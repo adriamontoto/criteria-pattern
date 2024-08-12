@@ -1,0 +1,1 @@
+# Remember to add the package, its single version and the documentation page

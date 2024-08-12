@@ -1,0 +1,192 @@
+[build-system]
+requires = ['hatchling']
+build-backend = 'hatchling.build'
+
+
+[tool.hatch.version]
+path = 'criteria_pattern/__init__.py'
+
+[tool.hatch.build.targets.sdist]
+include = ['criteria_pattern/', 'tests/', 'requirements*.txt']
+
+
+[project]
+name = 'criteria-pattern'
+description = 'The "Criteria Pattern" is a Python package that simplifies and standardizes criteria based filtering, validation and selection.'
+readme = 'README.md'
+authors = [{ name = 'Adria Montoto' }]
+license = 'MIT'
+classifiers = [
+    'License :: OSI Approved :: MIT License',
+    'Intended Audience :: Developers',
+    'Operating System :: OS Independent',
+    'Typing :: Typed',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+]
+keywords = [
+    'python',
+    'development',
+    'tools',
+    'utilities',
+    'criteria',
+    'pattern',
+    'filtering',
+    'validation',
+    'selection',
+]
+requires-python = '>=3.11'
+dynamic = ['version']
+
+[project.urls]
+Homepage = 'https://github.com/adriamontoto/criteria-pattern'
+Repository = 'https://github.com/adriamontoto/criteria-pattern'
+Issues = 'https://github.com/adriamontoto/criteria-pattern/issues'
+
+
+[tool.pytest.ini_options]
+pythonpath = '.'
+addopts = [
+    '--strict-config',  # fail if an unregistered option is used
+    '--strict-markers', # fail if an unregistered marker is used
+    '--color=yes',      # color the output
+]
+markers = [
+    'unit_testing: Check a unique funtionality',
+    'integration_testing: Check the integration between two or more functions',
+    'e2e_testing: Check the end to end functionality of the application',
+    'performance_testing: Check the performance of the application',
+    'security_testing: Check the security of the application',
+]
+xfail_strict = true
+
+
+[tool.coverage.run]
+source = ['criteria_pattern']
+parallel = true
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+precision = 2
+exclude_lines = [
+    'pragma: no cover',
+    'raise NotImplementedError',
+    'if TYPE_CHECKING:',
+    'if typing.TYPE_CHECKING:',
+    '@overload',
+    '@typing.overload',
+    'typing.assert_never',
+    'assert_never',
+]
+
+[tool.coverage.paths]
+source = ['criteria_pattern']
+
+
+[tool.ruff]
+fix = true
+indent-width = 4
+line-length = 120
+target-version = 'py312'
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 120
+indent-style = 'space'
+quote-style = 'single'
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+select = [
+    'F',   # pyflakes
+    'E',   # pycodestyle
+    'W',   # pycodestyle
+    'D',   # pydocstyle
+    'C90', # mccabe
+    'I',   # isort
+    'N',   # pep8-naming
+    'UP',  # pyupgrade
+    'B',   # flake8-bugbear
+    'C4',  # flake8-comprehensions
+    'DTZ', # flake8-datetimez
+    'S',   # flake8-bandit
+    'SIM', # flake8-simplify
+    'RUF', # ruff
+]
+ignore = [
+    'E111', # Checks for indentation with a non-multiple of 4 spaces.
+    'E114', # Checks for indentation of comments with a non-multiple of 4 spaces.
+    'E117', # Checks for over-indented code.
+    'W191', # Checks for indentation that uses tabs.
+    'D200', # Checks for single-line docstrings that are broken across multiple lines.
+    'D205', # 1 blank line required between summary line and description.
+    'D206', # Checks for docstrings that are indented with tabs.
+    'D212', # Checks for docstring summary lines that are not positioned on the first physical line of the docstring.
+    'D401', # First line of docstring should be in imperative mood.
+    'D300', # Checks for docstrings that use '''triple single quotes''' instead of 'triple double quotes'.
+]
+
+[tool.ruff.lint.per-file-ignores]
+'__init__.py' = [
+    'F401', # Checks for unused imports.
+    'D104', # Checks for undocumented public package definitions.
+]
+'database.py' = [
+    'F401', # Checks for unused imports.
+]
+'**test**.py' = [
+    'S101', # Use of `assert` detected.
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = 'pep257'
+property-decorators = ['sqlalchemy.ext.hybrid.hybrid_property']
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    'pydantic.field_validator', # Allow Pydantic's @field_validator decorator to trigger class method treatment.
+    'pydantic.model_validator', # Allow Pydantic's @model_validator decorator to trigger class method treatment.
+    'declared_attr',            # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
+    'expression',               # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
+    'comparator',               # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    'fastapi.Body',
+    'fastapi.Cookie',
+    'fastapi.Depends',
+    'fastapi.File',
+    'fastapi.Form',
+    'fastapi.Header',
+    'fastapi.Path',
+    'fastapi.Query',
+]
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+extra-standard-library = ['typing_extensions']
+known-first-party = ['src', 'backend', 'app']
+combine-as-imports = true
+
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+enable_error_code = [
+    'redundant-expr',
+    'possibly-undefined',
+    'truthy-bool',
+    'explicit-override',
+]
+
+
+[tool.bandit]
