@@ -1,0 +1,44 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in Criteria 🤏🏻 Pattern.
+labels: [bug, pending]
+
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for interest! Please fill out the form below to report a bug. 💥
+
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Description
+      description: |
+        Please explain what you are seeing and what you would expect to see.
+
+        Please provide as much detail as possible to make understanding and solving your problem as quick as possible. 🙏
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Code
+      render: Python
+      description: >
+        If applicable, please add a self-contained,
+        [minimal, reproducible, example](https://stackoverflow.com/help/minimal-reproducible-example)
+        demonstrating the bug.
+
+      placeholder: |
+        import criteria_pattern
+
+        ...
+
+  - type: textarea
+    id: version
+    validations:
+      required: true
+    attributes:
+      label: Python, Criteria Pattern & OS Version
+      render: Text
+      description: |
+        Which version of Python & Criteria Pattern are you using, and which Operating System?

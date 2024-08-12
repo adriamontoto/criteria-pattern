@@ -1,0 +1,22 @@
+name: ✨ Feature Request
+description: Suggest a new feature for Criteria 🤏🏻 Pattern.
+labels: [enhancement, pending]
+
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for interest! Please fill out the form below to suggest a new feature. 🚀
+
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Description
+      description: |
+        Please give as much detail as possible about the feature you would like to suggest. 🙏
+
+        You might like to add:
+        * A demo of how code might look when using the feature
+        * Your use case(s) for the feature
+        * Why the feature should be added to criteria pattern (as opposed to another library or just implemented in your code)
