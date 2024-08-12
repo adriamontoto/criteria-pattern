@@ -1,0 +1,67 @@
+name: Lint Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  lint:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.12]
+
+    name: Lint Pipeline - Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Only last commit
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - id: cache
+        name: 📦 Create cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
+
+      - name: 📦 Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make install-dev
+
+      - name: 🏃 Run Linter
+        run: make lint
+
+      - name: 🫙 Store type coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: type_coverage_report_${{ runner.os }}_${{ matrix.python-version }}
+          path: index.txt
+
+  # This job does nothing and is only used for the branch protection
+  check-all:
+    needs: [lint]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ All lint tests passed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

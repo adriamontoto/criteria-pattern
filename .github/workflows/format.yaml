@@ -1,0 +1,59 @@
+name: Format Pipeline
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  format:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.12]
+
+    name: Format Pipeline - Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Only last commit
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - id: cache
+        name: 📦 Create cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
+
+      - name: 📦 Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make install-dev
+
+      - name: 🏃 Run Formatter
+        run: make format
+
+      - name: 📤 Commit & Push Changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: .
+          message: '🔨 refactor: run automatic formatter'
+          commit: --signoff
+          default_author: github_actions

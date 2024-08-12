@@ -1,0 +1,126 @@
+name: Test Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.12]
+
+    name: Test Pipeline - Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Only last commit
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - id: cache
+        name: 📦 Create cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
+
+      - name: 📦 Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make install-dev
+
+      - name: 📂 Create coverage directory
+        run: mkdir coverage
+
+      - name: 🏃 Run Tests
+        run: make coverage
+        env:
+          COVERAGE_FILE: coverage/.coverage_${{ runner.os }}_python_${{ matrix.python-version }}
+          CONTEXT: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+
+      - name: 🫙 Store tests coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage_${{ runner.os }}_python_${{ matrix.python-version }}
+          path: coverage
+
+  coverage-combine:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Only last commit
+
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - id: cache
+        name: 📦 Create cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-python-3.12-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ runner.os }}-python-3.12-
+
+      - name: 📦 Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make install-dev
+
+      - name: 📥 Download coverage files
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          pattern: coverage_*
+          path: coverage
+
+      - name: 🏃 Combine coverage files
+        run: |
+          ls -la coverage
+          coverage combine coverage/.coverage_*
+
+      - name: 📊 Generate coverage report
+        run: |
+          coverage report
+          coverage html --show-contexts --title "Coverage for ${{ github.sha }}"
+
+      - name: 🫙 Store coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov
+
+  # This job does nothing and is only used for the branch protection
+  check-all:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ All tests passed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
