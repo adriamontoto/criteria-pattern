@@ -17,7 +17,7 @@ class Criteria(Generic[T]):
     Criteria class.
     """
 
-    __filters: list[Filter[T]]
+    _filters: list[Filter[T]]
 
     def __init__(self, filters: list[Filter[T]]) -> None:
         """
@@ -26,7 +26,7 @@ class Criteria(Generic[T]):
         Args:
             filters (List[Filter]): List of filters.
         """
-        self.__filters = filters
+        self._filters = filters
 
     @override
     def __repr__(self) -> str:
@@ -36,9 +36,9 @@ class Criteria(Generic[T]):
         Returns:
             str: String representation of Criteria.
         """
-        return f'<Criteria(filters={self.__filters})>'
+        return f'<Criteria(filters={self._filters})>'
 
-    def __and__(self, criteria: Criteria[T]) -> Criteria[T]:
+    def __and__(self, criteria: Criteria[T]) -> AndCriteria[T]:
         """
         Combine two criteria with AND operator. It merges the filters from both criteria into a single Criteria object.
 
@@ -46,7 +46,7 @@ class Criteria(Generic[T]):
             criteria (Criteria): Another criteria.
 
         Returns:
-            Criteria: Combined criteria.
+            AndCriteria: Combined criteria.
 
         Example:
         ```python
@@ -58,9 +58,9 @@ class Criteria(Generic[T]):
         criteria3 = Criteria(filters=[filter1, filter2])
         ```
         """
-        return Criteria(filters=self.__filters + criteria.filters)
+        return AndCriteria(left=self, right=criteria)
 
-    def add_(self, criteria: Criteria[T]) -> Criteria[T]:
+    def add_(self, criteria: Criteria[T]) -> AndCriteria[T]:
         """
         Combine two criteria with AND operator.
 
@@ -68,7 +68,7 @@ class Criteria(Generic[T]):
             criteria (Criteria): Another criteria.
 
         Returns:
-            Criteria: Combined criteria.
+            AndCriteria: Combined criteria.
 
         Example:
         ```python
@@ -76,7 +76,7 @@ class Criteria(Generic[T]):
         criteria2 = Criteria(filters=[filter2])
 
         # both are equivalent
-        criteria3 = criteria1.add_(criteria2)
+        criteria3 = criteria1.add_(criteria=criteria2)
         criteria3 = Criteria(filters=[filter1, filter2])
         ```
         """
@@ -90,4 +90,65 @@ class Criteria(Generic[T]):
         Returns:
             List[Filter]: List of filters.
         """
-        return self.__filters
+        return self._filters
+
+
+class AndCriteria(Criteria[T]):
+    """
+    AndCriteria class to handle AND logic.
+    """
+
+    _left: Criteria[T]
+    _right: Criteria[T]
+
+    def __init__(self, left: Criteria[T], right: Criteria[T]) -> None:
+        """
+        AndCriteria constructor.
+
+        Args:
+            left (Criteria): Left criteria.
+            right (Criteria): Right criteria.
+        """
+        self._left = left
+        self._right = right
+
+    @override
+    def __repr__(self) -> str:
+        """
+        Get string representation of AndCriteria.
+
+        Returns:
+            str: String representation of AndCriteria.
+        """
+        return f'<AndCriteria(left={self._left}, right={self._right})>'
+
+    @property
+    @override
+    def filters(self) -> list[Filter[T]]:
+        """
+        Get filters.
+
+        Returns:
+            List[Filter]: List of filters.
+        """
+        return self.left._filters + self.right._filters
+
+    @property
+    def left(self) -> Criteria[T]:
+        """
+        Get left criteria.
+
+        Returns:
+            Criteria: Left criteria.
+        """
+        return self._left
+
+    @property
+    def right(self) -> Criteria[T]:
+        """
+        Get right criteria.
+
+        Returns:
+            Criteria: Right criteria.
+        """
+        return self._right
