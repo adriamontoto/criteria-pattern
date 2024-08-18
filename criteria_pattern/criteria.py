@@ -61,7 +61,7 @@ class Criteria:
         """
         return AndCriteria(left=self, right=criteria)
 
-    def add_(self, criteria: Criteria) -> AndCriteria:
+    def and_(self, criteria: Criteria) -> AndCriteria:
         """
         Combine two criteria with AND operator.
 
