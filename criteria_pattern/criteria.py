@@ -4,27 +4,24 @@ This module contains the Criteria class.
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar
-from typing_extensions import override
+from typing import Any, override
 
 from .filter import Filter
 
-T = TypeVar('T')
 
-
-class Criteria(Generic[T]):
+class Criteria:
     """
     Criteria class.
     """
 
-    _filters: list[Filter[T]]
+    _filters: list[Filter[Any]]
 
-    def __init__(self, filters: list[Filter[T]]) -> None:
+    def __init__(self, filters: list[Filter[Any]]) -> None:
         """
         Criteria constructor.
 
         Args:
-            filters (List[Filter]): List of filters.
+            filters (List[Filter[Any]]): List of filters.
         """
         self._filters = filters
 
@@ -38,7 +35,7 @@ class Criteria(Generic[T]):
         """
         return f'<Criteria(filters={self._filters})>'
 
-    def __and__(self, criteria: Criteria[T]) -> AndCriteria[T]:
+    def __and__(self, criteria: Criteria) -> AndCriteria:
         """
         Combine two criteria with AND operator. It merges the filters from both criteria into a single Criteria object.
 
@@ -60,7 +57,7 @@ class Criteria(Generic[T]):
         """
         return AndCriteria(left=self, right=criteria)
 
-    def add_(self, criteria: Criteria[T]) -> AndCriteria[T]:
+    def add_(self, criteria: Criteria) -> AndCriteria:
         """
         Combine two criteria with AND operator.
 
@@ -82,7 +79,7 @@ class Criteria(Generic[T]):
         """
         return self & criteria
 
-    def __or__(self, criteria: Criteria[T]) -> OrCriteria[T]:
+    def __or__(self, criteria: Criteria) -> OrCriteria:
         """
         Combine two criteria with OR operator. It merges the filters from both criteria into a single Criteria object.
 
@@ -104,7 +101,7 @@ class Criteria(Generic[T]):
         """
         return OrCriteria(left=self, right=criteria)
 
-    def or_(self, criteria: Criteria[T]) -> OrCriteria[T]:
+    def or_(self, criteria: Criteria) -> OrCriteria:
         """
         Combine two criteria with OR operator.
 
@@ -127,25 +124,25 @@ class Criteria(Generic[T]):
         return self | criteria
 
     @property
-    def filters(self) -> list[Filter[T]]:
+    def filters(self) -> list[Filter[Any]]:
         """
         Get filters.
 
         Returns:
-            List[Filter]: List of filters.
+           list[Filter[Any]]: List of filters.
         """
         return self._filters
 
 
-class AndCriteria(Criteria[T]):
+class AndCriteria(Criteria):
     """
     AndCriteria class to handle AND logic.
     """
 
-    _left: Criteria[T]
-    _right: Criteria[T]
+    _left: Criteria
+    _right: Criteria
 
-    def __init__(self, left: Criteria[T], right: Criteria[T]) -> None:
+    def __init__(self, left: Criteria, right: Criteria) -> None:
         """
         AndCriteria constructor.
 
@@ -168,17 +165,17 @@ class AndCriteria(Criteria[T]):
 
     @property
     @override
-    def filters(self) -> list[Filter[T]]:
+    def filters(self) -> list[Filter[Any]]:
         """
         Get filters.
 
         Returns:
-            List[Filter]: List of filters.
+            list[Filter[Any]]: List of filters.
         """
         return self.left._filters + self.right._filters
 
     @property
-    def left(self) -> Criteria[T]:
+    def left(self) -> Criteria:
         """
         Get left criteria.
 
@@ -188,7 +185,7 @@ class AndCriteria(Criteria[T]):
         return self._left
 
     @property
-    def right(self) -> Criteria[T]:
+    def right(self) -> Criteria:
         """
         Get right criteria.
 
@@ -198,15 +195,15 @@ class AndCriteria(Criteria[T]):
         return self._right
 
 
-class OrCriteria(Criteria[T]):
+class OrCriteria(Criteria):
     """
     OrCriteria class to handle OR logic.
     """
 
-    _left: Criteria[T]
-    _right: Criteria[T]
+    _left: Criteria
+    _right: Criteria
 
-    def __init__(self, left: Criteria[T], right: Criteria[T]) -> None:
+    def __init__(self, left: Criteria, right: Criteria) -> None:
         """
         OrCriteria constructor.
 
@@ -229,17 +226,17 @@ class OrCriteria(Criteria[T]):
 
     @property
     @override
-    def filters(self) -> list[Filter[T]]:
+    def filters(self) -> list[Filter[Any]]:
         """
         Get filters.
 
         Returns:
-            List[Filter]: List of filters.
+            list[Filter[Any]]: List of filters.
         """
         return self.left._filters + self.right._filters
 
     @property
-    def left(self) -> Criteria[T]:
+    def left(self) -> Criteria:
         """
         Get left criteria.
 
@@ -249,7 +246,7 @@ class OrCriteria(Criteria[T]):
         return self._left
 
     @property
-    def right(self) -> Criteria[T]:
+    def right(self) -> Criteria:
         """
         Get right criteria.
 
