@@ -56,7 +56,7 @@ def test_order_field_type() -> None:
     assert isinstance(order.field, str)
 
 
-def test_order_field_cannot_changed() -> None:
+def test_order_field_cannot_be_changed() -> None:
     """
     Test that the field property of Order class cannot be changed.
     """
@@ -75,7 +75,7 @@ def test_order_direction_type() -> None:
     assert isinstance(order.direction, OrderDirection)
 
 
-def test_order_direction_cannot_changed() -> None:
+def test_order_direction_cannot_be_changed() -> None:
     """
     Test that the direction property of Order class cannot be changed.
     """

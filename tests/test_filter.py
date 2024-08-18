@@ -86,7 +86,7 @@ def test_filter_field_type() -> None:
     assert isinstance(filter.field, str)
 
 
-def test_filter_field_cannot_changed() -> None:
+def test_filter_field_cannot_be_changed() -> None:
     """
     Test that the field property of Filter class cannot be changed.
     """
@@ -105,7 +105,7 @@ def test_filter_operator_type() -> None:
     assert isinstance(filter.operator, FilterOperator)
 
 
-def test_filter_operator_cannot_changed() -> None:
+def test_filter_operator_cannot_be_changed() -> None:
     """
     Test that the operator property of Filter class cannot be changed.
     """
@@ -137,7 +137,7 @@ def test_filter_value_type(value: Any) -> None:
     assert isinstance(filter.value, type(value))
 
 
-def test_filter_value_cannot_changed() -> None:
+def test_filter_value_cannot_be_changed() -> None:
     """
     Test that the value property of Filter class cannot be changed.
     """
