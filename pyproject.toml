@@ -40,6 +40,9 @@ keywords = [
 requires-python = '>=3.11'
 dynamic = ['version']
 
+[project.optional-dependencies]
+sqlalchemy = ['sqlalchemy>=2.0.0,<3.0.0']
+
 [project.urls]
 Homepage = 'https://github.com/adriamontoto/criteria-pattern'
 Repository = 'https://github.com/adriamontoto/criteria-pattern'

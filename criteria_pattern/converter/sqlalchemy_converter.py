@@ -2,6 +2,11 @@
 SQLAlchemy converter module.
 """
 
+from importlib.util import find_spec
+
+if find_spec(name='sqlalchemy') is None:
+    raise ImportError("SQLAlchemy is not installed. Please install it using 'pip install criteria-pattern[sqlalchemy]'")
+
 from typing import assert_never
 
 from sqlalchemy import Column, and_, or_
