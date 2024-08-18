@@ -2,7 +2,12 @@
 This module contains the Order class.
 """
 
-from typing import override
+from sys import version_info
+
+if version_info >= (3, 12):
+    from typing import override  # pragma: no cover
+else:
+    from typing_extensions import override  # pragma: no cover
 
 from .order_direction import OrderDirection
 
