@@ -4,7 +4,14 @@ This module contains the Criteria class.
 
 from __future__ import annotations
 
-from typing import Any, override
+from sys import version_info
+
+if version_info >= (3, 12):
+    from typing import override  # pragma: no cover
+else:
+    from typing_extensions import override  # pragma: no cover
+
+from typing import Any
 
 from .filter import Filter
 from .order import Order

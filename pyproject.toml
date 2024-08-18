@@ -122,16 +122,18 @@ select = [
     'RUF', # ruff
 ]
 ignore = [
-    'E111', # Checks for indentation with a non-multiple of 4 spaces.
-    'E114', # Checks for indentation of comments with a non-multiple of 4 spaces.
-    'E117', # Checks for over-indented code.
-    'W191', # Checks for indentation that uses tabs.
-    'D200', # Checks for single-line docstrings that are broken across multiple lines.
-    'D205', # 1 blank line required between summary line and description.
-    'D206', # Checks for docstrings that are indented with tabs.
-    'D212', # Checks for docstring summary lines that are not positioned on the first physical line of the docstring.
-    'D401', # First line of docstring should be in imperative mood.
-    'D300', # Checks for docstrings that use '''triple single quotes''' instead of 'triple double quotes'.
+    'UP035', # Checks for uses of deprecated imports based on the minimum supported Python version.
+    'UP036', # Checks for conditional blocks gated on sys.version_info comparisons that are outdated for the minimum supported Python version.
+    'E111',  # Checks for indentation with a non-multiple of 4 spaces.
+    'E114',  # Checks for indentation of comments with a non-multiple of 4 spaces.
+    'E117',  # Checks for over-indented code.
+    'W191',  # Checks for indentation that uses tabs.
+    'D200',  # Checks for single-line docstrings that are broken across multiple lines.
+    'D205',  # 1 blank line required between summary line and description.
+    'D206',  # Checks for docstrings that are indented with tabs.
+    'D212',  # Checks for docstring summary lines that are not positioned on the first physical line of the docstring.
+    'D401',  # First line of docstring should be in imperative mood.
+    'D300',  # Checks for docstrings that use '''triple single quotes''' instead of 'triple double quotes'.
 ]
 
 [tool.ruff.lint.per-file-ignores]
