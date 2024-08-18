@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.elements import BinaryExpression
 
-from criteria_pattern import Criteria, FilterOperator
+from criteria_pattern import Criteria, FilterOperator, OrderDirection
 from criteria_pattern.criteria import AndCriteria, OrCriteria
 
 from .converter import Converter
@@ -32,13 +32,17 @@ class SQLAlchemyConverter(Converter):
             Query: Query object.
         """
         query = Query(model)
-        filters = self._process_criteria(criteria=criteria, model=model)
+        filters = self._process_filters(criteria=criteria, model=model)
         if filters:
             query = query.filter(*filters)
 
+        orders = self._process_orders(criteria=criteria, model=model)
+        if orders:
+            query = query.order_by(*orders)
+
         return query
 
-    def _process_criteria(self, criteria: Criteria, model: DeclarativeMeta) -> list[BinaryExpression]:  # noqa: C901
+    def _process_filters(self, criteria: Criteria, model: DeclarativeMeta) -> list[BinaryExpression]:  # noqa: C901
         """
         Process the Criteria and return a list of conditions.
 
@@ -52,15 +56,15 @@ class SQLAlchemyConverter(Converter):
         conditions = []
 
         if isinstance(criteria, AndCriteria):
-            left_conditions = self._process_criteria(criteria=criteria.left, model=model)
-            right_conditions = self._process_criteria(criteria=criteria.right, model=model)
+            left_conditions = self._process_filters(criteria=criteria.left, model=model)
+            right_conditions = self._process_filters(criteria=criteria.right, model=model)
             conditions.append(and_(*left_conditions, *right_conditions))
 
             return conditions
 
         if isinstance(criteria, OrCriteria):
-            left_conditions = self._process_criteria(criteria=criteria.left, model=model)
-            right_conditions = self._process_criteria(criteria=criteria.right, model=model)
+            left_conditions = self._process_filters(criteria=criteria.left, model=model)
+            right_conditions = self._process_filters(criteria=criteria.right, model=model)
             conditions.append(or_(*left_conditions, *right_conditions))
 
             return conditions
@@ -123,3 +127,30 @@ class SQLAlchemyConverter(Converter):
                     assert_never(filter.operator)
 
         return conditions
+
+    def _process_orders(self, criteria: Criteria, model: DeclarativeMeta) -> list[Column]:
+        """
+        Process the Criteria and return a list of order fields.
+
+        Args:
+            criteria (Criteria): Criteria to process.
+            model (DeclarativeMeta): SQLAlchemy model.
+
+        Returns:
+            list[Column]: List of order fields.
+        """
+        orders = []
+
+        for order in criteria.orders:
+            field: Column = getattr(model, order.field)
+            match order.direction:
+                case OrderDirection.ASC:
+                    orders.append(field.asc())
+
+                case OrderDirection.DESC:
+                    orders.append(field.desc())
+
+                case _:
+                    assert_never(order.direction)
+
+        return orders

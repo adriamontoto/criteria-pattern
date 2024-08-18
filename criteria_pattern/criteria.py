@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, override
 
 from .filter import Filter
+from .order import Order
 
 
 class Criteria:
@@ -15,15 +16,18 @@ class Criteria:
     """
 
     _filters: list[Filter[Any]]
+    _orders: list[Order]
 
-    def __init__(self, filters: list[Filter[Any]]) -> None:
+    def __init__(self, filters: list[Filter[Any]], orders: list[Order] | None = None) -> None:
         """
         Criteria constructor.
 
         Args:
             filters (List[Filter[Any]]): List of filters.
+            sort (List[Order], optional): List of orders. Defaults to [].
         """
         self._filters = filters
+        self._orders = orders or []
 
     @override
     def __repr__(self) -> str:
@@ -33,7 +37,7 @@ class Criteria:
         Returns:
             str: String representation of Criteria.
         """
-        return f'<Criteria(filters={self._filters})>'
+        return f'<Criteria(filters={self._filters}, orders={self._orders})>'
 
     def __and__(self, criteria: Criteria) -> AndCriteria:
         """
@@ -133,6 +137,16 @@ class Criteria:
         """
         return self._filters
 
+    @property
+    def orders(self) -> list[Order]:
+        """
+        Get orders.
+
+        Returns:
+            list[Order]: List of orders.
+        """
+        return self._orders
+
 
 class AndCriteria(Criteria):
     """
@@ -173,6 +187,16 @@ class AndCriteria(Criteria):
             list[Filter[Any]]: List of filters.
         """
         return self.left._filters + self.right._filters
+
+    @property
+    def orders(self) -> list[Order]:
+        """
+        Get orders, only left criteria orders are returned.
+
+        Returns:
+            list[Order]: List of orders.
+        """
+        return self.left._orders
 
     @property
     def left(self) -> Criteria:
@@ -234,6 +258,17 @@ class OrCriteria(Criteria):
             list[Filter[Any]]: List of filters.
         """
         return self.left._filters + self.right._filters
+
+    @property
+    @override
+    def orders(self) -> list[Order]:
+        """
+        Get orders, only left criteria orders are returned.
+
+        Returns:
+            list[Order]: List of orders.
+        """
+        return self.left._orders
 
     @property
     def left(self) -> Criteria:
