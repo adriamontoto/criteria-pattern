@@ -1,1 +1,4 @@
 # Remember to add the package, its single version and the documentation page
+
+# SQLAlchemy package dependencies
+sqlalchemy>=2.0.0,<3.0.0  # https://docs.sqlalchemy.org/
