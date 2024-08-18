@@ -189,6 +189,7 @@ class AndCriteria(Criteria):
         return self.left._filters + self.right._filters
 
     @property
+    @override
     def orders(self) -> list[Order]:
         """
         Get orders, only left criteria orders are returned.
