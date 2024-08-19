@@ -134,6 +134,36 @@ class Criteria:
         """
         return self | criteria
 
+    def __invert__(self) -> NotCriteria:
+        """
+        Negate the criteria.
+
+        Returns:
+            NotCriteria: Negated criteria.
+
+        Example:
+        ```python
+        criteria = Criteria(filters=[filter1])
+        not_criteria = ~criteria
+        ```
+        """
+        return NotCriteria(criteria=self)
+
+    def not_(self) -> NotCriteria:
+        """
+        Negate the criteria.
+
+        Returns:
+            NotCriteria: Negated criteria.
+
+        Example:
+        ```python
+        criteria = Criteria(filters=[filter1])
+        not_criteria = criteria.not_()
+        ```
+        """
+        return ~self
+
     @property
     def filters(self) -> list[Filter[Any]]:
         """
@@ -297,3 +327,62 @@ class OrCriteria(Criteria):
             Criteria: Right criteria.
         """
         return self._right
+
+
+class NotCriteria(Criteria):
+    """
+    NotCriteria class to handle NOT logic.
+    """
+
+    _criteria: Criteria
+
+    def __init__(self, criteria: Criteria) -> None:
+        """
+        NotCriteria constructor.
+
+        Args:
+            criteria (Criteria): Criteria to negate.
+        """
+        self._criteria = criteria
+
+    @override
+    def __repr__(self) -> str:
+        """
+        Get string representation of NotCriteria.
+
+        Returns:
+            str: String representation of NotCriteria.
+        """
+        return f'<NotCriteria(criteria={self._criteria})>'
+
+    @property
+    def criteria(self) -> Criteria:
+        """
+        Get criteria.
+
+        Returns:
+            Criteria: Criteria to negate.
+        """
+        return self._criteria
+
+    @property
+    @override
+    def filters(self) -> list[Filter[Any]]:
+        """
+        Get negated filters.
+
+        Returns:
+            list[Filter[Any]]: List of negated filters.
+        """
+        return self._criteria.filters
+
+    @property
+    @override
+    def orders(self) -> list[Order]:
+        """
+        Get orders.
+
+        Returns:
+            list[Order]: List of orders.
+        """
+        return self._criteria.orders

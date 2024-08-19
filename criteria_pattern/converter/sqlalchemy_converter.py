@@ -9,13 +9,13 @@ if find_spec(name='sqlalchemy') is None:
 
 from typing import Any, TypeVar, assert_never
 
-from sqlalchemy import Column, and_, or_
+from sqlalchemy import Column, and_, not_, or_
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.elements import ColumnElement, UnaryExpression
 
 from criteria_pattern import Criteria, FilterOperator, OrderDirection
-from criteria_pattern.criteria import AndCriteria, OrCriteria
+from criteria_pattern.criteria import AndCriteria, NotCriteria, OrCriteria
 
 T = TypeVar('T', bound=DeclarativeMeta)
 
@@ -98,6 +98,16 @@ class SQLAlchemyConverter:
                 column_mapping=column_mapping,
             )
             conditions.append(or_(*left_conditions, *right_conditions))
+
+            return conditions
+
+        if isinstance(criteria, NotCriteria):
+            not_conditions = self._process_filters(
+                criteria=criteria.criteria,
+                model=model,
+                column_mapping=column_mapping,
+            )
+            conditions.append(not_(*not_conditions))  # type: ignore
 
             return conditions
 
