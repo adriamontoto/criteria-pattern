@@ -144,7 +144,10 @@ class Criteria:
         Example:
         ```python
         criteria = Criteria(filters=[filter1])
+
+        # both are equivalent
         not_criteria = ~criteria
+        not_criteria = criteria.not_()
         ```
         """
         return NotCriteria(criteria=self)
@@ -159,7 +162,10 @@ class Criteria:
         Example:
         ```python
         criteria = Criteria(filters=[filter1])
+
+        # both are equivalent
         not_criteria = criteria.not_()
+        not_criteria = ~criteria
         ```
         """
         return ~self
@@ -223,7 +229,7 @@ class AndCriteria(Criteria):
         Returns:
             list[Filter[Any]]: List of filters.
         """
-        return self.left._filters + self.right._filters
+        return self.left.filters + self.right.filters
 
     @property
     @override
@@ -234,7 +240,7 @@ class AndCriteria(Criteria):
         Returns:
             list[Order]: List of orders.
         """
-        return self.left._orders
+        return self.left.orders
 
     @property
     def left(self) -> Criteria:
@@ -295,7 +301,7 @@ class OrCriteria(Criteria):
         Returns:
             list[Filter[Any]]: List of filters.
         """
-        return self.left._filters + self.right._filters
+        return self.left.filters + self.right.filters
 
     @property
     @override
@@ -306,7 +312,7 @@ class OrCriteria(Criteria):
         Returns:
             list[Order]: List of orders.
         """
-        return self.left._orders
+        return self.left.orders
 
     @property
     def left(self) -> Criteria:
