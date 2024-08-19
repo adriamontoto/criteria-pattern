@@ -7,25 +7,25 @@ from importlib.util import find_spec
 if find_spec(name='sqlalchemy') is None:
     raise ImportError("SQLAlchemy is not installed. Please install it using 'pip install criteria-pattern[sqlalchemy]'")
 
-from typing import assert_never
+from typing import Any, TypeVar, assert_never
 
 from sqlalchemy import Column, and_, or_
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.query import Query
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import ColumnElement, UnaryExpression
 
 from criteria_pattern import Criteria, FilterOperator, OrderDirection
 from criteria_pattern.criteria import AndCriteria, OrCriteria
 
-from .converter import Converter
+T = TypeVar('T', bound=DeclarativeMeta)
 
 
-class SQLAlchemyConverter(Converter):
+class SQLAlchemyConverter:
     """
     SQLAlchemy converter.
     """
 
-    def convert(self, criteria: Criteria, model: DeclarativeMeta) -> Query:
+    def convert(self, criteria: Criteria, model: type[T]) -> Query[T]:
         """
         Convert the Criteria object to a SQLAlchemy Query.
 
@@ -36,7 +36,7 @@ class SQLAlchemyConverter(Converter):
         Returns:
             Query: Query object.
         """
-        query = Query(model)
+        query: Query[T] = Query(model)
         filters = self._process_filters(criteria=criteria, model=model)
         if filters:
             query = query.filter(*filters)
@@ -47,7 +47,7 @@ class SQLAlchemyConverter(Converter):
 
         return query
 
-    def _process_filters(self, criteria: Criteria, model: DeclarativeMeta) -> list[BinaryExpression]:  # noqa: C901
+    def _process_filters(self, criteria: Criteria, model: type[T]) -> list[ColumnElement[bool]]:  # noqa: C901
         """
         Process the Criteria and return a list of conditions.
 
@@ -58,7 +58,7 @@ class SQLAlchemyConverter(Converter):
         Returns:
             list[BinaryExpression]: List of conditions.
         """
-        conditions = []
+        conditions: list[ColumnElement[bool]] = []
 
         if isinstance(criteria, AndCriteria):
             left_conditions = self._process_filters(criteria=criteria.left, model=model)
@@ -75,7 +75,7 @@ class SQLAlchemyConverter(Converter):
             return conditions
 
         for filter in criteria.filters:
-            field: Column = getattr(model, filter.field)
+            field: Column[Any] = getattr(model, filter.field)
             match filter.operator:
                 case FilterOperator.EQUAL:
                     conditions.append(field == filter.value)
@@ -133,7 +133,7 @@ class SQLAlchemyConverter(Converter):
 
         return conditions
 
-    def _process_orders(self, criteria: Criteria, model: DeclarativeMeta) -> list[Column]:
+    def _process_orders(self, criteria: Criteria, model: type[T]) -> list[UnaryExpression[Any]]:
         """
         Process the Criteria and return a list of order fields.
 
@@ -147,7 +147,7 @@ class SQLAlchemyConverter(Converter):
         orders = []
 
         for order in criteria.orders:
-            field: Column = getattr(model, order.field)
+            field: Column[Any] = getattr(model, order.field)
             match order.direction:
                 case OrderDirection.ASC:
                     orders.append(field.asc())
