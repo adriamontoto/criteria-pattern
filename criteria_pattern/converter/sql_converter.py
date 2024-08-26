@@ -13,18 +13,21 @@ class SqlConverter:
     Raw SQL converter.
     """
 
-    def convert(self, criteria: Criteria, table: str, columns: list[str]) -> str:
+    def convert(self, criteria: Criteria, table: str, columns: list[str] | None = None) -> str:
         """
         Convert the Criteria object to a raw SQL query.
 
         Args:
             criteria (Criteria): Criteria to convert.
             table (str): Name of the table to query.
-            columns (list[str]): Columns of the table to select.
+            columns (list[str]): Columns of the table to select. Default to *.
 
         Returns:
             str: The raw SQL query string.
         """
+        if columns is None:
+            columns = ['*']
+
         query = f'SELECT {", ".join(columns)} FROM {table}'
 
         if criteria.filters:
