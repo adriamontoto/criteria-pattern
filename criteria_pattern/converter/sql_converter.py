@@ -13,7 +13,8 @@ class SqlConverter:
     Raw SQL converter.
     """
 
-    def convert(self, criteria: Criteria, table: str, columns: list[str] | None = None) -> str:
+    @classmethod
+    def convert(cls, criteria: Criteria, table: str, columns: list[str] | None = None) -> str:
         """
         Convert the Criteria object to a raw SQL query.
 
@@ -31,16 +32,17 @@ class SqlConverter:
         query = f'SELECT {", ".join(columns)} FROM {table}'
 
         if criteria.filters:
-            where_clause = self._process_filters(criteria=criteria)
+            where_clause = cls._process_filters(criteria=criteria)
             query += f' WHERE {where_clause}'
 
         if criteria.orders:
-            order_clause = self._process_orders(criteria=criteria)
+            order_clause = cls._process_orders(criteria=criteria)
             query += f' ORDER BY {order_clause}'
 
         return f'{query};'
 
-    def _process_filters(self, criteria: Criteria) -> str:  # noqa: C901
+    @classmethod
+    def _process_filters(cls, criteria: Criteria) -> str:  # noqa: C901
         """
         Process the filter string to create SQL WHERE clause.
 
@@ -53,21 +55,21 @@ class SqlConverter:
         filters = ''
 
         if isinstance(criteria, AndCriteria):
-            left_conditions = self._process_filters(criteria=criteria.left)
-            right_conditions = self._process_filters(criteria=criteria.right)
+            left_conditions = cls._process_filters(criteria=criteria.left)
+            right_conditions = cls._process_filters(criteria=criteria.right)
             filters += f'({left_conditions} AND {right_conditions})'
 
             return filters
 
         if isinstance(criteria, OrCriteria):
-            left_conditions = self._process_filters(criteria=criteria.left)
-            right_conditions = self._process_filters(criteria=criteria.right)
+            left_conditions = cls._process_filters(criteria=criteria.left)
+            right_conditions = cls._process_filters(criteria=criteria.right)
             filters += f'({left_conditions} OR {right_conditions})'
 
             return filters
 
         if isinstance(criteria, NotCriteria):
-            not_conditions = self._process_filters(criteria=criteria.criteria)
+            not_conditions = cls._process_filters(criteria=criteria.criteria)
             filters += f'NOT ({not_conditions})'
 
             return filters
@@ -141,7 +143,8 @@ class SqlConverter:
 
         return filters
 
-    def _process_orders(self, criteria: Criteria) -> str:
+    @classmethod
+    def _process_orders(cls, criteria: Criteria) -> str:
         """
         Process the Criteria and return a string of order fields.
 
