@@ -11,5 +11,5 @@ class OrderDirection(StrEnum):
     OrderDirection enum class.
     """
 
-    ASC = 'asc'
-    DESC = 'desc'
+    ASC = 'ASC'
+    DESC = 'DESC'
