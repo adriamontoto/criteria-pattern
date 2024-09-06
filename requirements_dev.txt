@@ -3,6 +3,7 @@
 # Install packages from requirements.txt
 -r requirements.txt
 
+Faker==28.4.1  # https://faker.readthedocs.io/en/master/
 pytest==8.2.2 # https://docs.pytest.org/en/latest/contents.html
 pytest-asyncio==0.23.7  # https://pytest-asyncio.readthedocs.io/en/latest/
 pytest-randomly==3.15.0  # https://github.com/pytest-dev/pytest-randomly
