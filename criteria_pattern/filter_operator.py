@@ -2,9 +2,10 @@
 Filter operator module.
 """
 
-from enum import StrEnum
+from enum import StrEnum, unique
 
 
+@unique
 class FilterOperator(StrEnum):
     """
     FilterOperator enum class.
