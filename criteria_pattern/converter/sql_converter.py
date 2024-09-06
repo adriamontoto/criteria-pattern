@@ -136,7 +136,7 @@ class SqlConverter:
                 case FilterOperator.IS_NOT_NULL:
                     filters += f'{filter.field} IS NOT NULL'
 
-                case _:
+                case _:  # pragma: no cover
                     assert_never(filter.operator)
 
         return filters
@@ -161,7 +161,7 @@ class SqlConverter:
                 case OrderDirection.DESC:
                     orders.append(f'{order.field} DESC')
 
-                case _:
+                case _:  # pragma: no cover
                     assert_never(order.direction)
 
         return ', '.join(orders)
