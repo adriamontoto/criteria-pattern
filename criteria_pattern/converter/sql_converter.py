@@ -40,7 +40,7 @@ class SqlConverter:
 
         return f'{query};'
 
-    def _process_filters(self, criteria: Criteria) -> str:  # noqa: C901
+    def _process_filters(self, criteria: Criteria) -> str:
         """
         Process the filter string to create SQL WHERE clause.
 
@@ -73,60 +73,14 @@ class SqlConverter:
             return filters
 
         for filter in criteria.filters:
-            match filter.operator:
-                case FilterOperator.EQUAL:
-                    filters += f'{filter.field} = {filter.value}'
+            if filter.operator in [FilterOperator.IS_NULL, FilterOperator.IS_NOT_NULL]:
+                filters += f'{filter.field} {filter.operator}'
 
-                case FilterOperator.NOT_EQUAL:
-                    filters += f'{filter.field} != {filter.value}'
+            elif filter.operator in [FilterOperator.BETWEEN, FilterOperator.NOT_BETWEEN]:
+                filters += f"{filter.field} {filter.operator} '{filter.value[0]}' AND '{filter.value[1]}'"
 
-                case FilterOperator.GREATER:
-                    filters += f'{filter.field} > {filter.value}'
-
-                case FilterOperator.GREATER_OR_EQUAL:
-                    filters += f'{filter.field} >= {filter.value}'
-
-                case FilterOperator.LESS:
-                    filters += f'{filter.field} < {filter.value}'
-
-                case FilterOperator.LESS_OR_EQUAL:
-                    filters += f'{filter.field} <= {filter.value}'
-
-                case FilterOperator.LIKE:
-                    filters += f'{filter.field} LIKE {filter.value}'
-
-                case FilterOperator.IN:
-                    filters += f'{filter.field} IN {filter.value}'
-
-                case FilterOperator.NOT_IN:
-                    filters += f'{filter.field} NOT IN {filter.value}'
-
-                case FilterOperator.IS_NULL:
-                    filters += f'{filter.field} IS NULL'
-
-                case FilterOperator.IS_NOT_NULL:
-                    filters += f'{filter.field} IS NOT NULL'
-
-                case FilterOperator.BETWEEN:
-                    filters += f'{filter.field} BETWEEN {filter.value[0]} AND {filter.value[1]}'
-
-                case FilterOperator.NOT_BETWEEN:
-                    filters += f'{filter.field} NOT BETWEEN {filter.value[0]} AND {filter.value[1]}'
-
-                case FilterOperator.CONTAINS:
-                    filters += f'{filter.field} LIKE {filter.value}'
-
-                case FilterOperator.NOT_CONTAINS:
-                    filters += f'{filter.field} NOT LIKE {filter.value}'
-
-                case FilterOperator.STARTS_WITH:
-                    filters += f'{filter.field} LIKE {filter.value}'
-
-                case FilterOperator.ENDS_WITH:
-                    filters += f'{filter.field} LIKE {filter.value}'
-
-                case _:
-                    assert_never(filter.operator)
+            else:
+                filters += f"{filter.field} {filter.operator} '{filter.value}'"
 
         return filters
 
