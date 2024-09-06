@@ -17,6 +17,7 @@ class FilterOperator(StrEnum):
     LESS = '<'
     LESS_OR_EQUAL = '<='
     LIKE = 'LIKE'
+    NOT_LIKE = 'NOT LIKE'
     IN = 'IN'
     NOT_IN = 'NOT IN'
     IS_NULL = 'IS NULL'
