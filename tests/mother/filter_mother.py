@@ -39,8 +39,8 @@ class FilterMother:
         Returns:
             Filter: A Filter object.
         """
-        field = kwargs.get('field', default=Faker().word())
-        operator = kwargs.get('operator', default=FilterOperator(value=choice(seq=list(FilterOperator))))
-        value = kwargs.get('value', default=Faker().word())
+        field = kwargs.get('field', Faker().word())
+        operator = kwargs.get('operator', FilterOperator(value=choice(seq=list(FilterOperator))))
+        value = kwargs.get('value', Faker().word())
 
         return Filter(field=field, operator=operator, value=value)

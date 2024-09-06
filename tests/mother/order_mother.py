@@ -37,7 +37,7 @@ class OrderMother:
         Returns:
             Order: A Order object.
         """
-        field = kwargs.get('field', default=Faker().word())
-        direction = kwargs.get('direction', default=OrderDirection(value=choice(seq=list(OrderDirection))))
+        field = kwargs.get('field', Faker().word())
+        direction = kwargs.get('direction', OrderDirection(value=choice(seq=list(OrderDirection))))
 
         return Order(field=field, direction=direction)
