@@ -68,7 +68,7 @@ class SqlConverter:
 
         if isinstance(criteria, NotCriteria):
             not_conditions = self._process_filters(criteria=criteria.criteria)
-            filters += f'(NOT {not_conditions})'
+            filters += f'NOT ({not_conditions})'
 
             return filters
 
