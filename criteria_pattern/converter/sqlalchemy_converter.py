@@ -26,7 +26,7 @@ class SqlAlchemyConverter:
     """
 
     @classmethod
-    def convert(cls, criteria: Criteria, model: type[T], column_mapping: dict[str, str] | None = None) -> Query[T]:
+    def convert(cls, criteria: Criteria, model: type[T], columns_mapping: dict[str, str] | None = None) -> Query[T]:
         """
         Convert the Criteria object to a SQLAlchemy Query.
 
@@ -40,14 +40,14 @@ class SqlAlchemyConverter:
         """
         query: Query[T] = Query(model)
 
-        if column_mapping is None:
-            column_mapping = {}
+        if columns_mapping is None:
+            columns_mapping = {}
 
-        filters = cls._process_filters(criteria=criteria, model=model, column_mapping=column_mapping)
+        filters = cls._process_filters(criteria=criteria, model=model, columns_mapping=columns_mapping)
         if filters:
             query = query.filter(*filters)
 
-        orders = cls._process_orders(criteria=criteria, model=model, column_mapping=column_mapping)
+        orders = cls._process_orders(criteria=criteria, model=model, columns_mapping=columns_mapping)
         if orders:
             query = query.order_by(*orders)
 
@@ -58,7 +58,7 @@ class SqlAlchemyConverter:
         cls,
         criteria: Criteria,
         model: type[T],
-        column_mapping: dict[str, str],
+        columns_mapping: dict[str, str],
     ) -> list[ColumnElement[bool]]:
         """
         Process the Criteria and return a list of conditions.
@@ -66,7 +66,7 @@ class SqlAlchemyConverter:
         Args:
             criteria (Criteria): Criteria to process.
             model (DeclarativeMeta): SQLAlchemy model.
-            column_mapping (dict[str, str]): Alias for column names.
+            columns_mapping (dict[str, str]): Alias for column names.
 
         Returns:
             list[BinaryExpression]: List of conditions.
@@ -77,12 +77,12 @@ class SqlAlchemyConverter:
             left_conditions = cls._process_filters(
                 criteria=criteria.left,
                 model=model,
-                column_mapping=column_mapping,
+                columns_mapping=columns_mapping,
             )
             right_conditions = cls._process_filters(
                 criteria=criteria.right,
                 model=model,
-                column_mapping=column_mapping,
+                columns_mapping=columns_mapping,
             )
             conditions.append(and_(*left_conditions, *right_conditions))
 
@@ -92,12 +92,12 @@ class SqlAlchemyConverter:
             left_conditions = cls._process_filters(
                 criteria=criteria.left,
                 model=model,
-                column_mapping=column_mapping,
+                columns_mapping=columns_mapping,
             )
             right_conditions = cls._process_filters(
                 criteria=criteria.right,
                 model=model,
-                column_mapping=column_mapping,
+                columns_mapping=columns_mapping,
             )
             conditions.append(or_(*left_conditions, *right_conditions))
 
@@ -107,14 +107,14 @@ class SqlAlchemyConverter:
             not_conditions = cls._process_filters(
                 criteria=criteria.criteria,
                 model=model,
-                column_mapping=column_mapping,
+                columns_mapping=columns_mapping,
             )
             conditions.append(not_(*not_conditions))
 
             return conditions
 
         for filter in criteria.filters:
-            field_name = column_mapping.get(filter.field, filter.field)
+            field_name = columns_mapping.get(filter.field, filter.field)
             field: Column[Any] = getattr(model, field_name)
             match filter.operator:
                 case FilterOperator.EQUAL:
@@ -178,7 +178,7 @@ class SqlAlchemyConverter:
         cls,
         criteria: Criteria,
         model: type[T],
-        column_mapping: dict[str, str],
+        columns_mapping: dict[str, str],
     ) -> list[UnaryExpression[Any]]:
         """
         Process the Criteria and return a list of order fields.
@@ -186,7 +186,7 @@ class SqlAlchemyConverter:
         Args:
             criteria (Criteria): Criteria to process.
             model (DeclarativeMeta): SQLAlchemy model.
-            column_mapping (dict[str, str]): Alias for column names.
+            columns_mapping (dict[str, str]): Alias for column names.
 
         Returns:
             list[Column]: List of order fields.
@@ -194,7 +194,7 @@ class SqlAlchemyConverter:
         orders = []
 
         for order in criteria.orders:
-            field_name = column_mapping.get(order.field, order.field)
+            field_name = columns_mapping.get(order.field, order.field)
             field: Column[Any] = getattr(model, field_name)
             match order.direction:
                 case OrderDirection.ASC:
