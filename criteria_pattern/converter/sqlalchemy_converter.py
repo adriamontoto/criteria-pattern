@@ -20,7 +20,7 @@ from criteria_pattern.criteria import AndCriteria, NotCriteria, OrCriteria
 T = TypeVar('T', bound=DeclarativeMeta)
 
 
-class SQLAlchemyConverter:
+class SqlAlchemyConverter:
     """
     SQLAlchemy converter.
     """
