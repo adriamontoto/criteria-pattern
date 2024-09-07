@@ -451,3 +451,37 @@ def test_sql_converter_with_filtered_and_ordered_criteria() -> None:
     )
 
     assert query == "SELECT id, name, email FROM user WHERE (name = 'John Doe' AND (email IS NOT NULL OR NOT (age < '18'))) ORDER BY email DESC;"  # noqa: E501 # fmt: skip
+
+
+def test_sql_converter_with_columns_mapping() -> None:
+    """
+    Test SqlConverter class with columns mapping.
+    """
+    query = SqlConverter.convert(
+        criteria=CriteriaMother.create(
+            filters=[{'field': 'full_name', 'operator': FilterOperator.EQUAL, 'value': 'John Doe'}],
+            orders=[{'field': 'full_name', 'direction': OrderDirection.ASC}],
+        ),
+        table='user',
+        columns=['id', 'name', 'email'],
+        columns_mapping={'full_name': 'name'},
+    )
+
+    assert query == "SELECT id, name, email FROM user WHERE name = 'John Doe' ORDER BY name ASC;"
+
+
+def test_sql_converter_with_columns_mapping_with_spaces() -> None:
+    """
+    Test SqlConverter class with columns mapping with spaces.
+    """
+    query = SqlConverter.convert(
+        criteria=CriteriaMother.create(
+            filters=[{'field': 'full name', 'operator': FilterOperator.EQUAL, 'value': 'John Doe'}],
+            orders=[{'field': 'full name', 'direction': OrderDirection.ASC}],
+        ),
+        table='user',
+        columns=['id', 'name', 'email'],
+        columns_mapping={'full name': 'name'},
+    )
+
+    assert query == "SELECT id, name, email FROM user WHERE name = 'John Doe' ORDER BY name ASC;"
