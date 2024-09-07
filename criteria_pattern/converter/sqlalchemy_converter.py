@@ -25,7 +25,8 @@ class SQLAlchemyConverter:
     SQLAlchemy converter.
     """
 
-    def convert(self, criteria: Criteria, model: type[T], column_mapping: dict[str, str] | None = None) -> Query[T]:
+    @classmethod
+    def convert(cls, criteria: Criteria, model: type[T], column_mapping: dict[str, str] | None = None) -> Query[T]:
         """
         Convert the Criteria object to a SQLAlchemy Query.
 
@@ -42,18 +43,19 @@ class SQLAlchemyConverter:
         if column_mapping is None:
             column_mapping = {}
 
-        filters = self._process_filters(criteria=criteria, model=model, column_mapping=column_mapping)
+        filters = cls._process_filters(criteria=criteria, model=model, column_mapping=column_mapping)
         if filters:
             query = query.filter(*filters)
 
-        orders = self._process_orders(criteria=criteria, model=model, column_mapping=column_mapping)
+        orders = cls._process_orders(criteria=criteria, model=model, column_mapping=column_mapping)
         if orders:
             query = query.order_by(*orders)
 
         return query
 
+    @classmethod
     def _process_filters(  # noqa: C901
-        self,
+        cls,
         criteria: Criteria,
         model: type[T],
         column_mapping: dict[str, str],
@@ -72,12 +74,12 @@ class SQLAlchemyConverter:
         conditions: list[ColumnElement[bool]] = []
 
         if isinstance(criteria, AndCriteria):
-            left_conditions = self._process_filters(
+            left_conditions = cls._process_filters(
                 criteria=criteria.left,
                 model=model,
                 column_mapping=column_mapping,
             )
-            right_conditions = self._process_filters(
+            right_conditions = cls._process_filters(
                 criteria=criteria.right,
                 model=model,
                 column_mapping=column_mapping,
@@ -87,12 +89,12 @@ class SQLAlchemyConverter:
             return conditions
 
         if isinstance(criteria, OrCriteria):
-            left_conditions = self._process_filters(
+            left_conditions = cls._process_filters(
                 criteria=criteria.left,
                 model=model,
                 column_mapping=column_mapping,
             )
-            right_conditions = self._process_filters(
+            right_conditions = cls._process_filters(
                 criteria=criteria.right,
                 model=model,
                 column_mapping=column_mapping,
@@ -102,12 +104,12 @@ class SQLAlchemyConverter:
             return conditions
 
         if isinstance(criteria, NotCriteria):
-            not_conditions = self._process_filters(
+            not_conditions = cls._process_filters(
                 criteria=criteria.criteria,
                 model=model,
                 column_mapping=column_mapping,
             )
-            conditions.append(not_(*not_conditions))  # type: ignore
+            conditions.append(not_(*not_conditions))
 
             return conditions
 
@@ -171,8 +173,9 @@ class SQLAlchemyConverter:
 
         return conditions
 
+    @classmethod
     def _process_orders(
-        self,
+        cls,
         criteria: Criteria,
         model: type[T],
         column_mapping: dict[str, str],
