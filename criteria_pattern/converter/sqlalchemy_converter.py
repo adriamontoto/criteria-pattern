@@ -116,6 +116,7 @@ class SqlAlchemyConverter:
         for filter in criteria.filters:
             field_name = columns_mapping.get(filter.field, filter.field)
             field: Column[Any] = getattr(model, field_name)
+
             match filter.operator:
                 case FilterOperator.EQUAL:
                     conditions.append(field == filter.value)
@@ -138,6 +139,33 @@ class SqlAlchemyConverter:
                 case FilterOperator.LIKE:
                     conditions.append(field.like(filter.value))
 
+                case FilterOperator.NOT_LIKE:
+                    conditions.append(~field.like(filter.value))
+
+                case FilterOperator.CONTAINS:
+                    conditions.append(field.contains(filter.value))
+
+                case FilterOperator.NOT_CONTAINS:
+                    conditions.append(~field.contains(filter.value))
+
+                case FilterOperator.STARTS_WITH:
+                    conditions.append(field.startswith(filter.value))
+
+                case FilterOperator.NOT_STARTS_WITH:
+                    conditions.append(~field.startswith(filter.value))
+
+                case FilterOperator.ENDS_WITH:
+                    conditions.append(field.endswith(filter.value))
+
+                case FilterOperator.NOT_ENDS_WITH:
+                    conditions.append(~field.endswith(filter.value))
+
+                case FilterOperator.BETWEEN:
+                    conditions.append(field.between(filter.value[0], filter.value[1]))
+
+                case FilterOperator.NOT_BETWEEN:
+                    conditions.append(~field.between(filter.value[0], filter.value[1]))
+
                 case FilterOperator.IN:
                     conditions.append(field.in_(filter.value))
 
@@ -150,25 +178,7 @@ class SqlAlchemyConverter:
                 case FilterOperator.IS_NOT_NULL:
                     conditions.append(field.isnot(None))
 
-                case FilterOperator.BETWEEN:
-                    conditions.append(field.between(filter.value[0], filter.value[1]))
-
-                case FilterOperator.NOT_BETWEEN:
-                    conditions.append(~field.between(filter.value[0], filter.value[1]))
-
-                case FilterOperator.CONTAINS:
-                    conditions.append(field.contains(filter.value))
-
-                case FilterOperator.NOT_CONTAINS:
-                    conditions.append(~field.contains(filter.value))
-
-                case FilterOperator.STARTS_WITH:
-                    conditions.append(field.startswith(filter.value))
-
-                case FilterOperator.ENDS_WITH:
-                    conditions.append(field.endswith(filter.value))
-
-                case _:
+                case _:  # pragma: no cover
                     assert_never(filter.operator)
 
         return conditions
@@ -196,6 +206,7 @@ class SqlAlchemyConverter:
         for order in criteria.orders:
             field_name = columns_mapping.get(order.field, order.field)
             field: Column[Any] = getattr(model, field_name)
+
             match order.direction:
                 case OrderDirection.ASC:
                     orders.append(field.asc())
@@ -203,7 +214,7 @@ class SqlAlchemyConverter:
                 case OrderDirection.DESC:
                     orders.append(field.desc())
 
-                case _:
+                case _:  # pragma: no cover
                     assert_never(order.direction)
 
         return orders
