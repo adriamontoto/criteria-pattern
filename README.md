@@ -30,6 +30,7 @@ Easy to install and integrate, this is a must have for any Python developer look
 ## Table of Contents
 - [📥 Installation](#installation)
 - [🔑 License](#license)
+- [💻 Utilization](#utilization)
 <br><br>
 
 <p align="right">
@@ -41,6 +42,30 @@ Easy to install and integrate, this is a must have for any Python developer look
 ## 📥 Installation
 ```bash
 pip install criteria-pattern
+```
+<br><br>
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+
+<a name="utilization"></a>
+## 💻 Utilization
+
+```python
+from criteria_pattern import Criteria, Filter, FilterOperator
+from criteria_pattern.converter import SqlConverter
+
+is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)])
+email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
+email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
+
+query = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+
+print(query)
+
+# >>> SELECT * FROM user WHERE (age >= '18' AND (email LIKE '%@gmail.com' OR email LIKE '%@yahoo.com'));
 ```
 <br><br>
 
