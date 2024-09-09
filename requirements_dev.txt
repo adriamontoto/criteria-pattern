@@ -4,9 +4,10 @@
 -r requirements.txt
 
 Faker>=28.0.0,<29.0.0  # https://faker.readthedocs.io/en/master/
+sqlglot>=25.0.0,<26.0.0  # https://sqlglot.com/sqlglot.html
 pytest>=8.0.0,<9.0.0  # https://docs.pytest.org/en/latest/contents.html
 pytest-asyncio>=0.23.0,<0.24.0  # https://pytest-asyncio.readthedocs.io/en/latest/
-pytest-randomly>=3.15.0,<4.0.0  # https://pytest-randomly.readthedocs.io/en/latest/
+pytest-randomly>=3.15.0,<4.0.0  # https://github.com/pytest-dev/pytest-randomly
 coverage[toml]>=7.6.0,<8.0.0  # https://coverage.readthedocs.io
 ruff>=0.5.0,<0.6.0  # https://docs.astral.sh/ruff/
 mypy[reports]>=1.10.0,<2.0.0  # https://mypy.readthedocs.io/en/stable/
