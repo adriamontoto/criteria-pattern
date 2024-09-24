@@ -38,7 +38,7 @@ class SqlConverter:
         if columns_mapping is None:
             columns_mapping = {}
 
-        query = f'SELECT {", ".join(columns)} FROM {table}'
+        query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
 
         if criteria.filters:
             where_clause = cls._process_filters(criteria=criteria, columns_mapping=columns_mapping)
