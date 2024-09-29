@@ -61,6 +61,7 @@ jobs:
         with:
           name: coverage_${{ runner.os }}_python_${{ matrix.python-version }}
           path: coverage
+          include-hidden-files: true
 
   coverage-combine:
     needs: [test]
