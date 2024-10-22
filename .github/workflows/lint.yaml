@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: [3.11, 3.12]
+        python-version: [3.11, 3.12, 3.13]
 
     name: Lint Pipeline - Python ${{ matrix.python-version }} on ${{ matrix.os }}
     timeout-minutes: 15

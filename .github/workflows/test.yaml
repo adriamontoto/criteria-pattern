@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: [3.11, 3.12]
+        python-version: [3.11, 3.12, 3.13]
 
     name: Test Pipeline - Python ${{ matrix.python-version }} on ${{ matrix.os }}
     timeout-minutes: 15
@@ -74,18 +74,18 @@ jobs:
         with:
           fetch-depth: 0 # Only last commit
 
-      - name: 🐍 Set up Python 3.12
+      - name: 🐍 Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: 3.13
 
       - id: cache
         name: 📦 Create cache
         uses: actions/cache@v4
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-3.12-${{ hashFiles('pyproject.toml', 'requirements*') }}
-          restore-keys: ${{ runner.os }}-python-3.12-
+          key: ${{ runner.os }}-python-3.13-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ runner.os }}-python-3.13-
 
       - name: 📦 Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
