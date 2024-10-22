@@ -1,7 +1,7 @@
 # Remember to add the package, its single version and the documentation page
 
 # Install packages from requirements.txt
--r requirements.txt
+--requirement requirements.txt
 
 Faker>=28.0.0,<29.0.0  # https://faker.readthedocs.io/en/master/
 sqlglot>=25.0.0,<26.0.0  # https://sqlglot.com/sqlglot.html
