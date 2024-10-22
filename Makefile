@@ -1,4 +1,4 @@
-FULL_SOURCES = criteria_pattern
+FULL_SOURCES = criteria_pattern tests
 SOURCES = criteria_pattern
 CONFIGURATION_FILE = pyproject.toml 
 
