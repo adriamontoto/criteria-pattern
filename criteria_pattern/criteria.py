@@ -260,7 +260,7 @@ class AndCriteria(Criteria):
         Returns:
             list[Order]: List of orders.
         """
-        return self.left.orders
+        return self.left.orders + self.right.orders
 
     @property
     def left(self) -> Criteria:
@@ -332,7 +332,7 @@ class OrCriteria(Criteria):
         Returns:
             list[Order]: List of orders.
         """
-        return self.left.orders
+        return self.left.orders + self.right.orders
 
     @property
     def left(self) -> Criteria:

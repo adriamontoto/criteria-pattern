@@ -428,7 +428,7 @@ def test_sql_converter_with_multiple_orders_on_different_criteria() -> None:
     criteria2 = CriteriaMother.create(filters=[], orders=[{'field': 'email', 'direction': OrderDirection.DESC}])
     query = SqlConverter.convert(criteria=criteria1 & criteria2, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user ORDER BY name ASC, age ASC;'
+    assert query == 'SELECT * FROM user ORDER BY name ASC, age ASC, email DESC;'
 
 
 def test_sql_converter_with_filtered_and_ordered_criteria() -> None:
@@ -450,7 +450,7 @@ def test_sql_converter_with_filtered_and_ordered_criteria() -> None:
         criteria=criteria1 & (criteria2 | ~criteria3), table='user', columns=['id', 'name', 'email']
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE (name = 'John Doe' AND (email IS NOT NULL OR NOT (age < '18'))) ORDER BY email DESC;"  # noqa: E501 # fmt: skip
+    assert query == "SELECT id, name, email FROM user WHERE (name = 'John Doe' AND (email IS NOT NULL OR NOT (age < '18'))) ORDER BY email DESC, name ASC;"  # noqa: E501 # fmt: skip
 
 
 def test_sql_converter_with_columns_mapping() -> None:

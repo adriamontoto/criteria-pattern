@@ -291,7 +291,8 @@ def test_and_criteria_filters_cannot_be_hanged() -> None:
 )
 def test_and_criteria_orders(orders_left: list[Order], orders_right: list[Order]) -> None:
     """
-    Test that the orders property of AndCriteria class are the same as the left criteria orders.
+    Test that the orders property of AndCriteria class is the same as the addition of the left and right criteria
+    orders.
 
     Args:
         orders_left (list[Order]): List of orders for the left criteria.
@@ -304,7 +305,7 @@ def test_and_criteria_orders(orders_left: list[Order], orders_right: list[Order]
 
     criteria = AndCriteria(left=left_criteria, right=right_criteria)
 
-    assert criteria.orders == orders_left
+    assert criteria.orders == (orders_left + orders_right)
 
 
 def test_and_criteria_orders_type() -> None:
