@@ -63,6 +63,7 @@ class Criteria:
 
         # both are equivalent
         criteria3 = criteria1 & criteria2
+        criteria3 = criteria1.add_(criteria=criteria2)
         criteria3 = Criteria(filters=[filter1, filter2])
         ```
         """
@@ -84,6 +85,7 @@ class Criteria:
         criteria2 = Criteria(filters=[filter2])
 
         # both are equivalent
+        criteria3 = criteria1 & criteria2
         criteria3 = criteria1.add_(criteria=criteria2)
         criteria3 = Criteria(filters=[filter1, filter2])
         ```
