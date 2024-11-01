@@ -167,19 +167,19 @@ class SqlConverter:
         Returns:
             str: Processed order fields
         """
-        orders = []
+        orders = ''
 
         for order in criteria.orders:
             order_field = columns_mapping.get(order.field, order.field)
 
             match order.direction:
                 case OrderDirection.ASC:
-                    orders.append(f'{order_field} ASC')
+                    orders += f'{order_field} ASC, '
 
                 case OrderDirection.DESC:
-                    orders.append(f'{order_field} DESC')
+                    orders += f'{order_field} DESC, '
 
                 case _:  # pragma: no cover
                     assert_never(order.direction)
 
-        return ', '.join(orders)
+        return orders.rstrip(', ')
