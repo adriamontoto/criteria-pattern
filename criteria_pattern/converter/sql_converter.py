@@ -53,7 +53,7 @@ class SqlConverter:
     @classmethod
     def _process_filters(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> str:  # noqa: C901
         """
-        Process the filter string to create SQL WHERE clause.
+        Process the Criteria object to return an SQL WHERE clause.
 
         Args:
             criteria (Criteria): Criteria to process.
@@ -158,14 +158,14 @@ class SqlConverter:
     @classmethod
     def _process_orders(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> str:
         """
-        Process the Criteria and return a string of order fields.
+        Process the Criteria object to return an SQL ORDER BY clause.
 
         Args:
             criteria (Criteria): Criteria to process.
             columns_mapping (dict[str, str]): Mapping of column names to aliases.
 
         Returns:
-            str: Processed order fields
+            str: Processed order string for SQL ORDER BY clause.
         """
         orders = ''
 
