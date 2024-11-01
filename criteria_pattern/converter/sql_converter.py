@@ -40,11 +40,11 @@ class SqlConverter:
 
         query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
 
-        if criteria.filters:
+        if criteria.has_filters():
             where_clause = cls._process_filters(criteria=criteria, columns_mapping=columns_mapping)
             query += f' WHERE {where_clause}'
 
-        if criteria.orders:
+        if criteria.has_orders():
             order_clause = cls._process_orders(criteria=criteria, columns_mapping=columns_mapping)
             query += f' ORDER BY {order_clause}'
 

@@ -190,6 +190,24 @@ class Criteria:
         """
         return self._orders
 
+    def has_filters(self) -> bool:
+        """
+        Check if criteria has filters.
+
+        Returns:
+            bool: True if criteria has filters, False otherwise.
+        """
+        return bool(self.filters)
+
+    def has_orders(self) -> bool:
+        """
+        Check if criteria has orders.
+
+        Returns:
+            bool: True if criteria has orders, False otherwise.
+        """
+        return bool(self.orders)
+
 
 class AndCriteria(Criteria):
     """
