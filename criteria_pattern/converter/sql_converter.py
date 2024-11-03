@@ -51,7 +51,21 @@ class SqlConverter:
         return f'{query};'
 
     @classmethod
-    def _process_filters(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> str:  # noqa: C901
+    def _process_filters(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> str:
+        """
+        Process the Criteria object to return an SQL WHERE clause.
+
+        Args:
+            criteria (Criteria): Criteria to process.
+            columns_mapping (dict[str, str]): Mapping of column names to aliases.
+
+        Returns:
+            str: Processed filter string for SQL WHERE clause.
+        """
+        return cls._process_filters_recursive(criteria=criteria, columns_mapping=columns_mapping)
+
+    @classmethod
+    def _process_filters_recursive(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> str:  # noqa: C901
         """
         Process the Criteria object to return an SQL WHERE clause.
 
