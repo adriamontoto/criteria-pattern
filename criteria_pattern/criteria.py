@@ -11,6 +11,7 @@ if version_info >= (3, 12):
 else:
     from typing_extensions import override  # pragma: no cover
 
+from collections.abc import Sequence
 from typing import Any
 
 from .filter import Filter
@@ -25,16 +26,16 @@ class Criteria:
     _filters: list[Filter[Any]]
     _orders: list[Order]
 
-    def __init__(self, filters: list[Filter[Any]], orders: list[Order] | None = None) -> None:
+    def __init__(self, filters: Sequence[Filter[Any]], orders: Sequence[Order] | None = None) -> None:
         """
         Criteria constructor.
 
         Args:
-            filters (List[Filter[Any]]): List of filters.
-            sort (List[Order], optional): List of orders. Defaults to [].
+            filters (Sequence[Filter[Any]]): Sequence of filters.
+            sort (Sequence[Order], optional): Sequence of orders. Defaults to [].
         """
-        self._filters = filters
-        self._orders = orders or []
+        self._filters = list(filters)
+        self._orders = list(orders) if orders is not None else []
 
     @override
     def __repr__(self) -> str:

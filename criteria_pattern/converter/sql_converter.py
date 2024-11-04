@@ -2,6 +2,7 @@
 Raw SQL converter module.
 """
 
+from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, FilterOperator, OrderDirection
@@ -18,8 +19,8 @@ class SqlConverter:
         cls,
         criteria: Criteria,
         table: str,
-        columns: list[str] | None = None,
-        columns_mapping: dict[str, str] | None = None,
+        columns: Sequence[str] | None = None,
+        columns_mapping: Mapping[str, str] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
         Convert the Criteria object to a raw SQL query.
@@ -27,7 +28,8 @@ class SqlConverter:
         Args:
             criteria (Criteria): Criteria to convert.
             table (str): Name of the table to query.
-            columns (list[str]): Columns of the table to select. Default to *.
+            columns (Sequence[str]): Columns of the table to select. Default to *.
+            columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
 
         Returns:
             tuple[str, dict[str, Any]]: The raw SQL query string and the query parameters.
@@ -52,13 +54,13 @@ class SqlConverter:
         return f'{query};', parameters
 
     @classmethod
-    def _process_filters(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> tuple[str, dict[str, Any]]:
+    def _process_filters(cls, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:
         """
         Process the Criteria object to return an SQL WHERE clause.
 
         Args:
             criteria (Criteria): Criteria to process.
-            columns_mapping (dict[str, str]): Mapping of column names to aliases.
+            columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
 
         Returns:
             tuple[str, dict[str, Any]]: Processed filter string for SQL WHERE clause and parameters for the SQL query.
@@ -69,7 +71,7 @@ class SqlConverter:
     def _process_filters_recursive(  # noqa: C901
         cls,
         criteria: Criteria,
-        columns_mapping: dict[str, str],
+        columns_mapping: Mapping[str, str],
         parameters_counter: int = 0,
     ) -> tuple[str, dict[str, Any]]:
         """
@@ -77,7 +79,7 @@ class SqlConverter:
 
         Args:
             criteria (Criteria): Criteria to process.
-            columns_mapping (dict[str, str]): Mapping of column names to aliases.
+            columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
             parameters_counter (int): Counter for parameter names to ensure uniqueness.
 
         Returns:
@@ -237,13 +239,13 @@ class SqlConverter:
         return filters, parameters
 
     @classmethod
-    def _process_orders(cls, criteria: Criteria, columns_mapping: dict[str, str]) -> str:
+    def _process_orders(cls, criteria: Criteria, columns_mapping: Mapping[str, str]) -> str:
         """
         Process the Criteria object to return an SQL ORDER BY clause.
 
         Args:
             criteria (Criteria): Criteria to process.
-            columns_mapping (dict[str, str]): Mapping of column names to aliases.
+            columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
 
         Returns:
             str: Processed order string for SQL ORDER BY clause.
