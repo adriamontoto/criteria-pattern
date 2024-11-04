@@ -20,7 +20,6 @@ from criteria_pattern import Filter, FilterOperator
         ('field', FilterOperator.LESS_OR_EQUAL, 5),
         ('field', FilterOperator.LIKE, 'value'),
         ('field', FilterOperator.BETWEEN, ['value', 'value']),
-
         ('field', FilterOperator.IS_NULL, None),
         ('field', FilterOperator.NOT_BETWEEN, ['value', 'value']),
         ('field', FilterOperator.NOT_CONTAINS, 'value'),
