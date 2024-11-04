@@ -7,7 +7,7 @@ from typing import Any, assert_never
 
 from criteria_pattern import Criteria, FilterOperator, OrderDirection
 from criteria_pattern.criteria import AndCriteria, NotCriteria, OrCriteria
-from criteria_pattern.exceptions import InvalidTableError
+from criteria_pattern.exceptions import InvalidColumnError, InvalidTableError
 
 
 class SqlConverter:
@@ -24,6 +24,8 @@ class SqlConverter:
         columns_mapping: Mapping[str, str] | None = None,
         check_table_injection: bool = False,
         valid_tables: Sequence[str] | None = None,
+        check_column_injection: bool = False,
+        valid_columns: Sequence[str] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
         Convert the Criteria object to a raw SQL query.
@@ -36,9 +38,13 @@ class SqlConverter:
             check_table_injection (bool, optional): Raise an error if the table is not in the list of valid tables.
             Default to False.
             valid_tables (Sequence[str], optional): List of valid tables to query. Default to empty list.
+            check_column_injection (bool, optional): Raise an error if the column is not in the list of valid columns.
+            Default to False.
+            valid_columns (Sequence[str], optional): List of valid columns to select. Default to empty list.
 
         Raises:
             InvalidTableError: If the table is not in the list of valid tables (only if check_table_injection=True).
+            InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
 
         Returns:
             tuple[str, dict[str, Any]]: The raw SQL query string and the query parameters.
@@ -46,9 +52,13 @@ class SqlConverter:
         columns = columns or ['*']
         columns_mapping = columns_mapping or {}
         valid_tables = valid_tables or []
+        valid_columns = valid_columns or []
 
         if check_table_injection:
             cls._validate_table(table=table, valid_tables=valid_tables)
+
+        if check_column_injection:
+            cls._validate_columns(columns=columns, columns_mapping=columns_mapping, valid_columns=valid_columns)
 
         query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
         parameters: dict[str, Any] = {}
@@ -77,6 +87,32 @@ class SqlConverter:
         """
         if table not in valid_tables:
             raise InvalidTableError(table=table, valid_tables=valid_tables)
+
+    @classmethod
+    def _validate_columns(
+        cls,
+        columns: Sequence[str],
+        columns_mapping: Mapping[str, str],
+        valid_columns: Sequence[str],
+    ) -> None:
+        """
+        Validate the column names to prevent SQL injection.
+
+        Args:
+            columns (Sequence[str]): Columns of the table to select.
+            columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
+            valid_columns (Sequence[str]): List of valid columns to select.
+
+        Raises:
+            InvalidColumnError: If the column is not in the list of valid columns.
+        """
+        for column in columns:
+            if column not in valid_columns:
+                raise InvalidColumnError(column=column, valid_columns=valid_columns)
+
+        for column in columns_mapping.values():
+            if column not in valid_columns:
+                raise InvalidColumnError(column=column, valid_columns=valid_columns)
 
     @classmethod
     def _process_filters(cls, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:

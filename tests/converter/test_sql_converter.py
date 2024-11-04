@@ -8,7 +8,7 @@ from pytest import mark, raises as assert_raises
 
 from criteria_pattern import OrderDirection
 from criteria_pattern.converter import SqlConverter
-from criteria_pattern.exceptions import InvalidTableError
+from criteria_pattern.exceptions import InvalidColumnError, InvalidTableError
 from criteria_pattern.filter_operator import FilterOperator
 from tests.mother import CriteriaMother
 
@@ -507,4 +507,91 @@ def test_sql_converter_with_table_injection() -> None:
             table='user; DROP TABLE user;',
             check_table_injection=True,
             valid_tables=['user'],
+        )
+
+
+def test_sql_converter_with_column_injection_check_disabled() -> None:
+    """
+    Test SqlConverter class with columns injection when check_columns_injection is disabled.
+    """
+    SqlConverter.convert(criteria=CriteriaMother.create(), table='user', columns=['id; DROP TABLE user;', 'name'])
+
+
+def test_sql_converter_with_column_injection() -> None:
+    """
+    Test SqlConverter class with columns injection.
+    """
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.create(),
+            table='user',
+            columns=['id; DROP TABLE user;', 'name'],
+            check_column_injection=True,
+            valid_columns=['id', 'name'],
+        )
+
+
+def test_sql_converter_with_column_injection_with_star_invalid() -> None:
+    """
+    Test SqlConverter class with columns injection where columns attribute is a star and is invalid.
+    """
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match=r'Invalid column specified: <<<\*>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.create(),
+            table='user',
+            check_column_injection=True,
+            valid_columns=['id', 'name'],
+        )
+
+
+def test_sql_converter_with_column_injection_with_star_valid() -> None:
+    """
+    Test SqlConverter class with columns injection where columns attribute is a star and is valid.
+    """
+    SqlConverter.convert(
+        criteria=CriteriaMother.create(),
+        table='user',
+        check_column_injection=True,
+        valid_columns=['*', 'id', 'name'],
+    )
+
+
+def test_sql_converter_with_column_injection_with_star_and_columns() -> None:
+    """
+    Test SqlConverter class with columns injection with star and columns.
+    """
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match=r'Invalid column specified: <<<\*>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.create(),
+            table='user',
+            columns=['*', 'id', 'name'],
+            check_column_injection=True,
+            valid_columns=['id', 'name'],
+        )
+
+
+def test_sql_converter_with_column_mapping_injection() -> None:
+    """
+    Test SqlConverter class with columns injection.
+    """
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.create(),
+            table='user',
+            columns=['id', 'name'],
+            columns_mapping={'id': 'id; DROP TABLE user;'},
+            check_column_injection=True,
+            valid_columns=['id', 'name'],
         )
