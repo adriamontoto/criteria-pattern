@@ -106,7 +106,7 @@ source = ['criteria_pattern']
 fix = true
 indent-width = 4
 line-length = 120
-target-version = 'py312'
+target-version = 'py313'
 
 [tool.ruff.format]
 docstring-code-format = true

@@ -4,7 +4,7 @@
 fail_fast: true # If there is an error it will fail the test
 
 default_language_version:
-  python: python3.12
+  python: python3.13
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
