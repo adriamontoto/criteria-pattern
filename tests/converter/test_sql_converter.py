@@ -4,10 +4,11 @@ Test SqlConverter class.
 
 from collections.abc import Collection
 
-from pytest import mark
+from pytest import mark, raises as assert_raises
 
 from criteria_pattern import OrderDirection
 from criteria_pattern.converter import SqlConverter
+from criteria_pattern.exceptions import InvalidTableError
 from criteria_pattern.filter_operator import FilterOperator
 from tests.mother import CriteriaMother
 
@@ -484,3 +485,26 @@ def test_sql_converter_with_columns_mapping_with_spaces() -> None:
 
     assert query == 'SELECT id, name, email FROM user WHERE name = %(parameter_0)s ORDER BY name ASC;'
     assert parameters == {'parameter_0': 'John Doe'}
+
+
+def test_sql_converter_with_table_injection_check_disabled() -> None:
+    """
+    Test SqlConverter class with table injection when check_table_injection is disabled.
+    """
+    SqlConverter.convert(criteria=CriteriaMother.create(), table='user; DROP TABLE user;', valid_tables=['user'])
+
+
+def test_sql_converter_with_table_injection() -> None:
+    """
+    Test SqlConverter class with table injection.
+    """
+    with assert_raises(
+        expected_exception=InvalidTableError,
+        match='Invalid table specified: <<<user; DROP TABLE user;>>>.Valid tables are: <<<user>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.create(),
+            table='user; DROP TABLE user;',
+            check_table_injection=True,
+            valid_tables=['user'],
+        )
