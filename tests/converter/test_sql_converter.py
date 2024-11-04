@@ -264,42 +264,6 @@ def test_sql_converter_with_not_between_filter(value: Collection[int]) -> None:
     assert parameters == {'parameter_0': 18, 'parameter_1': 30}
 
 
-@mark.parametrize('value', [('John', 'Jane', 'Mike'), ['John']])
-def test_sql_converter_with_in_filter(value: Collection[str]) -> None:
-    """
-    Test SqlConverter class with an IN filter.
-
-    Args:
-        value (Collection[str]): Filter value.
-    """
-    query = SqlConverter.convert(
-        criteria=CriteriaMother.with_filter(field='name', operator=FilterOperator.IN, value=value),
-        table='user',
-        columns=['id', 'name', 'email'],
-    )
-
-    sequence = ', '.join([f"'{v}'" for v in value])
-    assert query == f'SELECT id, name, email FROM user WHERE name IN ({sequence});'  # noqa: S608
-
-
-@mark.parametrize('value', [('John', 'Jane', 'Mike'), ['John']])
-def test_sql_converter_with_not_in_filter(value: Collection[str]) -> None:
-    """
-    Test SqlConverter class with a NOT IN filter.
-
-    Args:
-        value (Collection[str]): Filter value.
-    """
-    query = SqlConverter.convert(
-        criteria=CriteriaMother.with_filter(field='name', operator=FilterOperator.NOT_IN, value=value),
-        table='user',
-        columns=['id', 'name', 'email'],
-    )
-
-    sequence = ', '.join([f"'{v}'" for v in value])
-    assert query == f'SELECT id, name, email FROM user WHERE name NOT IN ({sequence});'  # noqa: S608
-
-
 def test_sql_converter_with_is_null_filter() -> None:
     """
     Test SqlConverter class with an IS NULL filter.

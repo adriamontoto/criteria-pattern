@@ -27,7 +27,5 @@ class FilterOperator(StrEnum):
     NOT_ENDS_WITH = 'NOT ENDS WITH'  # NOT LIKE '%value'
     BETWEEN = 'BETWEEN'
     NOT_BETWEEN = 'NOT BETWEEN'
-    IN = 'IN'
-    NOT_IN = 'NOT IN'
     IS_NULL = 'IS NULL'
     IS_NOT_NULL = 'IS NOT NULL'

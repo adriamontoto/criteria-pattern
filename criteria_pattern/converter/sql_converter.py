@@ -219,14 +219,6 @@ class SqlConverter:
 
                     filters += f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}'
 
-                case FilterOperator.IN:
-                    sequence = ', '.join([f"'{value}'" for value in filter.value])
-                    filters += f'{filter_field} IN ({sequence})'
-
-                case FilterOperator.NOT_IN:
-                    sequence = ', '.join([f"'{value}'" for value in filter.value])
-                    filters += f'{filter_field} NOT IN ({sequence})'
-
                 case FilterOperator.IS_NULL:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
