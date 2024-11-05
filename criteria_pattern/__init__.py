@@ -1,4 +1,4 @@
-__version__ = '2024.09.24'
+__version__ = '2024.11.05'
 
 from .criteria import Criteria
 from .filter import Filter
