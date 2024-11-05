@@ -1,0 +1,40 @@
+name: Code Quality Pipeline
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize]
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
+
+permissions:
+  security-events: write
+
+jobs:
+  analyze:
+    name: Code Quality Pipeline - ${{ matrix.language }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        language: [python]
+        build-mode: [none]
+
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4.2.2
+
+      - name: ▶️ CodeQL Initialization
+        uses: github/codeql-action/init@v3.27.0
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended, security-and-quality
+
+      - name: 🔬 CodeQL Analysis
+        uses: github/codeql-action/analyze@v3.27.0
+        with:
+          category: '/language:${{matrix.language}}'
