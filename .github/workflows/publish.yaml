@@ -6,7 +6,13 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.13]
+
     environment:
       name: pypi
       url: https://pypi.org/p/criteria-pattern/
@@ -22,10 +28,10 @@ jobs:
         with:
           fetch-depth: 0 # Only last commit
 
-      - name: 🐍 Set up Python 3.13
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: 3.13
+          python-version: ${{ matrix.python-version }}
 
       - name: 📦 Install dependencies
         run: pip install build

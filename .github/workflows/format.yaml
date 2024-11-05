@@ -1,17 +1,13 @@
 name: Format Pipeline
 
-permissions:
-  contents: write
-
 on:
   push:
-    branches:
-      - master
-      - develop
+    branches: [master]
   pull_request:
-    types:
-      - opened
-      - synchronize
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
 
 jobs:
   format:

@@ -2,13 +2,9 @@ name: Test Pipeline
 
 on:
   push:
-    branches:
-      - master
-      - develop
+    branches: [master]
   pull_request:
-    types:
-      - opened
-      - synchronize
+    types: [opened, synchronize]
   schedule:
     - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
 
@@ -66,7 +62,12 @@ jobs:
   coverage-combine:
     needs: [test]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.13]
 
     steps:
       - name: 📥 Checkout the repository
@@ -74,18 +75,18 @@ jobs:
         with:
           fetch-depth: 0 # Only last commit
 
-      - name: 🐍 Set up Python 3.13
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: 3.13
+          python-version: ${{ matrix.python-version }}
 
       - id: cache
         name: 📦 Create cache
         uses: actions/cache@v4
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-3.13-${{ hashFiles('pyproject.toml', 'requirements*') }}
-          restore-keys: ${{ runner.os }}-python-3.13-
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
 
       - name: 📦 Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -118,7 +119,11 @@ jobs:
   check-all:
     needs: [test]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
 
     steps:
       - name: ✅ All tests passed
