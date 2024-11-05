@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0 # Only last commit
 
       - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236
+        uses: actions/setup-python@55aad42e4674b58b2b2fb7d8e7552402d922b4e7
         with:
           python-version: ${{ matrix.python-version }}
 
