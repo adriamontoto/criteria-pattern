@@ -21,18 +21,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0 # Only last commit
 
       - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
       - id: cache
         name: 📦 Create cache
-        uses: actions/cache@v4
+        uses: actions/cache@v4.1.2
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
@@ -52,7 +52,7 @@ jobs:
           CONTEXT: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
 
       - name: 🫙 Store tests coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         if: always()
         with:
           name: coverage_${{ runner.os }}_python_${{ matrix.python-version }}
@@ -71,18 +71,18 @@ jobs:
 
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0 # Only last commit
 
       - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
       - id: cache
         name: 📦 Create cache
-        uses: actions/cache@v4
+        uses: actions/cache@v4.1.2
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
@@ -93,7 +93,7 @@ jobs:
         run: make install-dev
 
       - name: 📥 Download coverage files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.8
         with:
           merge-multiple: true
           pattern: coverage_*
@@ -110,7 +110,7 @@ jobs:
           coverage html --show-contexts --title "Coverage for ${{ github.sha }}"
 
       - name: 🫙 Store coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: coverage-html
           path: htmlcov
@@ -127,6 +127,6 @@ jobs:
 
     steps:
       - name: ✅ All tests passed
-        uses: re-actors/alls-green@release/v1
+        uses: re-actors/alls-green@v1.2.2
         with:
           jobs: ${{ toJSON(needs) }}
