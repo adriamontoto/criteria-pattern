@@ -510,6 +510,18 @@ def test_sql_converter_with_table_injection() -> None:
         )
 
 
+def test_sql_converter_without_table_injection() -> None:
+    """
+    Test SqlConverter class without table injection.
+    """
+    SqlConverter.convert(
+        criteria=CriteriaMother.create(),
+        table='user',
+        check_table_injection=True,
+        valid_tables=['user'],
+    )
+
+
 def test_sql_converter_with_column_injection_check_disabled() -> None:
     """
     Test SqlConverter class with columns injection when check_columns_injection is disabled.
@@ -591,7 +603,89 @@ def test_sql_converter_with_column_mapping_injection() -> None:
             criteria=CriteriaMother.create(),
             table='user',
             columns=['id', 'name'],
-            columns_mapping={'id': 'id; DROP TABLE user;'},
+            columns_mapping={'fullname': 'name', 'id': 'id; DROP TABLE user;'},
             check_column_injection=True,
+            valid_columns=['id', 'name'],
+        )
+
+
+def test_sql_converter_with_filter_field_injection_check_disabled() -> None:
+    """
+    Test SqlConverter class with filter field injection when check_criteria_injection is disabled.
+    """
+    SqlConverter.convert(
+        criteria=CriteriaMother.with_filter(field='id; DROP TABLE user;', operator=FilterOperator.EQUAL, value=1),
+        table='user',
+        columns=['id', 'name'],
+        valid_columns=['id', 'name'],
+    )
+
+
+def test_sql_converter_with_filter_field_injection() -> None:
+    """
+    Test SqlConverter class with filter field injection.
+    """
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.with_filter(field='id; DROP TABLE user;', operator=FilterOperator.EQUAL, value=1),
+            table='user',
+            columns=['id', 'name'],
+            check_criteria_injection=True,
+            valid_columns=['id', 'name'],
+        )
+
+
+def test_sql_converter_with_filter_value_injection() -> None:
+    """
+    Test SqlConverter class with filter value injection.
+    """
+    query, parameters = SqlConverter.convert(
+        criteria=CriteriaMother.with_filter(field='id', operator=FilterOperator.EQUAL, value='1; DROP TABLE user;'),
+        table='user',
+        columns=['id', 'name'],
+        check_criteria_injection=True,
+        valid_columns=['id', 'name'],
+    )
+
+    assert query == 'SELECT id, name FROM user WHERE id = %(parameter_0)s;'
+    assert parameters == {'parameter_0': '1; DROP TABLE user;'}
+
+
+def test_sql_converter_with_order_field_injection() -> None:
+    """
+    Test SqlConverter class with order field injection.
+    """
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=CriteriaMother.with_order(field='id; DROP TABLE user;', direction=OrderDirection.ASC),
+            table='user',
+            columns=['id', 'name'],
+            check_criteria_injection=True,
+            valid_columns=['id', 'name'],
+        )
+
+
+def test_sql_converter_with_two_order_fields_injection() -> None:
+    """
+    Test SqlConverter class with order field injection.
+    """
+    criteria1 = CriteriaMother.with_order(field='name', direction=OrderDirection.ASC)
+    criteria2 = CriteriaMother.with_order(field='id; DROP TABLE user;', direction=OrderDirection.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+    ):
+        SqlConverter.convert(
+            criteria=criteria1 & criteria2,
+            table='user',
+            columns=['id', 'name'],
+            check_criteria_injection=True,
             valid_columns=['id', 'name'],
         )
