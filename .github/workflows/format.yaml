@@ -35,8 +35,8 @@ jobs:
         uses: actions/cache@v4.1.2
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
-          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
+          key: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ matrix.os }}-python-${{ matrix.python-version }}-
 
       - name: 📦 Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'

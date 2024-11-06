@@ -34,8 +34,8 @@ jobs:
         uses: actions/cache@v4.1.2
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
-          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
+          key: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ matrix.os }}-python-${{ matrix.python-version }}-
 
       - name: 📦 Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -47,14 +47,14 @@ jobs:
       - name: 🏃 Run Tests
         run: make coverage
         env:
-          COVERAGE_FILE: coverage/.coverage_${{ runner.os }}_python_${{ matrix.python-version }}
-          CONTEXT: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          COVERAGE_FILE: coverage/.coverage_${{ matrix.os }}_python_${{ matrix.python-version }}
+          CONTEXT: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
 
       - name: 🫙 Store tests coverage
         uses: actions/upload-artifact@v4.4.3
         if: always()
         with:
-          name: coverage_${{ runner.os }}_python_${{ matrix.python-version }}
+          name: coverage_${{ matrix.os }}_python_${{ matrix.python-version }}
           path: coverage
           include-hidden-files: true
 
@@ -82,8 +82,8 @@ jobs:
         uses: actions/cache@v4.1.2
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
-          restore-keys: ${{ runner.os }}-python-${{ matrix.python-version }}-
+          key: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
+          restore-keys: ${{ matrix.os }}-python-${{ matrix.python-version }}-
 
       - name: 📦 Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
