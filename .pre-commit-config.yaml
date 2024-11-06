@@ -16,7 +16,7 @@ repos:
           - --branch=master
         pass_filenames: false
         stages:
-          - commit
+          - pre-commit
           - pre-push
 
       - id: check-added-large-files
@@ -24,24 +24,24 @@ repos:
         args:
           - --maxkb=100
         stages:
-          - commit
+          - pre-commit
 
       - id: check-case-conflict
         name: 🔠 Case Conflict Checker
         stages:
-          - commit
+          - pre-commit
 
       - id: check-json
         name: 📄 JSON Files Checker
         files: '.*\.json'
         stages:
-          - commit
+          - pre-commit
 
       - id: check-toml
         name: 📄 TOML Files Checker
         files: '.*\.toml'
         stages:
-          - commit
+          - pre-commit
 
       - id: check-yaml
         name: 📄 YAML Files Checker
@@ -49,7 +49,7 @@ repos:
         args:
           - --unsafe
         stages:
-          - commit
+          - pre-commit
 
       - id: name-tests-test
         name: 🧪 Test Files Checker
@@ -57,7 +57,7 @@ repos:
         args:
           - --pytest-test-first
         stages:
-          - commit
+          - pre-commit
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.20.1
@@ -65,5 +65,5 @@ repos:
       - id: gitleaks
         name: 🔍 Secrets Checker
         stages:
-          - commit
+          - pre-commit
           - pre-push
