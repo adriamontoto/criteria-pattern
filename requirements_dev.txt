@@ -3,7 +3,7 @@
 # Install packages from requirements.txt
 -r requirements.txt
 
-Faker>=28.0.0,<31.0.0  # https://faker.readthedocs.io/en/master/
+Faker>=28.0.0,<33.0.0  # https://faker.readthedocs.io/en/master/
 pytest>=8.0.0,<9.0.0  # https://docs.pytest.org
 pytest-asyncio>=0.0.0,<1.0.0  # https://pytest-asyncio.readthedocs.io
 pytest-randomly>=3.0.0,<4.0.0  # https://github.com/pytest-dev/pytest-randomly
