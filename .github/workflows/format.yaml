@@ -32,7 +32,7 @@ jobs:
 
       - id: cache
         name: 📦 Create cache
-        uses: actions/cache@v4.1.2
+        uses: actions/cache@v4.2.0
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
