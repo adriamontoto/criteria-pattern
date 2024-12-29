@@ -45,7 +45,6 @@ dynamic = ['version']
 tests = [
     'Faker>=28.0.0,<34.0.0',
     'pytest>=8.0.0,<9.0.0',
-    'pytest-asyncio>=0.0.0,<1.0.0',
     'pytest-randomly>=3.0.0,<4.0.0',
     'coverage[toml]>=7.0.0,<8.0.0',
     'ruff>=0.0.0,<1.0.0',
@@ -166,9 +165,9 @@ property-decorators = ['sqlalchemy.ext.hybrid.hybrid_property']
 
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = [
-    'declared_attr',            # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
-    'expression',               # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
-    'comparator',               # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
+    'declared_attr', # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
+    'expression',    # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
+    'comparator',    # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
 ]
 
 [tool.ruff.lint.isort]
