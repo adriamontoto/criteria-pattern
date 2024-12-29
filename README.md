@@ -149,7 +149,7 @@ git push origin feature/your-feature-name
 
 ## 🔑 License
 
-This project is licensed under the terms of the [`MIT license`](LICENSE.md).
+This project is licensed under the terms of the [`MIT license`](https://github.com/adriamontoto/criteria-pattern/blob/master/LICENSE.md).
 
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
