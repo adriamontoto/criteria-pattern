@@ -15,7 +15,7 @@ name = 'criteria-pattern'
 description = 'The Criteria Pattern is a Python package that simplifies and standardizes criteria based filtering, validation and selection.'
 readme = './README.md'
 authors = [{ name = 'Adria Montoto' }]
-license = 'MIT'
+license = './LICENSE.md'
 classifiers = [
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
