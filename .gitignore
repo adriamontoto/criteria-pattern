@@ -1,17 +1,17 @@
 #################### Files to exclude ####################
-# Lintting files
+# linting files
 .coverage
 index.txt
 
 ################### Folders to exclude ###################
-# all IDE folders
+# IDE folders
 **vscode**
 **idea**
 
-# all cache folders
+# cache folders
 **cache**
 
-# all environment folders
+# environment folders
 **env**
 
 ################## Files not to exclude ##################
