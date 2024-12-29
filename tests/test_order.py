@@ -2,7 +2,7 @@
 Test the Order class.
 """
 
-from pytest import mark, raises as pytest_raises
+from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Order, OrderDirection
 
@@ -62,7 +62,7 @@ def test_order_field_cannot_be_changed() -> None:
     """
     order = Order(field='field', direction=OrderDirection.ASC)
 
-    with pytest_raises(AttributeError, match="property 'field' of 'Order' object has no setter"):
+    with assert_raises(AttributeError, match="property 'field' of 'Order' object has no setter"):
         order.field = 'new_field'  # type: ignore
 
 
@@ -81,5 +81,5 @@ def test_order_direction_cannot_be_changed() -> None:
     """
     order = Order(field='field', direction=OrderDirection.ASC)
 
-    with pytest_raises(AttributeError, match="property 'direction' of 'Order' object has no setter"):
+    with assert_raises(AttributeError, match="property 'direction' of 'Order' object has no setter"):
         order.direction = OrderDirection.DESC  # type: ignore

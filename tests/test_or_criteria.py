@@ -4,7 +4,7 @@ Test the OrCriteria class.
 
 from typing import Any
 
-from pytest import mark, raises as pytest_raises
+from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Filter, FilterOperator, Order, OrderDirection
 from criteria_pattern.criteria import AndCriteria, OrCriteria
@@ -272,7 +272,7 @@ def test_or_criteria_filters_cannot_be_hanged() -> None:
 
     criteria = OrCriteria(left=left_criteria, right=right_criteria)
 
-    with pytest_raises(AttributeError, match="property 'filters' of 'OrCriteria' object has no setter"):
+    with assert_raises(AttributeError, match="property 'filters' of 'OrCriteria' object has no setter"):
         criteria.filters = [Filter(field='new_field', operator=FilterOperator.EQUAL, value='new_value')]  # type: ignore
 
 
@@ -336,7 +336,7 @@ def test_or_criteria_orders_cannot_changed() -> None:
 
     criteria = OrCriteria(left=left_criteria, right=right_criteria)
 
-    with pytest_raises(AttributeError, match="property 'orders' of 'OrCriteria' object has no setter"):
+    with assert_raises(AttributeError, match="property 'orders' of 'OrCriteria' object has no setter"):
         criteria.orders = [Order(field='new_field', direction=OrderDirection.DESC)]  # type: ignore
 
 
@@ -367,7 +367,7 @@ def test_or_criteria_left_can_be_changed() -> None:
 
     criteria = OrCriteria(left=left_criteria, right=right_criteria)
 
-    with pytest_raises(AttributeError, match="property 'left' of 'OrCriteria' object has no setter"):
+    with assert_raises(AttributeError, match="property 'left' of 'OrCriteria' object has no setter"):
         criteria.left = Criteria(filters=filters, orders=orders)  # type: ignore
 
 
@@ -398,5 +398,5 @@ def test_or_criteria_right_cannot_be_changed() -> None:
 
     criteria = OrCriteria(left=left_criteria, right=right_criteria)
 
-    with pytest_raises(AttributeError, match="property 'right' of 'OrCriteria' object has no setter"):
+    with assert_raises(AttributeError, match="property 'right' of 'OrCriteria' object has no setter"):
         criteria.right = Criteria(filters=filters, orders=orders)  # type: ignore

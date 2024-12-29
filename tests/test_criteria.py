@@ -4,7 +4,7 @@ Test the Criteria class.
 
 from typing import Any
 
-from pytest import mark, raises as pytest_raises
+from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Filter, FilterOperator, Order, OrderDirection
 from criteria_pattern.criteria import AndCriteria, OrCriteria
@@ -257,7 +257,7 @@ def test_criteria_filters_cannot_changed() -> None:
     """
     criteria = Criteria(filters=[Filter(field='field', operator=FilterOperator.EQUAL, value='value')])
 
-    with pytest_raises(AttributeError, match="property 'filters' of 'Criteria' object has no setter"):
+    with assert_raises(AttributeError, match="property 'filters' of 'Criteria' object has no setter"):
         criteria.filters = [Filter(field='new_field', operator=FilterOperator.EQUAL, value='new_value')]  # type: ignore
 
 
@@ -284,5 +284,5 @@ def test_criteria_orders_cannot_changed() -> None:
         orders=[Order(field='field', direction=OrderDirection.ASC)],
     )
 
-    with pytest_raises(AttributeError, match="property 'orders' of 'Criteria' object has no setter"):
+    with assert_raises(AttributeError, match="property 'orders' of 'Criteria' object has no setter"):
         criteria.orders = [Order(field='new_field', direction=OrderDirection.DESC)]  # type: ignore

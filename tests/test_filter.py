@@ -4,7 +4,7 @@ Test the Filter class.
 
 from typing import Any
 
-from pytest import mark, raises as pytest_raises
+from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Filter, FilterOperator
 
@@ -88,7 +88,7 @@ def test_filter_field_cannot_be_changed() -> None:
     """
     filter = Filter(field='field', operator=FilterOperator.EQUAL, value='value')
 
-    with pytest_raises(AttributeError, match="property 'field' of 'Filter' object has no setter"):
+    with assert_raises(AttributeError, match="property 'field' of 'Filter' object has no setter"):
         filter.field = 'new_field'  # type: ignore
 
 
@@ -107,7 +107,7 @@ def test_filter_operator_cannot_be_changed() -> None:
     """
     filter = Filter(field='field', operator=FilterOperator.EQUAL, value='value')
 
-    with pytest_raises(AttributeError, match="property 'operator' of 'Filter' object has no setter"):
+    with assert_raises(AttributeError, match="property 'operator' of 'Filter' object has no setter"):
         filter.operator = FilterOperator.BETWEEN  # type: ignore
 
 
@@ -139,5 +139,5 @@ def test_filter_value_cannot_be_changed() -> None:
     """
     filter = Filter(field='field', operator=FilterOperator.EQUAL, value='value')
 
-    with pytest_raises(AttributeError, match="property 'value' of 'Filter' object has no setter"):
+    with assert_raises(AttributeError, match="property 'value' of 'Filter' object has no setter"):
         filter.value = 'new_value'  # type: ignore
