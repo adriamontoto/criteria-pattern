@@ -31,12 +31,6 @@ repos:
         stages:
           - pre-commit
 
-      - id: check-json
-        name: 📄 JSON Files Checker
-        files: '.*\.json'
-        stages:
-          - pre-commit
-
       - id: check-toml
         name: 📄 TOML Files Checker
         files: '.*\.toml'
@@ -48,14 +42,6 @@ repos:
         files: '.*\.ya?ml'
         args:
           - --unsafe
-        stages:
-          - pre-commit
-
-      - id: name-tests-test
-        name: 🧪 Test Files Checker
-        files: '.*test.*\.py'
-        args:
-          - --pytest-test-first
         stages:
           - pre-commit
 

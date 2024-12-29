@@ -13,7 +13,7 @@ include = ['criteria_pattern/', 'tests/', 'requirements*.txt']
 [project]
 name = 'criteria-pattern'
 description = 'The "Criteria Pattern" is a Python package that simplifies and standardizes criteria based filtering, validation and selection.'
-readme = 'README.md'
+readme = './README.md'
 authors = [{ name = 'Adria Montoto' }]
 license = 'MIT'
 classifiers = [
@@ -68,10 +68,8 @@ addopts = [
     '--color=yes',      # color the output
 ]
 markers = [
-    'unit_testing: Check a unique funtionality',
+    'unit_testing: Check a unique functionality',
     'integration_testing: Check the integration between two or more functions',
-    'e2e_testing: Check the end to end functionality of the application',
-    'performance_testing: Check the performance of the application',
     'security_testing: Check the security of the application',
 ]
 xfail_strict = true
@@ -168,29 +166,15 @@ property-decorators = ['sqlalchemy.ext.hybrid.hybrid_property']
 
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = [
-    'pydantic.field_validator', # Allow Pydantic's @field_validator decorator to trigger class method treatment.
-    'pydantic.model_validator', # Allow Pydantic's @model_validator decorator to trigger class method treatment.
     'declared_attr',            # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
     'expression',               # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
     'comparator',               # Allow SQLAlchemy's dynamic decorators, like @field.expression, to trigger class method treatment.
 ]
 
-[tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = [
-    'fastapi.Body',
-    'fastapi.Cookie',
-    'fastapi.Depends',
-    'fastapi.File',
-    'fastapi.Form',
-    'fastapi.Header',
-    'fastapi.Path',
-    'fastapi.Query',
-]
-
 [tool.ruff.lint.isort]
 case-sensitive = true
 extra-standard-library = ['typing_extensions']
-known-first-party = ['src', 'backend', 'app']
+known-first-party = ['criteria_pattern']
 combine-as-imports = true
 
 

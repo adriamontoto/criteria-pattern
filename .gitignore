@@ -1,10 +1,4 @@
 #################### Files to exclude ####################
-# Log files
-*.log
-
-# Environment files
-**.env**
-
 # Lintting files
 .coverage
 index.txt
@@ -20,19 +14,6 @@ index.txt
 # all environment folders
 **env**
 
-# all build folders
-**build*
-
-# all logs folders
-**logs**
-
-# all files/folders with "___" (3 underscores) in the name
-**___**
-
-# all files inside dist folder
-dist/**
-
 ################## Files not to exclude ##################
-!.env.example
 
 ################# Folders not to exclude #################
