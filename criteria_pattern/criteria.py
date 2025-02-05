@@ -21,6 +21,15 @@ from .order import Order
 class Criteria:
     """
     Criteria class.
+
+    Example:
+    ```python
+    from criteria_pattern import Criteria, Filter, FilterOperator
+
+    criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
+    print(criteria)
+    # >>> <Criteria(filters=['name' EQUAL 'John'], orders=[])>
+    ```
     """
 
     _filters: list[Filter[Any]]
@@ -32,7 +41,16 @@ class Criteria:
 
         Args:
             filters (Sequence[Filter[Any]]): Sequence of filters.
-            sort (Sequence[Order], optional): Sequence of orders. Defaults to [].
+            orders (Sequence[Order], optional): Sequence of orders. Defaults to [].
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
+        print(criteria)
+        # >>> <Criteria(filters=['name' EQUAL 'John'], orders=[])>
+        ```
         """
         self._filters = list(filters)
         self._orders = list(orders) if orders is not None else []
@@ -44,6 +62,15 @@ class Criteria:
 
         Returns:
             str: String representation of Criteria.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
+        print(repr(criteria))
+        # >>> <Criteria(filters=['name' EQUAL 'John'], orders=[])>
+        ```
         """
         return f'<Criteria(filters={self._filters}, orders={self._orders})>'
 
@@ -59,15 +86,21 @@ class Criteria:
 
         Example:
         ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        filter1 = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        filter2 = Filter(field='age', operator=FilterOperator.GREATER, value=18)
+
         criteria1 = Criteria(filters=[filter1])
         criteria2 = Criteria(filters=[filter2])
 
         # both are equivalent
         criteria3 = criteria1 & criteria2
-        criteria3 = criteria1.add_(criteria=criteria2)
-        criteria3 = Criteria(filters=[filter1, filter2])
+        criteria3 = criteria1.and_(criteria=criteria2)
+        print(criteria3)
+        # >>> <AndCriteria(left=<Criteria(filters=['name' EQUAL 'John'], orders=[])>, right=<Criteria(filters=['age' GREATER 18], orders=[])>)>
         ```
-        """
+        """  # noqa: E501
         return AndCriteria(left=self, right=criteria)
 
     def and_(self, criteria: Criteria) -> AndCriteria:
@@ -82,15 +115,21 @@ class Criteria:
 
         Example:
         ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        filter1 = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        filter2 = Filter(field='age', operator=FilterOperator.GREATER, value=18)
+
         criteria1 = Criteria(filters=[filter1])
         criteria2 = Criteria(filters=[filter2])
 
         # both are equivalent
         criteria3 = criteria1 & criteria2
-        criteria3 = criteria1.add_(criteria=criteria2)
-        criteria3 = Criteria(filters=[filter1, filter2])
+        criteria3 = criteria1.and_(criteria=criteria2)
+        print(criteria3)
+        # >>> <AndCriteria(left=<Criteria(filters=['name' EQUAL 'John'], orders=[])>, right=<Criteria(filters=['age' GREATER 18], orders=[])>)>
         ```
-        """
+        """  # noqa: E501
         return self & criteria
 
     def __or__(self, criteria: Criteria) -> OrCriteria:
@@ -105,14 +144,21 @@ class Criteria:
 
         Example:
         ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        filter1 = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        filter2 = Filter(field='age', operator=FilterOperator.GREATER, value=18)
+
         criteria1 = Criteria(filters=[filter1])
         criteria2 = Criteria(filters=[filter2])
 
         # both are equivalent
         criteria3 = criteria1 | criteria2
         criteria3 = criteria1.or_(criteria=criteria2)
+        print(criteria3)
+        # >>> <OrCriteria(left=<Criteria(filters=['name' EQUAL 'John'], orders=[])>, right=<Criteria(filters=['age' GREATER 18], orders=[])>)>
         ```
-        """
+        """  # noqa: E501
         return OrCriteria(left=self, right=criteria)
 
     def or_(self, criteria: Criteria) -> OrCriteria:
@@ -127,14 +173,21 @@ class Criteria:
 
         Example:
         ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        filter1 = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        filter2 = Filter(field='age', operator=FilterOperator.GREATER, value=18)
+
         criteria1 = Criteria(filters=[filter1])
         criteria2 = Criteria(filters=[filter2])
 
         # both are equivalent
         criteria3 = criteria1 | criteria2
         criteria3 = criteria1.or_(criteria=criteria2)
+        print(criteria3)
+        # >>> <OrCriteria(left=<Criteria(filters=['name' EQUAL 'John'], orders=[])>, right=<Criteria(filters=['age' GREATER 18], orders=[])>)>
         ```
-        """
+        """  # noqa: E501
         return self | criteria
 
     def __invert__(self) -> NotCriteria:
@@ -146,11 +199,16 @@ class Criteria:
 
         Example:
         ```python
-        criteria = Criteria(filters=[filter1])
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        criteria = Criteria(filters=[filter])
 
         # both are equivalent
         not_criteria = ~criteria
         not_criteria = criteria.not_()
+        print(not_criteria)
+        # >>> <NotCriteria(criteria=<Criteria(filters=['name' EQUAL 'John'], orders=[])>)>
         ```
         """
         return NotCriteria(criteria=self)
@@ -164,11 +222,16 @@ class Criteria:
 
         Example:
         ```python
-        criteria = Criteria(filters=[filter1])
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        criteria = Criteria(filters=[filter])
 
         # both are equivalent
-        not_criteria = criteria.not_()
         not_criteria = ~criteria
+        not_criteria = criteria.not_()
+        print(not_criteria)
+        # >>> <NotCriteria(criteria=<Criteria(filters=['name' EQUAL 'John'], orders=[])>)>
         ```
         """
         return ~self
@@ -180,6 +243,15 @@ class Criteria:
 
         Returns:
            list[Filter[Any]]: List of filters.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
+        print(criteria.filters)
+        # >>> ['name' EQUAL 'John']
+        ```
         """
         return self._filters
 
@@ -190,6 +262,18 @@ class Criteria:
 
         Returns:
             list[Order]: List of orders.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator, Order, OrderDirection
+
+        criteria = Criteria(
+            filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')],
+            orders=[Order(field='name', direction=OrderDirection.ASC)],
+        )
+        print(criteria.orders)
+        # >>> ['name' ASC]
+        ```
         """
         return self._orders
 
@@ -199,6 +283,15 @@ class Criteria:
 
         Returns:
             bool: True if criteria has filters, False otherwise.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+
+        criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
+        print(criteria.has_filters())
+        # >>> True
+        ```
         """
         return bool(self.filters)
 
@@ -208,6 +301,18 @@ class Criteria:
 
         Returns:
             bool: True if criteria has orders, False otherwise.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator, Order, OrderDirection
+
+        criteria = Criteria(
+            filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')],
+            orders=[Order(field='name', direction=OrderDirection.ASC)],
+        )
+        print(criteria.has_orders())
+        # >>> True
+        ```
         """
         return bool(self.orders)
 

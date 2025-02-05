@@ -9,6 +9,15 @@ from enum import StrEnum, unique
 class OrderDirection(StrEnum):
     """
     OrderDirection enum class.
+
+    Example:
+    ```python
+    from criteria_pattern import OrderDirection
+
+    direction = OrderDirection.ASC
+    print(direction)
+    # >>> ASC
+    ```
     """
 
     ASC = 'ASC'

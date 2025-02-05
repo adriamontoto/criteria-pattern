@@ -13,7 +13,23 @@ from criteria_pattern.exceptions import InvalidColumnError, InvalidTableError
 class SqlConverter:
     """
     Raw SQL converter.
-    """
+
+    Example:
+    ```python
+    from criteria_pattern import Criteria, Filter, FilterOperator
+    from criteria_pattern.converter import SqlConverter
+
+    is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)])
+    email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
+    email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
+
+    query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+    print(query)
+    print(parameters)
+    # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
+    # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
+    ```
+    """  # noqa: E501
 
     @classmethod
     def convert(
@@ -51,7 +67,23 @@ class SqlConverter:
 
         Returns:
             tuple[str, dict[str, Any]]: The raw SQL query string and the query parameters.
-        """
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Filter, FilterOperator
+        from criteria_pattern.converter import SqlConverter
+
+        is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)])
+        email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
+        email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
+
+        query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+        print(query)
+        print(parameters)
+        # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
+        # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
+        ```
+        """  # noqa: E501
         columns = columns or ['*']
         columns_mapping = columns_mapping or {}
         valid_tables = valid_tables or []

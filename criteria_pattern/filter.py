@@ -19,6 +19,15 @@ T = TypeVar('T')
 class Filter(Generic[T]):
     """
     Filter class.
+
+    Example:
+    ```python
+    from criteria_pattern import Filter, FilterOperator
+
+    filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+    print(filter)
+    # >>> 'name' EQUAL 'John'
+    ```
     """
 
     __field: str
@@ -33,6 +42,15 @@ class Filter(Generic[T]):
             field (str): Field name.
             operator (FilterOperator): Filter operator.
             value (T): Filter value.
+
+        Example:
+        ```python
+        from criteria_pattern import Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        print(filter)
+        # >>> 'name' EQUAL 'John'
+        ```
         """
         self.__field = field
         self.__operator = operator
@@ -45,6 +63,15 @@ class Filter(Generic[T]):
 
         Returns:
             str: String representation of Filter.
+
+        Example:
+        ```python
+        from criteria_pattern import Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        print(repr(filter))
+        # >>> 'name' EQUAL 'John'
+        ```
         """
         return f'{self.field!r} {self.operator} {self.value!r}'
 
@@ -55,6 +82,15 @@ class Filter(Generic[T]):
 
         Returns:
             str: Field name.
+
+        Example:
+        ```python
+        from criteria_pattern import Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        print(filter.field)
+        # >>> name
+        ```
         """
         return self.__field
 
@@ -65,6 +101,15 @@ class Filter(Generic[T]):
 
         Returns:
             FilterOperator: Filter operator.
+
+        Example:
+        ```python
+        from criteria_pattern import Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        print(filter.operator)
+        # >>> EQUAL
+        ```
         """
         return self.__operator
 
@@ -75,5 +120,14 @@ class Filter(Generic[T]):
 
         Returns:
             T: Filter value.
+
+        Example:
+        ```python
+        from criteria_pattern import Filter, FilterOperator
+
+        filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
+        print(filter.value)
+        # >>> John
+        ```
         """
         return self.__value

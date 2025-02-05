@@ -9,6 +9,15 @@ from enum import StrEnum, unique
 class FilterOperator(StrEnum):
     """
     FilterOperator enum class.
+
+    Example:
+    ```python
+    from criteria_pattern import FilterOperator
+
+    operator = FilterOperator.EQUAL
+    print(operator)
+    # >>> EQUAL
+    ```
     """
 
     EQUAL = 'EQUAL'

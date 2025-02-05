@@ -64,11 +64,11 @@ is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)]
 email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
 email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
 
-query = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
-
+query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
 print(query)
-
-# >>> SELECT * FROM user WHERE (age >= '18' AND (email LIKE '%@gmail.com' OR email LIKE '%@yahoo.com'));
+print(parameters)
+# >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
+# >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
 ```
 
 <p align="right">

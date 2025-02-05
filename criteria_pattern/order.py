@@ -15,6 +15,15 @@ from .order_direction import OrderDirection
 class Order:
     """
     Order class.
+
+    Example:
+    ```python
+    from criteria_pattern import Order, OrderDirection
+
+    order = Order(field='name', direction=OrderDirection.ASC)
+    print(order)
+    # >>> 'name' ASC
+    ```
     """
 
     __field: str
@@ -27,6 +36,15 @@ class Order:
         Args:
             field (str): Field name.
             direction (OrderDirection): Order direction.
+
+        Example:
+        ```python
+        from criteria_pattern import Order, OrderDirection
+
+        order = Order(field='name', direction=OrderDirection.ASC)
+        print(order)
+        # >>> 'name' ASC
+        ```
         """
         self.__field = field
         self.__direction = direction
@@ -38,6 +56,15 @@ class Order:
 
         Returns:
             str: String representation of Order.
+
+        Example:
+        ```python
+        from criteria_pattern import Order, OrderDirection
+
+        order = Order(field='name', direction=OrderDirection.ASC)
+        print(repr(order))
+        # >>> 'name' ASC
+        ```
         """
         return f'{self.field!r} {self.direction}'
 
@@ -48,6 +75,15 @@ class Order:
 
         Returns:
             str: Field name.
+
+        Example:
+        ```python
+        from criteria_pattern import Order, OrderDirection
+
+        order = Order(field='name', direction=OrderDirection.ASC)
+        print(order.field)
+        # >>> name
+        ```
         """
         return self.__field
 
@@ -58,5 +94,14 @@ class Order:
 
         Returns:
             OrderDirection: Order direction.
+
+        Example:
+        ```python
+        from criteria_pattern import Order, OrderDirection
+
+        order = Order(field='name', direction=OrderDirection.ASC)
+        print(order.direction)
+        # >>> ASC
+        ```
         """
         return self.__direction
