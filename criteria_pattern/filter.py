@@ -26,7 +26,7 @@ class Filter(Generic[T]):
 
     filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
     print(filter)
-    # >>> 'name' EQUAL 'John'
+    # >>> <Filter(field='name', operator=EQUAL, value='John')>
     ```
     """
 
@@ -49,7 +49,7 @@ class Filter(Generic[T]):
 
         filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
         print(filter)
-        # >>> 'name' EQUAL 'John'
+        # >>> <Filter(field='name', operator=EQUAL, value='John')>
         ```
         """
         self.__field = field
@@ -70,10 +70,10 @@ class Filter(Generic[T]):
 
         filter = Filter(field='name', operator=FilterOperator.EQUAL, value='John')
         print(repr(filter))
-        # >>> 'name' EQUAL 'John'
+        # >>> <Filter(field='name', operator=EQUAL, value='John')>
         ```
         """
-        return f'{self.field!r} {self.operator} {self.value!r}'
+        return f'<Filter(field={self.field!r}, operator={self.operator}, value={self.value!r})>'
 
     @property
     def field(self) -> str:

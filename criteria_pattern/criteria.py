@@ -27,8 +27,8 @@ class Criteria:
     from criteria_pattern import Criteria, Filter, FilterOperator
 
     criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
-    print(criteria)
-    # >>> <Criteria(filters=['name' EQUAL 'John'], orders=[])>
+    print(repr(criteria))
+    # >>> <Criteria(filters=[<Filter(field='name', operator=EQUAL, value='John')>], orders=[])>
     ```
     """
 
@@ -49,7 +49,7 @@ class Criteria:
 
         criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
         print(criteria)
-        # >>> <Criteria(filters=['name' EQUAL 'John'], orders=[])>
+        # >>> <Criteria(filters=[<Filter(field='name', operator=EQUAL, value='John')>], orders=[])>
         ```
         """
         self._filters = list(filters)
@@ -69,7 +69,7 @@ class Criteria:
 
         criteria = Criteria(filters=[Filter(field='name', operator=FilterOperator.EQUAL, value='John')])
         print(repr(criteria))
-        # >>> <Criteria(filters=['name' EQUAL 'John'], orders=[])>
+        # >>> <Criteria(filters=[<Filter(field='name', operator=FilterOperator.EQUAL, value='John')>], orders=[])>
         ```
         """
         return f'<Criteria(filters={self._filters}, orders={self._orders})>'

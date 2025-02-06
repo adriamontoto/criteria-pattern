@@ -22,7 +22,7 @@ class Order:
 
     order = Order(field='name', direction=OrderDirection.ASC)
     print(order)
-    # >>> 'name' ASC
+    # >>> <Order(field='name', direction=ASC)>
     ```
     """
 
@@ -43,7 +43,7 @@ class Order:
 
         order = Order(field='name', direction=OrderDirection.ASC)
         print(order)
-        # >>> 'name' ASC
+        # >>> <Order(field='name', direction=ASC)>
         ```
         """
         self.__field = field
@@ -63,10 +63,10 @@ class Order:
 
         order = Order(field='name', direction=OrderDirection.ASC)
         print(repr(order))
-        # >>> 'name' ASC
+        # >>> <Order(field='name', direction=ASC)>
         ```
         """
-        return f'{self.field!r} {self.direction}'
+        return f'<Order(field={self.__field!r}, direction={self.__direction})>'
 
     @property
     def field(self) -> str:

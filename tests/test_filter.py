@@ -70,7 +70,7 @@ def test_filter_string_representation(operator: FilterOperator, value: Any) -> N
     """
     filter = Filter(field='field', operator=operator, value=value)
 
-    assert repr(filter) == f"'field' {operator} {value!r}"
+    assert repr(filter) == f"<Filter(field='field', operator={operator}, value={value!r})>"
 
 
 def test_filter_field_type() -> None:

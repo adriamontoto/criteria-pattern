@@ -44,7 +44,7 @@ def test_order_string_representation(direction: OrderDirection) -> None:
     """
     order = Order(field='field', direction=direction)
 
-    assert repr(order) == f"'field' {direction}"
+    assert repr(order) == f"<Order(field='field', direction={direction})>"
 
 
 def test_order_field_type() -> None:
