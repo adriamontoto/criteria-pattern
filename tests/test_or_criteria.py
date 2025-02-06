@@ -7,7 +7,7 @@ from typing import Any
 from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Filter, FilterOperator, Order, OrderDirection
-from criteria_pattern.criteria import AndCriteria, OrCriteria
+from criteria_pattern.models.criteria import AndCriteria, OrCriteria
 
 
 @mark.parametrize(

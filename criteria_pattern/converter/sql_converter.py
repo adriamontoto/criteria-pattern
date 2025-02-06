@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, FilterOperator, OrderDirection
-from criteria_pattern.criteria import AndCriteria, NotCriteria, OrCriteria
 from criteria_pattern.exceptions import InvalidColumnError, InvalidTableError
+from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
 class SqlConverter:

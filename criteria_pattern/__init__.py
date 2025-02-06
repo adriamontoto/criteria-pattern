@@ -1,10 +1,6 @@
 __version__ = '2024.11.05'
 
-from .criteria import Criteria
-from .filter import Filter
-from .filter_operator import FilterOperator
-from .order import Order
-from .order_direction import OrderDirection
+from .models import Criteria, Filter, FilterOperator, Order, OrderDirection
 
 __all__ = (
     'Criteria',

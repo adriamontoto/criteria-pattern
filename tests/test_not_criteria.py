@@ -2,7 +2,7 @@
 Test the NotCriteria class.
 """
 
-from criteria_pattern.criteria import NotCriteria
+from criteria_pattern.models.criteria import NotCriteria
 from tests.mother import CriteriaMother
 
 

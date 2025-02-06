@@ -6,10 +6,9 @@ from collections.abc import Collection
 
 from pytest import mark, raises as assert_raises
 
-from criteria_pattern import OrderDirection
+from criteria_pattern import FilterOperator, OrderDirection
 from criteria_pattern.converter import SqlConverter
 from criteria_pattern.exceptions import InvalidColumnError, InvalidTableError
-from criteria_pattern.filter_operator import FilterOperator
 from tests.mother import CriteriaMother
 
 
