@@ -51,7 +51,7 @@ jobs:
           CONTEXT: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'requirements*') }}
 
       - name: 🫙 Store tests coverage
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v4.6.1
         if: always()
         with:
           name: coverage_${{ matrix.os }}_python_${{ matrix.python-version }}
@@ -107,7 +107,7 @@ jobs:
           coverage html --show-contexts --title "Coverage for ${{ github.sha }}"
 
       - name: 🫙 Store coverage report
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v4.6.1
         with:
           name: coverage-html
           path: htmlcov
