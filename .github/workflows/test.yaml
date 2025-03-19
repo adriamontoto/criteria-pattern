@@ -90,7 +90,7 @@ jobs:
         run: make install-dev
 
       - name: 📥 Download coverage files
-        uses: actions/download-artifact@v4.1.9
+        uses: actions/download-artifact@v4.2.1
         with:
           merge-multiple: true
           pattern: coverage_*
