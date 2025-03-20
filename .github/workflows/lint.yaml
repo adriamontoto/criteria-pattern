@@ -43,7 +43,7 @@ jobs:
         run: make lint
 
       - name: 🫙 Store type coverage
-        uses: actions/upload-artifact@v4.6.1
+        uses: actions/upload-artifact@v4.6.2
         if: always()
         with:
           name: type_coverage_report_${{ matrix.os }}_${{ matrix.python-version }}
