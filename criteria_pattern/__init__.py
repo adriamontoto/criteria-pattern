@@ -1,4 +1,4 @@
-__version__ = '2024.11.05'
+__version__ = '0.0.0'
 
 from .models import Criteria, Filter, FilterOperator, Order, OrderDirection
 
