@@ -6,11 +6,11 @@ updates:
     schedule:
       interval: daily
     commit-message:
-      prefix: '👷🏻 ci:'
+      prefix: 'ci:'
 
   - package-ecosystem: pip
     directory: '/'
     schedule:
       interval: daily
     commit-message:
-      prefix: '📦 build:'
+      prefix: 'build:'
