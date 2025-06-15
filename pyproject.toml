@@ -188,4 +188,24 @@ enable_error_code = [
 ]
 
 
-[tool.bandit]
+[tool.semantic_release]
+allow_zero_version = true
+commit_message = 'bump: new version {version} released'
+commit_parser = 'conventional'
+major_on_zero = true
+no_git_verify = false
+tag_format = 'v{version}'
+version_variables = ['criteria_pattern/__init__.py:__version__']
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ['feat']
+patch_tags = ['fix', 'perf', 'build']
+allowed_tags = ['feat', 'fix', 'perf', 'build']
+default_bump_level = 0
+parse_squash_commits = false
+ignore_merge_commits = true
+
+[tool.semantic_release.changelog]
+template_dir = 'docs/changelog_template'
+mode = 'update'
+exclude_commit_patterns = ['''Merged? .*''']
