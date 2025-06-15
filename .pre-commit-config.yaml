@@ -1,23 +1,19 @@
-# Documentation: https://pre-commit.com
-
-# General flags
-fail_fast: true # If there is an error it will fail the test
+fail_fast: true
 
 default_language_version:
   python: python3.13
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # v5.0.0
     hooks:
       - id: no-commit-to-branch
-        name: 🛡️ Protected Branches Checker
+        name: 🚧 Protected Branches Checker
         args:
           - --branch=master
         pass_filenames: false
         stages:
           - pre-commit
-          - pre-push
 
       - id: check-added-large-files
         name: 📦 Large Files Checker
@@ -46,10 +42,18 @@ repos:
           - pre-commit
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.20.1
+    rev: 782f3104786efdce0f809bce8a9ff31f2fa1c9ed # v8.27.0
     hooks:
       - id: gitleaks
         name: 🔍 Secrets Checker
+        entry: gitleaks detect --no-git --redact --verbose
         stages:
           - pre-commit
-          - pre-push
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: a0cc4901b0faaced74c713a9e355555fc4de0880 # v4.7.1
+    hooks:
+      - id: commitizen
+        name: 📝 Standard Commit Message Checker
+        stages:
+          - commit-msg
