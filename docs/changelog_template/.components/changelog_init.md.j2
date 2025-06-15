@@ -1,0 +1,21 @@
+{#
+This changelog template initializes a full changelog for the project,
+it follows the following logic:
+  1. Header
+  2. Any Unreleased Details (uncommon)
+  3. all previous releases except the very first release
+  4. the first release
+
+#}{#
+   #    Header
+#}{%    include "changelog_header.md.j2"
+-%}{#
+#}{%  if releases | length > 0
+%}{%    for release in releases
+%}{{      "\n"
+}}{%      include "versioned_changes.md.j2"
+%}{{      "\n"
+}}{#
+#}{%    endfor
+%}{%  endif
+%}
