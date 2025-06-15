@@ -3,13 +3,10 @@
 # 🤏🏻 Criteria Pattern
 
 <p align="center">
-    <a href="https://github.com/adriamontoto/criteria-pattern/actions/workflows/test.yaml?event=push&branch=master" target="_blank">
-        <img src="https://github.com/adriamontoto/criteria-pattern/actions/workflows/test.yaml/badge.svg?event=push&branch=master" alt="Test Pipeline">
+    <a href="https://github.com/adriamontoto/criteria-pattern/actions/workflows/ci.yaml?event=push&branch=master" target="_blank">
+        <img src="https://github.com/adriamontoto/criteria-pattern/actions/workflows/ci.yaml/badge.svg?event=push&branch=master" alt="CI Pipeline">
     </a>
-    <a href="https://github.com/adriamontoto/criteria-pattern/actions/workflows/lint.yaml?event=push&branch=master" target="_blank">
-        <img src="https://github.com/adriamontoto/criteria-pattern/actions/workflows/lint.yaml/badge.svg?event=push&branch=master" alt="Lint Pipeline">
-    </a>
-        <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/adriamontoto/criteria-pattern" target="_blank">
+    <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/adriamontoto/criteria-pattern" target="_blank">
         <img src="https://coverage-badge.samuelcolvin.workers.dev/adriamontoto/criteria-pattern.svg" alt="Coverage Pipeline">
     </a>
     <a href="https://pypi.org/project/criteria-pattern" target="_blank">
@@ -79,67 +76,13 @@ print(parameters)
 
 ## 🤝 Contributing
 
-We welcome contributions to **Criteria Pattern**! To ensure a smooth collaboration process, please follow the guidelines below.
+We love community help! Before you open an issue or pull request, please read:
 
-### How to Contribute
+- [`🤝 How to Contribute`](https://github.com/adriamontoto/criteria-pattern/blob/master/.github/CONTRIBUTING.md)
+- [`🧭 Code of Conduct`](https://github.com/adriamontoto/criteria-pattern/blob/master/.github/CODE_OF_CONDUCT.md)
+- [`🔐 Security Policy`](https://github.com/adriamontoto/criteria-pattern/blob/master/.github/SECURITY.md)
 
-**1. Fork the Repository:** Click the "Fork" button at the top right of the repository page.
-
-**2. Clone Your Fork:**
-
-```bash
-git clone git+ssh://git@github.com/<your-username>/criteria-pattern.git
-```
-
-**3. Create a Branch:**
-
-```bash
-git checkout -b feature/your-feature-name
-```
-
-**4. Make Your Changes:** Implement your new feature or fix a bug.
-
-**5. Run Tests:** Ensure all the following tests pass before submitting your changes.
-
-- Run tests:
-
-```bash
-make test
-```
-
-- Run tests with coverage:
-
-```bash
-make coverage
-```
-
-- Run linter:
-
-```bash
-make lint
-```
-
-- Run formatter:
-
-```bash
-make format
-```
-
-**6. Commit Your Changes:**
-
-```bash
-git commit -m "✨ feature: your feature description"
-```
-
-**7. Push to Your Fork:**
-
-```bash
-git push origin feature/your-feature-name
-```
-
-**8. Create a Pull Request:** Navigate to the original repository and create a pull request from your fork.
-
-**9. Wait for Review:** Your pull request will be reviewed by the maintainers. Make any necessary changes based on their feedback.
+_Thank you for helping make **🤏🏻 Criteria Pattern** package awesome! 🌟_
 
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
