@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.1.1 (2025-06-15)
+
+### 📦 Build System
+
+- Update package license locations
+  ([`4c05682`](https://github.com/adriamontoto/criteria-pattern/commit/4c05682394b245e8d4f3df23e2c3c3952a76066f))
+
+
 ## v0.1.0 (2025-06-15)
 
 ### 🐛 Bug Fixes
