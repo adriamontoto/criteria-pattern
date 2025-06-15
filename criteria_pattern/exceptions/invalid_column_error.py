@@ -29,7 +29,7 @@ class InvalidColumnError(SqlConverterError):
         self.__column = column
         self.__valid_columns = set(valid_columns)
 
-        message = f"Invalid column specified: <<<{column}>>>." f" Valid columns are: <<<{', '.join(valid_columns)}>>>."
+        message = f'Invalid column specified: <<<{column}>>>. Valid columns are: <<<{", ".join(valid_columns)}>>>.'
         super().__init__(message)
 
     @property

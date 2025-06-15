@@ -29,7 +29,7 @@ class InvalidTableError(SqlConverterError):
         self.__table = table
         self.__valid_tables = set(valid_tables)
 
-        message = f"Invalid table specified: <<<{table}>>>." f"Valid tables are: <<<{', '.join(valid_tables)}>>>."
+        message = f'Invalid table specified: <<<{table}>>>. Valid tables are: <<<{", ".join(valid_tables)}>>>.'
         super().__init__(message)
 
     @property

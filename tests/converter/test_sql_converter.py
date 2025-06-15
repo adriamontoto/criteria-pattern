@@ -499,7 +499,7 @@ def test_sql_converter_with_table_injection() -> None:
     """
     with assert_raises(
         expected_exception=InvalidTableError,
-        match='Invalid table specified: <<<user; DROP TABLE user;>>>.Valid tables are: <<<user>>>.',
+        match='Invalid table specified: <<<user; DROP TABLE user;>>>. Valid tables are: <<<user>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.create(),
