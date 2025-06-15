@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: Criteria Pattern
+message: >
+  If you use this software, please cite it using the metadata below.
+type: software
+authors:
+  - given-names: Adrià
+    family-names: Montoto
+repository-code: https://github.com/adriamontoto/criteria-pattern
+url: https://pypi.org/project/criteria-pattern
+abstract: >
+  Criteria Pattern is a Python package that simplifies and standardizes
+  criteria based filtering, validation and selection. This package
+  provides a set of prebuilt objects and utilities that you can drop into
+  your existing projects and not have to implement yourself.
+keywords:
+  - python
+  - validation
+  - sql
+  - filtering
+  - criteria
+license: MIT
