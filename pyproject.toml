@@ -39,7 +39,7 @@ keywords = [
     'selection',
 ]
 requires-python = '>=3.11'
-dependencies = ['value-object-pattern>=0.2.0']
+dependencies = ['value-object-pattern>=0.10.0']
 dynamic = ['version']
 
 [project.urls]
@@ -51,14 +51,14 @@ Issues = 'https://github.com/adriamontoto/criteria-pattern/issues'
 [dependency-groups]
 audit = ['pip-audit>=2.9.0']
 coverage = ['coverage[toml]>=7.0.0', 'smokeshow>=0.5.0']
-develop = ['pre-commit>=3.0.0']
+develop = ['pre-commit>=3.1.0']
 format = ['ruff>=0.11.10']
 lint = ['ruff>=0.11.10', 'mypy[reports]>=1.0.0', { include-group = 'test' }]
 release = ['build>=1.2.2', 'python-semantic-release>=10.0.2']
 test = [
     'pytest>=8.0.0',
     'pytest-randomly>=3.0.0',
-    'object-mother-pattern>=1.0.0',
+    'object-mother-pattern>=3.1.1',
     { include-group = 'coverage' },
 ]
 all = [
@@ -103,6 +103,7 @@ exclude_lines = [
     'typing.assert_never',
     'assert_never',
 ]
+omit = ['*mother.py']
 
 [tool.coverage.paths]
 source = ['criteria_pattern']
