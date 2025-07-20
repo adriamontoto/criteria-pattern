@@ -15,6 +15,9 @@
     <a href="https://pypi.org/project/criteria-pattern/" target="_blank">
         <img src="https://img.shields.io/pypi/pyversions/criteria-pattern.svg?color=%2334D058" alt="Supported Python Versions">
     </a>
+    <a href="https://pepy.tech/projects/criteria-pattern" target="_blank">
+        <img src="https://static.pepy.tech/badge/criteria-pattern/month" alt="Package Downloads">
+    </a>
 </p>
 
 The **Criteria Pattern** is a Python 🐍 package that simplifies and standardizes criteria based filtering 🤏🏻, validation and selection. This package provides a set of prebuilt 👷🏻 objects and utilities that you can drop into your existing projects and not have to implement yourself.
@@ -54,12 +57,12 @@ pip install criteria-pattern
 ## 💻 Utilization
 
 ```python
-from criteria_pattern import Criteria, Filter, FilterOperator
+from criteria_pattern import Criteria, Filter, Operator
 from criteria_pattern.converter import SqlConverter
 
-is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)])
-email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
-email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
+is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
+email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
+email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
 query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
 print(query)
