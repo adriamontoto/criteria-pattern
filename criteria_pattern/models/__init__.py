@@ -1,13 +1,11 @@
 from .criteria import Criteria
-from .filter import Filter
-from .filter_operator import FilterOperator
-from .order import Order
-from .order_direction import OrderDirection
+from .filter import Filter, Operator
+from .order import Direction, Order
 
 __all__ = (
     'Criteria',
+    'Direction',
     'Filter',
-    'FilterOperator',
+    'Operator',
     'Order',
-    'OrderDirection',
 )
