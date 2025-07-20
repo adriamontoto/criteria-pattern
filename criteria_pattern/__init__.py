@@ -1,11 +1,11 @@
 __version__ = '0.1.1'
 
-from .models import Criteria, Filter, FilterOperator, Order, OrderDirection
+from .models import Criteria, Direction, Filter, Operator, Order
 
 __all__ = (
     'Criteria',
+    'Direction',
     'Filter',
-    'FilterOperator',
+    'Operator',
     'Order',
-    'OrderDirection',
 )

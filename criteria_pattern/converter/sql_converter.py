@@ -5,8 +5,8 @@ Raw SQL converter module.
 from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
-from criteria_pattern import Criteria, FilterOperator, OrderDirection
-from criteria_pattern.exceptions import InvalidColumnError, InvalidTableError
+from criteria_pattern import Criteria, Direction, Operator
+from criteria_pattern.errors import InvalidColumnError, InvalidTableError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
@@ -16,12 +16,12 @@ class SqlConverter:
 
     Example:
     ```python
-    from criteria_pattern import Criteria, Filter, FilterOperator
+    from criteria_pattern import Criteria, Filter, Operator
     from criteria_pattern.converter import SqlConverter
 
-    is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)])
-    email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
-    email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
+    is_adult = Criteria(filters=[Filter('age', Operator.GREATER_OR_EQUAL, 18)])
+    email_is_gmail = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@gmail.com')])
+    email_is_yahoo = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@yahoo.com')])
 
     query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
     print(query)
@@ -70,12 +70,12 @@ class SqlConverter:
 
         Example:
         ```python
-        from criteria_pattern import Criteria, Filter, FilterOperator
+        from criteria_pattern import Criteria, Filter, Operator
         from criteria_pattern.converter import SqlConverter
 
-        is_adult = Criteria(filters=[Filter('age', FilterOperator.GREATER_OR_EQUAL, 18)])
-        email_is_gmail = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@gmail.com')])
-        email_is_yahoo = Criteria(filters=[Filter('email', FilterOperator.ENDS_WITH, '@yahoo.com')])
+        is_adult = Criteria(filters=[Filter('age', Operator.GREATER_OR_EQUAL, 18)])
+        email_is_gmail = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@gmail.com')])
+        email_is_yahoo = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@yahoo.com')])
 
         query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
         print(query)
@@ -269,50 +269,51 @@ class SqlConverter:
             placeholder = f'%({parameter_name})s'
             parameters_counter += 1
 
-            match filter.operator:
-                case FilterOperator.EQUAL:
+            operator = Operator(value=filter.operator)
+            match operator:
+                case Operator.EQUAL:
                     filters += f'{filter_field} = {placeholder}'
 
-                case FilterOperator.NOT_EQUAL:
+                case Operator.NOT_EQUAL:
                     filters += f'{filter_field} != {placeholder}'
 
-                case FilterOperator.GREATER:
+                case Operator.GREATER:
                     filters += f'{filter_field} > {placeholder}'
 
-                case FilterOperator.GREATER_OR_EQUAL:
+                case Operator.GREATER_OR_EQUAL:
                     filters += f'{filter_field} >= {placeholder}'
 
-                case FilterOperator.LESS:
+                case Operator.LESS:
                     filters += f'{filter_field} < {placeholder}'
 
-                case FilterOperator.LESS_OR_EQUAL:
+                case Operator.LESS_OR_EQUAL:
                     filters += f'{filter_field} <= {placeholder}'
 
-                case FilterOperator.LIKE:
+                case Operator.LIKE:
                     filters += f'{filter_field} LIKE {placeholder}'
 
-                case FilterOperator.NOT_LIKE:
+                case Operator.NOT_LIKE:
                     filters += f'{filter_field} NOT LIKE {placeholder}'
 
-                case FilterOperator.CONTAINS:
+                case Operator.CONTAINS:
                     filters += f"{filter_field} LIKE '%%' || {placeholder} || '%%'"
 
-                case FilterOperator.NOT_CONTAINS:
+                case Operator.NOT_CONTAINS:
                     filters += f"{filter_field} NOT LIKE '%%' || {placeholder} || '%%'"
 
-                case FilterOperator.STARTS_WITH:
+                case Operator.STARTS_WITH:
                     filters += f"{filter_field} LIKE {placeholder} || '%%'"
 
-                case FilterOperator.NOT_STARTS_WITH:
+                case Operator.NOT_STARTS_WITH:
                     filters += f"{filter_field} NOT LIKE {placeholder} || '%%'"
 
-                case FilterOperator.ENDS_WITH:
+                case Operator.ENDS_WITH:
                     filters += f"{filter_field} LIKE '%%' || {placeholder}"
 
-                case FilterOperator.NOT_ENDS_WITH:
+                case Operator.NOT_ENDS_WITH:
                     filters += f"{filter_field} NOT LIKE '%%' || {placeholder}"
 
-                case FilterOperator.BETWEEN:
+                case Operator.BETWEEN:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
 
@@ -326,7 +327,7 @@ class SqlConverter:
 
                     filters += f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}'
 
-                case FilterOperator.NOT_BETWEEN:
+                case Operator.NOT_BETWEEN:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
 
@@ -340,20 +341,20 @@ class SqlConverter:
 
                     filters += f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}'
 
-                case FilterOperator.IS_NULL:
+                case Operator.IS_NULL:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
 
                     filters += f'{filter_field} IS NULL'
 
-                case FilterOperator.IS_NOT_NULL:
+                case Operator.IS_NOT_NULL:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
 
                     filters += f'{filter_field} IS NOT NULL'
 
                 case _:  # pragma: no cover
-                    assert_never(filter.operator)
+                    assert_never(operator)
 
         return filters, parameters
 
@@ -374,14 +375,15 @@ class SqlConverter:
         for order in criteria.orders:
             order_field = columns_mapping.get(order.field, order.field)
 
-            match order.direction:
-                case OrderDirection.ASC:
+            direction = Direction(value=order.direction)
+            match direction:
+                case Direction.ASC:
                     orders += f'{order_field} ASC, '
 
-                case OrderDirection.DESC:
+                case Direction.DESC:
                     orders += f'{order_field} DESC, '
 
                 case _:  # pragma: no cover
-                    assert_never(order.direction)
+                    assert_never(direction)
 
         return orders.rstrip(', ')
