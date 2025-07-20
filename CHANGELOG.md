@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.0.0 (2025-07-20)
+
+### ✨ Features
+
+- Implement hole library using value objects pattern library
+  ([`7427554`](https://github.com/adriamontoto/criteria-pattern/commit/7427554202bfbc6b9c08dd4b1cee209e8bc8cc9a))
+
+
 ## v0.1.1 (2025-06-15)
 
 ### 📦 Build System
