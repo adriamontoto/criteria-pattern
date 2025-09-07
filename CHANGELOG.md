@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.0 (2025-09-07)
+
+### ✨ Features
+
+- Implement in and not in operators
+  ([`e5294ee`](https://github.com/adriamontoto/criteria-pattern/commit/e5294eeffb77be81cae131b7f9dd36714279f92d))
+
+
 ## v1.0.0 (2025-07-20)
 
 ### ✨ Features
