@@ -353,6 +353,34 @@ class SqlConverter:
 
                     filters += f'{filter_field} IS NOT NULL'
 
+                case Operator.IN:
+                    parameters.pop(parameter_name)
+                    parameters_counter -= 1
+
+                    values = filter.value
+                    placeholders = []
+                    for i, value in enumerate(values):
+                        param_name = f'parameter_{parameters_counter + i}'
+                        parameters[param_name] = value
+                        placeholders.append(f'%({param_name})s')
+                    parameters_counter += len(values)
+
+                    filters += f'{filter_field} IN ({", ".join(placeholders)})'
+
+                case Operator.NOT_IN:
+                    parameters.pop(parameter_name)
+                    parameters_counter -= 1
+
+                    values = filter.value
+                    placeholders = []
+                    for i, value in enumerate(values):
+                        param_name = f'parameter_{parameters_counter + i}'
+                        parameters[param_name] = value
+                        placeholders.append(f'%({param_name})s')
+                    parameters_counter += len(values)
+
+                    filters += f'{filter_field} NOT IN ({", ".join(placeholders)})'
+
                 case _:  # pragma: no cover
                     assert_never(operator)
 

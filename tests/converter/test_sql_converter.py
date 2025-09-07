@@ -361,6 +361,38 @@ def test_sql_converter_with_is_not_null_filter() -> None:
 
 
 @mark.unit_testing
+def test_sql_converter_with_in_filter() -> None:
+    """
+    Test SqlConverter class with an IN filter.
+    """
+    filter = Filter(field='status', operator=Operator.IN, value=['active', 'pending', 'inactive'])
+    query, parameters = SqlConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name', 'status'],
+    )
+
+    assert query == 'SELECT id, name, status FROM user WHERE status IN (%(parameter_0)s, %(parameter_1)s, %(parameter_2)s);'  # noqa: E501  # fmt: skip
+    assert parameters == {'parameter_0': 'active', 'parameter_1': 'pending', 'parameter_2': 'inactive'}
+
+
+@mark.unit_testing
+def test_sql_converter_with_not_in_filter() -> None:
+    """
+    Test SqlConverter class with a NOT IN filter.
+    """
+    filter = Filter(field='status', operator=Operator.NOT_IN, value=['deleted', 'banned'])
+    query, parameters = SqlConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name', 'status'],
+    )
+
+    assert query == 'SELECT id, name, status FROM user WHERE status NOT IN (%(parameter_0)s, %(parameter_1)s);'
+    assert parameters == {'parameter_0': 'deleted', 'parameter_1': 'banned'}
+
+
+@mark.unit_testing
 def test_sql_converter_with_and_criteria() -> None:
     """
     Test SqlConverter class with an AND Criteria object.
