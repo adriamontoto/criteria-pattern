@@ -38,3 +38,5 @@ class Operator(StrEnum):
     NOT_BETWEEN = 'NOT BETWEEN'
     IS_NULL = 'IS NULL'
     IS_NOT_NULL = 'IS NOT NULL'
+    IN = 'IN'
+    NOT_IN = 'NOT IN'
