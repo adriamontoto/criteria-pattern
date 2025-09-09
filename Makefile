@@ -1,8 +1,8 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-FULL_SOURCES = criteria_pattern tests
 SOURCES = criteria_pattern
+FULL_SOURCES = $(SOURCES) tests
 CONFIGURATION_FILE = pyproject.toml 
 CI ?= false
 VERBOSE ?= false
