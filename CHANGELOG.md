@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.0 (2025-09-09)
+
+### ✨ Features
+
+- Enhance model constructors with title and parameter attributes
+  ([`65b1b77`](https://github.com/adriamontoto/criteria-pattern/commit/65b1b77f5f483d0292f73406ded5f5caebc8d24a))
+
+
 ## v1.1.0 (2025-09-07)
 
 ### ✨ Features
