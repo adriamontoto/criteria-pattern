@@ -4,11 +4,13 @@ Test Filter model.
 
 from typing import Any
 
+from object_mother_pattern import StringMother
 from object_mother_pattern.models import BaseMother
-from pytest import mark
+from pytest import mark, raises as assert_raises
 
 from criteria_pattern.models.filter import Filter, FilterField, FilterOperator, FilterValue
 from criteria_pattern.models.testing.mothers import FilterMother
+from criteria_pattern.models.testing.mothers.filter import FilterFieldMother, FilterOperatorMother, FilterValueMother
 
 
 @mark.unit_testing
@@ -112,3 +114,83 @@ def test_filter_model_to_primitives_method_happy_path() -> None:
     }
 
     assert filter.to_primitives() == primitives
+
+
+@mark.unit_testing
+def test_filter_model_field_invalid_type() -> None:
+    """
+    Test Filter model raises TypeError when field is not a string.
+    """
+    with assert_raises(
+        expected_exception=TypeError,
+        match=r'Filter field <<<.*>>> must be a string. Got <<<.*>>> type.',
+    ):
+        Filter(
+            field=StringMother.invalid_type(),
+            operator=FilterOperatorMother.create().value.value,
+            value=FilterValueMother.create().value,
+        )
+
+
+@mark.unit_testing
+def test_filter_model_field_empty_value() -> None:
+    """
+    Test Filter model raises ValueError when field is empty.
+    """
+    with assert_raises(
+        expected_exception=ValueError,
+        match=r'Filter field <<<>>> is an empty string. Only non-empty strings are allowed.',
+    ):
+        Filter(
+            field=StringMother.empty(),
+            operator=FilterOperatorMother.create().value.value,
+            value=FilterValueMother.create().value,
+        )
+
+
+@mark.unit_testing
+def test_filter_model_field_not_trimmed() -> None:
+    """
+    Test Filter model raises ValueError when field has leading/trailing whitespace.
+    """
+    with assert_raises(
+        expected_exception=ValueError,
+        match=r'Filter field <<<.*>>> contains leading or trailing whitespaces. Only trimmed values are allowed.',
+    ):
+        Filter(
+            field=StringMother.not_trimmed(),
+            operator=FilterOperatorMother.create().value.value,
+            value=FilterValueMother.create().value,
+        )
+
+
+@mark.unit_testing
+def test_filter_model_field_non_printable() -> None:
+    """
+    Test Filter model raises ValueError when field contains non-printable characters.
+    """
+    with assert_raises(
+        expected_exception=ValueError,
+        match=r'Filter field <<<.*>>> contains invalid characters. Only printable characters are allowed.',
+    ):
+        Filter(
+            field=StringMother.invalid_value(),
+            operator=FilterOperatorMother.create().value.value,
+            value=FilterValueMother.create().value,
+        )
+
+
+@mark.unit_testing
+def test_filter_model_operator_invalid_type() -> None:
+    """
+    Test Filter model raises TypeError when operator is not a valid type.
+    """
+    with assert_raises(
+        expected_exception=TypeError,
+        match=r'Filter operator <<<.*>>> must be from the enumeration <<<Operator>>>. Got <<<.*>>> type.',
+    ):
+        Filter(
+            field=FilterFieldMother.create().value,
+            operator=StringMother.invalid_type(),
+            value=FilterValueMother.create().value,
+        )

@@ -24,12 +24,14 @@ class Filters(ListValueObject[Filter[Any]]):
     ```
     """
 
-    def __init__(self, *, value: list[Filter[Any]]) -> None:
+    def __init__(self, *, value: list[Filter[Any]], title: str | None = None, parameter: str | None = None) -> None:
         """
         Initialize a list of filters.
 
         Args:
             value (list[Filter]): The list of filters.
+            title (str | None, optional): The title of the filters. Default is None.
+            parameter (str | None, optional): The parameter name of the filters. Default is None.
 
         Example:
         ```python
@@ -41,4 +43,4 @@ class Filters(ListValueObject[Filter[Any]]):
         # >>> ['Filter(field=name, operator=EQUAL, value=John)']
         ```
         """
-        super().__init__(value=value)
+        super().__init__(value=value, title=title, parameter=parameter)

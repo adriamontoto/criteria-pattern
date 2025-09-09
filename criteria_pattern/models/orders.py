@@ -23,12 +23,14 @@ class Orders(ListValueObject[Order]):
     ```
     """
 
-    def __init__(self, *, value: list[Order]) -> None:
+    def __init__(self, *, value: list[Order], title: str | None = None, parameter: str | None = None) -> None:
         """
         Initialize a list of orders.
 
         Args:
             value (list[Order]): The list of orders.
+            title (str | None, optional): The title of the orders. Default is None.
+            parameter (str | None, optional): The parameter name of the orders. Default is None.
 
         Example:
         ```python
@@ -40,7 +42,7 @@ class Orders(ListValueObject[Order]):
         # >>> ['Order(direction=ASC, field=name)']
         ```
         """
-        super().__init__(value=value)
+        super().__init__(value=value, title=title, parameter=parameter)
 
     @validation(order=0)
     def _ensure_no_duplicate_fields(self, value: list[Order]) -> None:

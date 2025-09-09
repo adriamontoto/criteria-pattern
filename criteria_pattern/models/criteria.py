@@ -38,13 +38,13 @@ class Criteria(BaseModel):
     _filters: Filters
     _orders: Orders
 
-    def __init__(self, *, filters: list[Filter[Any]], orders: list[Order] | None = None) -> None:
+    def __init__(self, *, filters: list[Filter[Any]] | None = None, orders: list[Order] | None = None) -> None:
         """
         Criteria constructor.
 
         Args:
-            filters (list[Filter[Any]]): List of filters.
-            orders (list[Order], optional): List of orders. Defaults to [].
+            filters (list[Filter[Any]] | None, optional): List of filters. Defaults to [].
+            orders (list[Order] | None, optional): List of orders. Defaults to [].
 
         Example:
         ```python
@@ -55,8 +55,8 @@ class Criteria(BaseModel):
         # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[])
         ```
         """  # noqa: E501
-        self._filters = Filters(value=filters)
-        self._orders = Orders(value=orders if orders is not None else [])
+        self._filters = Filters(value=filters if filters is not None else [], title='Criteria', parameter='filters')
+        self._orders = Orders(value=orders if orders is not None else [], title='Criteria', parameter='orders')
 
     def __and__(self, criteria: Criteria) -> AndCriteria:
         """

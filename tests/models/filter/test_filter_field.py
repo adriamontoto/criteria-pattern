@@ -55,3 +55,15 @@ def test_filter_field_value_object_invalid_trimmed_value() -> None:
         match=r'FilterField value <<<.*>>> contains leading or trailing whitespaces. Only trimmed values are allowed.',  # noqa: E501
     ):
         FilterField(value=StringMother.not_trimmed())
+
+
+@mark.unit_testing
+def test_filter_field_value_object_invalid_non_printable_value() -> None:
+    """
+    Test FilterField value object raises ValueError when non-printable characters are provided.
+    """
+    with assert_raises(
+        expected_exception=ValueError,
+        match=r'FilterField value <<<.*>>> contains invalid characters. Only printable characters are allowed.',
+    ):
+        FilterField(value=StringMother.invalid_value())

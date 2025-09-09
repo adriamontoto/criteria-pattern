@@ -49,8 +49,8 @@ class Order(BaseModel):
         # >>> Order(direction=ASC, field=name)
         ```
         """
-        self._field = OrderField(value=field)
-        self._direction = OrderDirection(value=direction)
+        self._field = OrderField(value=field, title='Order', parameter='field')
+        self._direction = OrderDirection(value=direction, title='Order', parameter='direction')
 
     @property
     def field(self) -> str:

@@ -57,9 +57,9 @@ class Filter(BaseModel, Generic[T]):  # noqa: UP046
         # >>> Filter(field=name, operator=EQUAL, value=John)
         ```
         """
-        self._field = FilterField(value=field)
-        self._operator = FilterOperator(value=operator)
-        self._value = FilterValue(value=value)
+        self._field = FilterField(value=field, title='Filter', parameter='field')
+        self._operator = FilterOperator(value=operator, title='Filter', parameter='operator')
+        self._value = FilterValue(value=value, title='Filter', parameter='value')
 
     @property
     def field(self) -> str:

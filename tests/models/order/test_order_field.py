@@ -55,3 +55,15 @@ def test_order_field_value_object_invalid_trimmed_value() -> None:
         match=r'OrderField value <<<.*>>> contains leading or trailing whitespaces. Only trimmed values are allowed.',  # noqa: E501
     ):
         OrderField(value=StringMother.not_trimmed())
+
+
+@mark.unit_testing
+def test_order_field_value_object_invalid_non_printable_value() -> None:
+    """
+    Test OrderField value object raises ValueError when non-printable characters are provided.
+    """
+    with assert_raises(
+        expected_exception=ValueError,
+        match=r'OrderField value <<<.*>>> contains invalid characters. Only printable characters are allowed.',
+    ):
+        OrderField(value=StringMother.invalid_value())
