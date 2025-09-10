@@ -26,8 +26,8 @@ class CriteriaToMysqlConverter:
     query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
     print(query)
     print(parameters)
-    # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE CONCAT('%', %(parameter_1)s) OR email LIKE CONCAT('%', %(parameter_2)s)));
-    # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
+    # >>> SELECT * FROM user WHERE (age >= %s AND (email LIKE CONCAT('%', %s) OR email LIKE CONCAT('%', %s)));
+    # >>> [18, '@gmail.com', '@yahoo.com']
     ```
     """  # noqa: E501  # fmt: skip
 
@@ -43,7 +43,7 @@ class CriteriaToMysqlConverter:
         check_criteria_injection: bool = False,
         valid_tables: Sequence[str] | None = None,
         valid_columns: Sequence[str] | None = None,
-    ) -> tuple[str, dict[str, Any]]:
+    ) -> tuple[str, list[Any]]:
         """
         Convert the Criteria object to a MySQL query.
 
@@ -66,7 +66,7 @@ class CriteriaToMysqlConverter:
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
 
         Returns:
-            tuple[str, dict[str, Any]]: The MySQL query string and the query parameters as a dict.
+            tuple[str, list[Any]]: The MySQL query string and the query parameters as a list.
 
         Example:
         ```python
@@ -80,8 +80,8 @@ class CriteriaToMysqlConverter:
         query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
         print(query)
         print(parameters)
-        # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE CONCAT('%', %(parameter_1)s) OR email LIKE CONCAT('%', %(parameter_2)s)));
-        # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
+        # >>> SELECT * FROM user WHERE (age >= %s AND (email LIKE CONCAT('%', %s) OR email LIKE CONCAT('%', %s)));
+        # >>> [18, '@gmail.com', '@yahoo.com']
         ```
         """  # noqa: E501  # fmt: skip
         columns = columns or ['*']
@@ -99,7 +99,7 @@ class CriteriaToMysqlConverter:
             cls._validate_criteria(criteria=criteria, valid_columns=valid_columns)
 
         query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
-        parameters: dict[str, Any] = {}
+        parameters: list[Any] = []
 
         if criteria.has_filters():
             where_clause, parameters = cls._process_filters(criteria=criteria, columns_mapping=columns_mapping)
@@ -180,7 +180,7 @@ class CriteriaToMysqlConverter:
                 raise InvalidColumnError(column=order.field, valid_columns=valid_columns)
 
     @classmethod
-    def _process_filters(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:
+    def _process_filters(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, list[Any]]:
         """
         Process the Criteria object to return an SQL WHERE clause.
 
@@ -189,7 +189,7 @@ class CriteriaToMysqlConverter:
             columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
 
         Returns:
-            tuple[str, dict[str, Any]]: Processed filter string for SQL WHERE clause and parameters for the SQL query.
+            tuple[str, list[Any]]: Processed filter string for SQL WHERE clause and parameters for the SQL query.
         """
         return cls._process_filters_recursive(criteria=criteria, columns_mapping=columns_mapping)
 
@@ -199,72 +199,77 @@ class CriteriaToMysqlConverter:
         *,
         criteria: Criteria,
         columns_mapping: Mapping[str, str],
-        parameters_counter: int = 0,
-    ) -> tuple[str, dict[str, Any]]:
+        parameters: list[Any] | None = None,
+    ) -> tuple[str, list[Any]]:
         """
         Process the Criteria object to return an SQL WHERE clause.
 
         Args:
             criteria (Criteria): Criteria to process.
             columns_mapping (Mapping[str, str]): Mapping of column names to aliases.
-            parameters_counter (int): Counter for parameter names to ensure uniqueness.
+            parameters (list[Any], optional): List to collect parameters. Default to empty list.
 
         Returns:
-            tuple[str, dict[str, Any]]: Processed filter string for SQL WHERE clause and parameters for the SQL query.
+            tuple[str, list[Any]]: Processed filter string for SQL WHERE clause and parameters for the SQL query.
         """
+        if parameters is None:
+            parameters = []
+
         filters = ''
-        parameters: dict[str, Any] = {}
 
         if isinstance(criteria, AndCriteria):
+            left_parameters: list[Any] = []
             left_conditions, left_parameters = cls._process_filters_recursive(
                 criteria=criteria.left,
                 columns_mapping=columns_mapping,
-                parameters_counter=parameters_counter,
+                parameters=left_parameters,
             )
-            parameters_counter += len(left_parameters)
-            parameters.update(left_parameters)
 
+            right_parameters: list[Any] = []
             right_conditions, right_parameters = cls._process_filters_recursive(
                 criteria=criteria.right,
                 columns_mapping=columns_mapping,
-                parameters_counter=parameters_counter,
+                parameters=right_parameters,
             )
-            parameters_counter += len(right_parameters)
-            parameters.update(right_parameters)
+
+            parameters.extend(left_parameters)
+            parameters.extend(right_parameters)
 
             filters += f'({left_conditions} AND {right_conditions})'
 
             return filters, parameters
 
         if isinstance(criteria, OrCriteria):
+            left_parameters = []
             left_conditions, left_parameters = cls._process_filters_recursive(
                 criteria=criteria.left,
                 columns_mapping=columns_mapping,
-                parameters_counter=parameters_counter,
+                parameters=left_parameters,
             )
-            parameters_counter += len(left_parameters)
-            parameters.update(left_parameters)
 
+            right_parameters = []
             right_conditions, right_parameters = cls._process_filters_recursive(
                 criteria=criteria.right,
                 columns_mapping=columns_mapping,
-                parameters_counter=parameters_counter,
+                parameters=right_parameters,
             )
-            parameters_counter += len(right_parameters)
-            parameters.update(right_parameters)
+
+            parameters.extend(left_parameters)
+            parameters.extend(right_parameters)
 
             filters += f'({left_conditions} OR {right_conditions})'
 
             return filters, parameters
 
         if isinstance(criteria, NotCriteria):
+            not_parameters: list[Any] = []
             not_conditions, not_parameters = cls._process_filters_recursive(
                 criteria=criteria.criteria,
                 columns_mapping=columns_mapping,
-                parameters_counter=parameters_counter,
+                parameters=not_parameters,
             )
-            parameters_counter += len(not_parameters)
-            parameters.update(not_parameters)
+
+            parameters.extend(not_parameters)
 
             filters += f'NOT ({not_conditions})'
 
@@ -272,122 +277,101 @@ class CriteriaToMysqlConverter:
 
         for filter in criteria.filters:
             filter_field = columns_mapping.get(filter.field, filter.field)
-            parameter_name = f'parameter_{parameters_counter}'
-            parameters[parameter_name] = filter.value
-            placeholder = f'%({parameter_name})s'
-            parameters_counter += 1
+            placeholder = '%s'
 
             operator = Operator(value=filter.operator)
             match operator:
                 case Operator.EQUAL:
                     filters += f'{filter_field} = {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.NOT_EQUAL:
                     filters += f'{filter_field} != {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.GREATER:
                     filters += f'{filter_field} > {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.GREATER_OR_EQUAL:
                     filters += f'{filter_field} >= {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.LESS:
                     filters += f'{filter_field} < {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.LESS_OR_EQUAL:
                     filters += f'{filter_field} <= {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.LIKE:
                     filters += f'{filter_field} LIKE {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.NOT_LIKE:
                     filters += f'{filter_field} NOT LIKE {placeholder}'
+                    parameters.append(filter.value)
 
                 case Operator.CONTAINS:
                     filters += f"{filter_field} LIKE CONCAT('%', {placeholder}, '%')"
+                    parameters.append(filter.value)
 
                 case Operator.NOT_CONTAINS:
                     filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')"
+                    parameters.append(filter.value)
 
                 case Operator.STARTS_WITH:
                     filters += f"{filter_field} LIKE CONCAT({placeholder}, '%')"
+                    parameters.append(filter.value)
 
                 case Operator.NOT_STARTS_WITH:
                     filters += f"{filter_field} NOT LIKE CONCAT({placeholder}, '%')"
+                    parameters.append(filter.value)
 
                 case Operator.ENDS_WITH:
                     filters += f"{filter_field} LIKE CONCAT('%', {placeholder})"
+                    parameters.append(filter.value)
 
                 case Operator.NOT_ENDS_WITH:
                     filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder})"
+                    parameters.append(filter.value)
 
                 case Operator.BETWEEN:
-                    parameters.pop(parameter_name)
-                    parameters_counter -= 1
-
-                    start_parameter_name = f'parameter_{parameters_counter}'
-                    end_parameter_name = f'parameter_{parameters_counter + 1}'
-                    parameters[start_parameter_name] = filter.value[0]
-                    parameters[end_parameter_name] = filter.value[1]
-                    start_placeholder = f'%({start_parameter_name})s'
-                    end_placeholder = f'%({end_parameter_name})s'
-                    parameters_counter += 2
-
+                    start_placeholder = '%s'
+                    end_placeholder = '%s'
+                    parameters.append(filter.value[0])
+                    parameters.append(filter.value[1])
                     filters += f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}'
 
                 case Operator.NOT_BETWEEN:
-                    parameters.pop(parameter_name)
-                    parameters_counter -= 1
-
-                    start_parameter_name = f'parameter_{parameters_counter}'
-                    end_parameter_name = f'parameter_{parameters_counter + 1}'
-                    parameters[start_parameter_name] = filter.value[0]
-                    parameters[end_parameter_name] = filter.value[1]
-                    start_placeholder = f'%({start_parameter_name})s'
-                    end_placeholder = f'%({end_parameter_name})s'
-                    parameters_counter += 2
-
+                    start_placeholder = '%s'
+                    end_placeholder = '%s'
+                    parameters.append(filter.value[0])
+                    parameters.append(filter.value[1])
                     filters += f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}'
 
                 case Operator.IS_NULL:
-                    parameters.pop(parameter_name)
-                    parameters_counter -= 1
-
                     filters += f'{filter_field} IS NULL'
 
                 case Operator.IS_NOT_NULL:
-                    parameters.pop(parameter_name)
-                    parameters_counter -= 1
-
                     filters += f'{filter_field} IS NOT NULL'
 
                 case Operator.IN:
-                    parameters.pop(parameter_name)
-                    parameters_counter -= 1
-
                     values = filter.value
-                    placeholders = []
-                    for i, value in enumerate(values):
-                        param_name = f'parameter_{parameters_counter + i}'
-                        parameters[param_name] = value
-                        placeholders.append(f'%({param_name})s')
-                    parameters_counter += len(values)
-
+                    placeholders: list[str] = []
+                    for value in values:
+                        parameters.append(value)
+                        placeholders.append('%s')
                     filters += f'{filter_field} IN ({", ".join(placeholders)})'
 
                 case Operator.NOT_IN:
-                    parameters.pop(parameter_name)
-                    parameters_counter -= 1
-
                     values = filter.value
-                    placeholders = []
-                    for i, value in enumerate(values):
-                        param_name = f'parameter_{parameters_counter + i}'
-                        parameters[param_name] = value
-                        placeholders.append(f'%({param_name})s')
-                    parameters_counter += len(values)
-
-                    filters += f'{filter_field} NOT IN ({", ".join(placeholders)})'
+                    placeholders_not_in: list[str] = []
+                    for value in values:
+                        parameters.append(value)
+                        placeholders_not_in.append('%s')
+                    filters += f'{filter_field} NOT IN ({", ".join(placeholders_not_in)})'
 
                 case _:  # pragma: no cover
                     assert_never(operator)

@@ -24,7 +24,7 @@ class CriteriaToMariadbConverter(CriteriaToMysqlConverter):
     query, parameters = CriteriaToMariadbConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
     print(query)
     print(parameters)
-    # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE CONCAT('%', %(parameter_1)s) OR email LIKE CONCAT('%', %(parameter_2)s)));
-    # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
+    # >>> SELECT * FROM user WHERE (age >= %s AND (email LIKE CONCAT('%', %s) OR email LIKE CONCAT('%', %s)));
+    # >>> [18, '@gmail.com', '@yahoo.com']
     ```
     """  # noqa: E501  # fmt: skip

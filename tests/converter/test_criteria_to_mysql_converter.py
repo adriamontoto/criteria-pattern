@@ -6,11 +6,51 @@ from typing import Any
 
 from object_mother_pattern import IntegerMother
 from pytest import mark, raises as assert_raises
+from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converter import CriteriaToMysqlConverter
 from criteria_pattern.errors import InvalidColumnError, InvalidTableError
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
+
+
+def assert_valid_mysql_syntax(*, query: str, parameters: list[Any]) -> None:
+    """
+    Helper function to validate that the generated SQL query is valid MySQL syntax using sqlglot.
+
+    Args:
+        query (str): The SQL query to validate.
+        parameters (list[Any]): The parameters to use in the query.
+
+    Raises:
+        AssertionError: If the query is not valid MySQL syntax.
+    """
+
+    def to_literal(parameter: Any) -> str:
+        if parameter is None:
+            return 'NULL'
+
+        if isinstance(parameter, bool):
+            return 'TRUE' if parameter else 'FALSE'
+
+        if isinstance(parameter, (int | float)):
+            return str(parameter)
+
+        string = str(parameter).replace("'", "''")
+        return f"'{string}'"
+
+    parameterized_query = query
+    for _, parameter in enumerate(parameters):
+        parameterized_query = parameterized_query.replace('%s', to_literal(parameter=parameter), count=1)
+
+    try:
+        parsed = parse_one(sql=parameterized_query, dialect='mysql')
+        normalized = parsed.sql(dialect='mysql')
+
+        assert normalized is not None
+
+    except Exception as exception:
+        raise AssertionError('Invalid MySQL syntax.') from exception
 
 
 @mark.unit_testing
@@ -21,7 +61,8 @@ def test_criteria_to_mysql_converter_with_empty_criteria_and_all_columns() -> No
     query, parameters = CriteriaToMysqlConverter.convert(criteria=CriteriaMother.empty(), table='user')
 
     assert query == 'SELECT * FROM user;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -36,7 +77,8 @@ def test_criteria_to_mysql_converter_with_empty_criteria() -> None:
     )
 
     assert query == 'SELECT id, name FROM user;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -51,8 +93,9 @@ def test_criteria_to_mysql_converter_with_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = %(parameter_0)s;'
-    assert parameters == {'parameter_0': 'John Doe'}
+    assert query == 'SELECT id, name, email FROM user WHERE name = %s;'
+    assert parameters == ['John Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -67,8 +110,9 @@ def test_criteria_to_mysql_converter_with_not_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name != %(parameter_0)s;'
-    assert parameters == {'parameter_0': 'John Doe'}
+    assert query == 'SELECT id, name, email FROM user WHERE name != %s;'
+    assert parameters == ['John Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -83,8 +127,9 @@ def test_criteria_to_mysql_converter_with_greater_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age > %(parameter_0)s;'
-    assert parameters == {'parameter_0': 18}
+    assert query == 'SELECT id, name, email FROM user WHERE age > %s;'
+    assert parameters == [18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -99,8 +144,9 @@ def test_criteria_to_mysql_converter_with_greater_or_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age >= %(parameter_0)s;'
-    assert parameters == {'parameter_0': 18}
+    assert query == 'SELECT id, name, email FROM user WHERE age >= %s;'
+    assert parameters == [18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -115,8 +161,9 @@ def test_criteria_to_mysql_converter_with_less_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age < %(parameter_0)s;'
-    assert parameters == {'parameter_0': 18}
+    assert query == 'SELECT id, name, email FROM user WHERE age < %s;'
+    assert parameters == [18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -131,8 +178,9 @@ def test_criteria_to_mysql_converter_with_less_or_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age <= %(parameter_0)s;'
-    assert parameters == {'parameter_0': 18}
+    assert query == 'SELECT id, name, email FROM user WHERE age <= %s;'
+    assert parameters == [18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -147,8 +195,9 @@ def test_criteria_to_mysql_converter_with_like_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name LIKE %(parameter_0)s;'
-    assert parameters == {'parameter_0': 'John'}
+    assert query == 'SELECT id, name, email FROM user WHERE name LIKE %s;'
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -163,8 +212,9 @@ def test_criteria_to_mysql_converter_with_not_like_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name NOT LIKE %(parameter_0)s;'
-    assert parameters == {'parameter_0': 'John'}
+    assert query == 'SELECT id, name, email FROM user WHERE name NOT LIKE %s;'
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -179,8 +229,9 @@ def test_criteria_to_mysql_converter_with_contains_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT('%', %(parameter_0)s, '%');"
-    assert parameters == {'parameter_0': 'John'}
+    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT('%', %s, '%');"
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -195,8 +246,9 @@ def test_criteria_to_mysql_converter_with_not_contains_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT('%', %(parameter_0)s, '%');"
-    assert parameters == {'parameter_0': 'John'}
+    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT('%', %s, '%');"
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -211,8 +263,9 @@ def test_criteria_to_mysql_converter_with_starts_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT(%(parameter_0)s, '%');"
-    assert parameters == {'parameter_0': 'John'}
+    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT(%s, '%');"
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -227,8 +280,9 @@ def test_criteria_to_mysql_converter_with_not_starts_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT(%(parameter_0)s, '%');"
-    assert parameters == {'parameter_0': 'John'}
+    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT(%s, '%');"
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -243,8 +297,9 @@ def test_criteria_to_mysql_converter_with_ends_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT('%', %(parameter_0)s);"
-    assert parameters == {'parameter_0': 'Doe'}
+    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT('%', %s);"
+    assert parameters == ['Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -259,8 +314,9 @@ def test_criteria_to_mysql_converter_with_not_ends_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT('%', %(parameter_0)s);"
-    assert parameters == {'parameter_0': 'Doe'}
+    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT('%', %s);"
+    assert parameters == ['Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -275,8 +331,9 @@ def test_criteria_to_mysql_converter_with_between_filter_list() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN %(parameter_0)s AND %(parameter_1)s;'
-    assert parameters == {'parameter_0': 18, 'parameter_1': 30}
+    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN %s AND %s;'
+    assert parameters == [18, 30]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -291,8 +348,9 @@ def test_criteria_to_mysql_converter_with_between_filter_tuple() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN %(parameter_0)s AND %(parameter_1)s;'
-    assert parameters == {'parameter_0': 18, 'parameter_1': 30}
+    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN %s AND %s;'
+    assert parameters == [18, 30]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -307,8 +365,9 @@ def test_criteria_to_mysql_converter_with_not_between_filter_list() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN %(parameter_0)s AND %(parameter_1)s;'
-    assert parameters == {'parameter_0': 18, 'parameter_1': 30}
+    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN %s AND %s;'
+    assert parameters == [18, 30]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -323,8 +382,9 @@ def test_criteria_to_mysql_converter_with_not_between_filter_tuple() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN %(parameter_0)s AND %(parameter_1)s;'
-    assert parameters == {'parameter_0': 18, 'parameter_1': 30}
+    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN %s AND %s;'
+    assert parameters == [18, 30]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -340,7 +400,8 @@ def test_criteria_to_mysql_converter_with_is_null_filter() -> None:
     )
 
     assert query == 'SELECT id, name, email FROM user WHERE email IS NULL;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -356,7 +417,8 @@ def test_criteria_to_mysql_converter_with_is_not_null_filter() -> None:
     )
 
     assert query == 'SELECT id, name, email FROM user WHERE email IS NOT NULL;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -371,8 +433,9 @@ def test_criteria_to_mysql_converter_with_in_filter() -> None:
         columns=['id', 'name', 'status'],
     )
 
-    assert query == 'SELECT id, name, status FROM user WHERE status IN (%(parameter_0)s, %(parameter_1)s, %(parameter_2)s);'  # noqa: E501  # fmt: skip
-    assert parameters == {'parameter_0': 'active', 'parameter_1': 'pending', 'parameter_2': 'inactive'}
+    assert query == 'SELECT id, name, status FROM user WHERE status IN (%s, %s, %s);'  # noqa: E501  # fmt: skip
+    assert parameters == ['active', 'pending', 'inactive']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -387,8 +450,9 @@ def test_criteria_to_mysql_converter_with_not_in_filter() -> None:
         columns=['id', 'name', 'status'],
     )
 
-    assert query == 'SELECT id, name, status FROM user WHERE status NOT IN (%(parameter_0)s, %(parameter_1)s);'
-    assert parameters == {'parameter_0': 'deleted', 'parameter_1': 'banned'}
+    assert query == 'SELECT id, name, status FROM user WHERE status NOT IN (%s, %s);'
+    assert parameters == ['deleted', 'banned']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -411,10 +475,12 @@ def test_criteria_to_mysql_converter_with_and_criteria() -> None:
         columns=['*'],
     )
 
-    assert query1 == 'SELECT * FROM user WHERE (name = %(parameter_0)s AND email IS NOT NULL);'
-    assert parameters1 == {'parameter_0': 'John Doe'}
-    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL AND name = %(parameter_0)s);'
-    assert parameters2 == {'parameter_0': 'John Doe'}
+    assert query1 == 'SELECT * FROM user WHERE (name = %s AND email IS NOT NULL);'
+    assert parameters1 == ['John Doe']
+    assert_valid_mysql_syntax(query=query1, parameters=parameters1)
+    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL AND name = %s);'
+    assert parameters2 == ['John Doe']
+    assert_valid_mysql_syntax(query=query2, parameters=parameters2)
 
 
 @mark.unit_testing
@@ -429,10 +495,12 @@ def test_criteria_to_mysql_converter_with_or_criteria() -> None:
     query1, parameters1 = CriteriaToMysqlConverter.convert(criteria=criteria1 | criteria2, table='user', columns=['*'])
     query2, parameters2 = CriteriaToMysqlConverter.convert(criteria=criteria2 | criteria1, table='user', columns=['*'])
 
-    assert query1 == 'SELECT * FROM user WHERE (name = %(parameter_0)s OR email IS NOT NULL);'
-    assert parameters1 == {'parameter_0': 'John Doe'}
-    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL OR name = %(parameter_0)s);'
-    assert parameters2 == {'parameter_0': 'John Doe'}
+    assert query1 == 'SELECT * FROM user WHERE (name = %s OR email IS NOT NULL);'
+    assert parameters1 == ['John Doe']
+    assert_valid_mysql_syntax(query=query1, parameters=parameters1)
+    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL OR name = %s);'
+    assert parameters2 == ['John Doe']
+    assert_valid_mysql_syntax(query=query2, parameters=parameters2)
 
 
 @mark.unit_testing
@@ -444,8 +512,9 @@ def test_criteria_to_mysql_converter_with_not_criteria() -> None:
     criteria = CriteriaMother.with_filters(filters=[filter])
     query, parameters = CriteriaToMysqlConverter.convert(criteria=~criteria, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user WHERE NOT (name = %(parameter_0)s);'
-    assert parameters == {'parameter_0': 'John Doe'}
+    assert query == 'SELECT * FROM user WHERE NOT (name = %s);'
+    assert parameters == ['John Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -465,8 +534,9 @@ def test_criteria_to_mysql_converter_with_mixed_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == "SELECT * FROM user WHERE (name = %(parameter_0)s AND (email IS NOT NULL OR NOT (age < %(parameter_1)s)));"  # noqa: E501 # fmt: skip
-    assert parameters == {'parameter_0': 'John Doe', 'parameter_1': 18}
+    assert query == "SELECT * FROM user WHERE (name = %s AND (email IS NOT NULL OR NOT (age < %s)));"  # noqa: E501 # fmt: skip
+    assert parameters == ['John Doe', 18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -482,7 +552,8 @@ def test_criteria_to_mysql_converter_with_asc_order() -> None:
     )
 
     assert query == 'SELECT id, name, email FROM user ORDER BY name ASC;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -498,7 +569,8 @@ def test_criteria_to_mysql_converter_with_desc_order() -> None:
     )
 
     assert query == 'SELECT id, name, email FROM user ORDER BY name DESC;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -512,7 +584,8 @@ def test_criteria_to_mysql_converter_with_multiple_orders_on_the_same_criteria()
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user', columns=['*'])
 
     assert query == 'SELECT * FROM user ORDER BY name ASC, email DESC;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -528,7 +601,8 @@ def test_criteria_to_mysql_converter_with_multiple_orders_on_different_criteria(
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria1 & criteria2, table='user', columns=['*'])
 
     assert query == 'SELECT * FROM user ORDER BY name ASC, age ASC, email DESC;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -550,8 +624,9 @@ def test_criteria_to_mysql_converter_with_filtered_and_ordered_criteria() -> Non
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE (name = %(parameter_0)s AND (email IS NOT NULL OR NOT (age < %(parameter_1)s))) ORDER BY email DESC, name ASC;"  # noqa: E501 # fmt: skip
-    assert parameters == {'parameter_0': 'John Doe', 'parameter_1': 18}
+    assert query == "SELECT id, name, email FROM user WHERE (name = %s AND (email IS NOT NULL OR NOT (age < %s))) ORDER BY email DESC, name ASC;"  # noqa: E501 # fmt: skip
+    assert parameters == ['John Doe', 18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -568,8 +643,9 @@ def test_criteria_to_mysql_converter_with_columns_mapping() -> None:
         columns_mapping={'full_name': 'name'},
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = %(parameter_0)s ORDER BY name ASC;'
-    assert parameters == {'parameter_0': 'John Doe'}
+    assert query == 'SELECT id, name, email FROM user WHERE name = %s ORDER BY name ASC;'
+    assert parameters == ['John Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -586,8 +662,9 @@ def test_criteria_to_mysql_converter_with_columns_mapping_with_spaces() -> None:
         columns_mapping={'full name': 'name'},
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = %(parameter_0)s ORDER BY name ASC;'
-    assert parameters == {'parameter_0': 'John Doe'}
+    assert query == 'SELECT id, name, email FROM user WHERE name = %s ORDER BY name ASC;'
+    assert parameters == ['John Doe']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -786,8 +863,9 @@ def test_criteria_to_mysql_converter_with_filter_value_injection() -> None:
         valid_columns=['id', 'name'],
     )
 
-    assert query == 'SELECT id, name FROM user WHERE id = %(parameter_0)s;'
-    assert parameters == {'parameter_0': '1; DROP TABLE user;'}
+    assert query == 'SELECT id, name FROM user WHERE id = %s;'
+    assert parameters == ['1; DROP TABLE user;']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -848,7 +926,8 @@ def test_criteria_to_mysql_converter_with_pagination() -> None:
     expected_query = f'SELECT * FROM user LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -860,7 +939,8 @@ def test_criteria_to_mysql_converter_without_pagination() -> None:
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
 
     assert query == 'SELECT * FROM user;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -876,10 +956,11 @@ def test_criteria_to_mysql_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user WHERE name = %(parameter_0)s LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = f'SELECT * FROM user WHERE name = %s LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {'parameter_0': 'John'}
+    assert parameters == ['John']
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -898,7 +979,8 @@ def test_criteria_to_mysql_converter_with_orders_and_pagination() -> None:
     expected_query = f'SELECT * FROM user ORDER BY name ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -919,10 +1001,13 @@ def test_criteria_to_mysql_converter_with_filters_orders_and_pagination() -> Non
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT id, name, age FROM user WHERE age >= %(parameter_0)s ORDER BY name DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = (
+        f'SELECT id, name, age FROM user WHERE age >= %s ORDER BY name DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
+    )
 
     assert query == expected_query
-    assert parameters == {'parameter_0': 18}
+    assert parameters == [18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -934,7 +1019,8 @@ def test_criteria_to_mysql_converter_pagination_first_page() -> None:
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
 
     assert query == 'SELECT * FROM user LIMIT 10 OFFSET 0;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -946,7 +1032,8 @@ def test_criteria_to_mysql_converter_pagination_second_page() -> None:
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
 
     assert query == 'SELECT * FROM user LIMIT 10 OFFSET 10;'
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -964,10 +1051,11 @@ def test_criteria_to_mysql_converter_pagination_with_combined_criteria() -> None
     query, parameters = CriteriaToMysqlConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = f'SELECT * FROM user WHERE (active = %(parameter_0)s AND age > %(parameter_1)s) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = f'SELECT * FROM user WHERE (active = %s AND age > %s) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
 
     assert query == expected_query
-    assert parameters == {'parameter_0': True, 'parameter_1': 18}
+    assert parameters == [True, 18]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -983,7 +1071,8 @@ def test_criteria_to_mysql_converter_with_page_size_only() -> None:
     expected_query = f'SELECT * FROM user LIMIT {page_size};'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -998,10 +1087,11 @@ def test_criteria_to_mysql_converter_with_filters_and_page_size_only() -> None:
 
     query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user WHERE {filter.field} = %(parameter_0)s LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM user WHERE {filter.field} = %s LIMIT {page_size};'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {'parameter_0': filter.value}
+    assert parameters == [filter.value]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
 
 
 @mark.unit_testing
@@ -1019,4 +1109,5 @@ def test_criteria_to_mysql_converter_with_orders_and_page_size_only() -> None:
     expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT {page_size};'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == []
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
