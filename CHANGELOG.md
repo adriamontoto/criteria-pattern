@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.1.0 (2025-09-10)
+
+### 🐛 Bug Fixes
+
+- Update FilterOperatorMother to exclude specific operators that can cause random test failures
+  ([`eafad7d`](https://github.com/adriamontoto/criteria-pattern/commit/eafad7dfa9dcf555a6cca3206d7f385ca186a7b4))
+
+### ✨ Features
+
+- Implement sqlite criteria converter
+  ([`b05576b`](https://github.com/adriamontoto/criteria-pattern/commit/b05576be4742f4819040471e658e0cc01e09a0c1))
+
+
 ## v2.0.0 (2025-09-10)
 
 ### ✨ Features
