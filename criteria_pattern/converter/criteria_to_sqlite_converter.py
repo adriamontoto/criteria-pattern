@@ -26,7 +26,7 @@ class CriteriaToSqliteConverter:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
     print(query)
     print(parameters)
-    # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%' || %(parameter_1)s OR email LIKE '%' || %(parameter_2)s));
+    # >>> SELECT * FROM user WHERE (age >= :parameter_0 AND (email LIKE '%' || :parameter_1 OR email LIKE '%' || :parameter_2));
     # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
     ```
     """  # noqa: E501  # fmt: skip
@@ -80,7 +80,7 @@ class CriteriaToSqliteConverter:
         query, parameters = CriteriaToSqliteConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
         print(query)
         print(parameters)
-        # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%' || %(parameter_1)s OR email LIKE '%' || %(parameter_2)s));
+        # >>> SELECT * FROM user WHERE (age >= :parameter_0 AND (email LIKE '%' || :parameter_1 OR email LIKE '%' || :parameter_2));
         # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
         ```
         """  # noqa: E501  # fmt: skip
@@ -274,7 +274,7 @@ class CriteriaToSqliteConverter:
             filter_field = columns_mapping.get(filter.field, filter.field)
             parameter_name = f'parameter_{parameters_counter}'
             parameters[parameter_name] = filter.value
-            placeholder = f'%({parameter_name})s'
+            placeholder = f':{parameter_name}'
             parameters_counter += 1
 
             operator = Operator(value=filter.operator)
@@ -329,8 +329,8 @@ class CriteriaToSqliteConverter:
                     end_parameter_name = f'parameter_{parameters_counter + 1}'
                     parameters[start_parameter_name] = filter.value[0]
                     parameters[end_parameter_name] = filter.value[1]
-                    start_placeholder = f'%({start_parameter_name})s'
-                    end_placeholder = f'%({end_parameter_name})s'
+                    start_placeholder = f':{start_parameter_name}'
+                    end_placeholder = f':{end_parameter_name}'
                     parameters_counter += 2
 
                     filters += f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}'
@@ -343,8 +343,8 @@ class CriteriaToSqliteConverter:
                     end_parameter_name = f'parameter_{parameters_counter + 1}'
                     parameters[start_parameter_name] = filter.value[0]
                     parameters[end_parameter_name] = filter.value[1]
-                    start_placeholder = f'%({start_parameter_name})s'
-                    end_placeholder = f'%({end_parameter_name})s'
+                    start_placeholder = f':{start_parameter_name}'
+                    end_placeholder = f':{end_parameter_name}'
                     parameters_counter += 2
 
                     filters += f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}'
@@ -370,7 +370,7 @@ class CriteriaToSqliteConverter:
                     for i, value in enumerate(values):
                         param_name = f'parameter_{parameters_counter + i}'
                         parameters[param_name] = value
-                        placeholders.append(f'%({param_name})s')
+                        placeholders.append(f':{param_name}')
                     parameters_counter += len(values)
 
                     filters += f'{filter_field} IN ({", ".join(placeholders)})'
@@ -384,7 +384,7 @@ class CriteriaToSqliteConverter:
                     for i, value in enumerate(values):
                         param_name = f'parameter_{parameters_counter + i}'
                         parameters[param_name] = value
-                        placeholders.append(f'%({param_name})s')
+                        placeholders.append(f':{param_name}')
                     parameters_counter += len(values)
 
                     filters += f'{filter_field} NOT IN ({", ".join(placeholders)})'
