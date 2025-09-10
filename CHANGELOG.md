@@ -2,6 +2,23 @@
 
 <!-- version list -->
 
+## v2.1.1 (2025-09-10)
+
+### 🐛 Bug Fixes
+
+- Enhance CriteriaToPostgresqlConverter to quote identifiers
+  ([`3038593`](https://github.com/adriamontoto/criteria-pattern/commit/30385936c03d0088cad9d69af3bdb3da7a5878c3))
+
+- Enhance CriteriaToSqliteConverter to quote identifiers
+  ([`966a35e`](https://github.com/adriamontoto/criteria-pattern/commit/966a35e79e1a6f5cd72ad5c1edd317d0f15d134d))
+
+- Enhance MySQL and Mariadb converters to use their dialect parameter style
+  ([`1af2496`](https://github.com/adriamontoto/criteria-pattern/commit/1af24968ea3c1bc063ab0a238fe5e26cf06322c1))
+
+- Enhance MySQL and Mariadb converters to use their dialect parameter style
+  ([`4ae0446`](https://github.com/adriamontoto/criteria-pattern/commit/4ae0446f998cd284d58ffbda2c6c5a91b25ff3ce))
+
+
 ## v2.1.0 (2025-09-10)
 
 ### 🐛 Bug Fixes
