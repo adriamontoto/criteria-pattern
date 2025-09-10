@@ -1,3 +1,3 @@
-from .sql_converter import SqlConverter
+from .criteria_to_postgresql_converter import CriteriaToPostgresqlConverter
 
-__all__ = ('SqlConverter',)
+__all__ = ('CriteriaToPostgresqlConverter',)

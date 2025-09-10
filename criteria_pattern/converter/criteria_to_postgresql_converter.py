@@ -1,5 +1,5 @@
 """
-Raw SQL converter module.
+Criteria to Postgresql converter module.
 """
 
 from collections.abc import Mapping, Sequence
@@ -10,20 +10,22 @@ from criteria_pattern.errors import InvalidColumnError, InvalidTableError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
-class SqlConverter:
+class CriteriaToPostgresqlConverter:
     """
-    Raw SQL converter.
+    Criteria to Postgresql converter.
 
     Example:
     ```python
     from criteria_pattern import Criteria, Filter, Operator
-    from criteria_pattern.converter import SqlConverter
+    from criteria_pattern.converter import CriteriaToPostgresqlConverter
 
     is_adult = Criteria(filters=[Filter('age', Operator.GREATER_OR_EQUAL, 18)])
     email_is_gmail = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@gmail.com')])
     email_is_yahoo = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@yahoo.com')])
 
-    query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+    query, parameters = CriteriaToPostgresqlConverter.convert(
+        criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user'
+    )
     print(query)
     print(parameters)
     # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
@@ -45,7 +47,7 @@ class SqlConverter:
         valid_columns: Sequence[str] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
-        Convert the Criteria object to a raw SQL query.
+        Convert the Criteria object to a Postgresql query.
 
         Args:
             criteria (Criteria): Criteria to convert.
@@ -66,18 +68,20 @@ class SqlConverter:
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
 
         Returns:
-            tuple[str, dict[str, Any]]: The raw SQL query string and the query parameters.
+            tuple[str, dict[str, Any]]: The Postgresql query string and the query parameters.
 
         Example:
         ```python
         from criteria_pattern import Criteria, Filter, Operator
-        from criteria_pattern.converter import SqlConverter
+        from criteria_pattern.converter import CriteriaToPostgresqlConverter
 
         is_adult = Criteria(filters=[Filter('age', Operator.GREATER_OR_EQUAL, 18)])
         email_is_gmail = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@gmail.com')])
         email_is_yahoo = Criteria(filters=[Filter('email', Operator.ENDS_WITH, '@yahoo.com')])
 
-        query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+        query, parameters = CriteriaToPostgresqlConverter.convert(
+            criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user'
+        )
         print(query)
         print(parameters)
         # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));

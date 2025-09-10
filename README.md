@@ -72,13 +72,13 @@ This [project's documentation](https://deepwiki.com/adriamontoto/criteria-patter
 
 ```python
 from criteria_pattern import Criteria, Filter, Operator
-from criteria_pattern.converter import SqlConverter
+from criteria_pattern.converter import CriteriaToPostgresqlConverter
 
 is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
 email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
 email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-query, parameters = SqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+query, parameters = CriteriaToPostgresqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
 print(query)
 print(parameters)
 # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
