@@ -98,7 +98,9 @@ class CriteriaToSqliteConverter:
         if check_criteria_injection:
             cls._validate_criteria(criteria=criteria, valid_columns=valid_columns)
 
-        query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
+        quoted_columns = ['*' if column == '*' else f'"{column}"' for column in columns]
+        quoted_table = '.'.join(f'"{part}"' for part in table.split('.'))
+        query = f'SELECT {", ".join(quoted_columns)} FROM {quoted_table}'  # noqa: S608  # nosec
         parameters: dict[str, Any] = {}
 
         if criteria.has_filters():
@@ -280,46 +282,46 @@ class CriteriaToSqliteConverter:
             operator = Operator(value=filter.operator)
             match operator:
                 case Operator.EQUAL:
-                    filters += f'{filter_field} = {placeholder}'
+                    filters += f'"{filter_field}" = {placeholder}'
 
                 case Operator.NOT_EQUAL:
-                    filters += f'{filter_field} != {placeholder}'
+                    filters += f'"{filter_field}" != {placeholder}'
 
                 case Operator.GREATER:
-                    filters += f'{filter_field} > {placeholder}'
+                    filters += f'"{filter_field}" > {placeholder}'
 
                 case Operator.GREATER_OR_EQUAL:
-                    filters += f'{filter_field} >= {placeholder}'
+                    filters += f'"{filter_field}" >= {placeholder}'
 
                 case Operator.LESS:
-                    filters += f'{filter_field} < {placeholder}'
+                    filters += f'"{filter_field}" < {placeholder}'
 
                 case Operator.LESS_OR_EQUAL:
-                    filters += f'{filter_field} <= {placeholder}'
+                    filters += f'"{filter_field}" <= {placeholder}'
 
                 case Operator.LIKE:
-                    filters += f'{filter_field} LIKE {placeholder}'
+                    filters += f'"{filter_field}" LIKE {placeholder}'
 
                 case Operator.NOT_LIKE:
-                    filters += f'{filter_field} NOT LIKE {placeholder}'
+                    filters += f'"{filter_field}" NOT LIKE {placeholder}'
 
                 case Operator.CONTAINS:
-                    filters += f"{filter_field} LIKE '%' || {placeholder} || '%'"
+                    filters += f"\"{filter_field}\" LIKE '%' || {placeholder} || '%'"
 
                 case Operator.NOT_CONTAINS:
-                    filters += f"{filter_field} NOT LIKE '%' || {placeholder} || '%'"
+                    filters += f"\"{filter_field}\" NOT LIKE '%' || {placeholder} || '%'"
 
                 case Operator.STARTS_WITH:
-                    filters += f"{filter_field} LIKE {placeholder} || '%'"
+                    filters += f'"{filter_field}" LIKE {placeholder} || \'%\''
 
                 case Operator.NOT_STARTS_WITH:
-                    filters += f"{filter_field} NOT LIKE {placeholder} || '%'"
+                    filters += f'"{filter_field}" NOT LIKE {placeholder} || \'%\''
 
                 case Operator.ENDS_WITH:
-                    filters += f"{filter_field} LIKE '%' || {placeholder}"
+                    filters += f'"{filter_field}" LIKE \'%\' || {placeholder}'
 
                 case Operator.NOT_ENDS_WITH:
-                    filters += f"{filter_field} NOT LIKE '%' || {placeholder}"
+                    filters += f'"{filter_field}" NOT LIKE \'%\' || {placeholder}'
 
                 case Operator.BETWEEN:
                     parameters.pop(parameter_name)
@@ -333,7 +335,7 @@ class CriteriaToSqliteConverter:
                     end_placeholder = f':{end_parameter_name}'
                     parameters_counter += 2
 
-                    filters += f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}'
+                    filters += f'"{filter_field}" BETWEEN {start_placeholder} AND {end_placeholder}'
 
                 case Operator.NOT_BETWEEN:
                     parameters.pop(parameter_name)
@@ -347,19 +349,19 @@ class CriteriaToSqliteConverter:
                     end_placeholder = f':{end_parameter_name}'
                     parameters_counter += 2
 
-                    filters += f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}'
+                    filters += f'"{filter_field}" NOT BETWEEN {start_placeholder} AND {end_placeholder}'
 
                 case Operator.IS_NULL:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
 
-                    filters += f'{filter_field} IS NULL'
+                    filters += f'"{filter_field}" IS NULL'
 
                 case Operator.IS_NOT_NULL:
                     parameters.pop(parameter_name)
                     parameters_counter -= 1
 
-                    filters += f'{filter_field} IS NOT NULL'
+                    filters += f'"{filter_field}" IS NOT NULL'
 
                 case Operator.IN:
                     parameters.pop(parameter_name)
@@ -373,7 +375,7 @@ class CriteriaToSqliteConverter:
                         placeholders.append(f':{param_name}')
                     parameters_counter += len(values)
 
-                    filters += f'{filter_field} IN ({", ".join(placeholders)})'
+                    filters += f'"{filter_field}" IN ({", ".join(placeholders)})'
 
                 case Operator.NOT_IN:
                     parameters.pop(parameter_name)
@@ -387,7 +389,7 @@ class CriteriaToSqliteConverter:
                         placeholders.append(f':{param_name}')
                     parameters_counter += len(values)
 
-                    filters += f'{filter_field} NOT IN ({", ".join(placeholders)})'
+                    filters += f'"{filter_field}" NOT IN ({", ".join(placeholders)})'
 
                 case _:  # pragma: no cover
                     assert_never(operator)
@@ -414,10 +416,10 @@ class CriteriaToSqliteConverter:
             direction = Direction(value=order.direction)
             match direction:
                 case Direction.ASC:
-                    orders += f'{order_field} ASC, '
+                    orders += f'"{order_field}" ASC, '
 
                 case Direction.DESC:
-                    orders += f'{order_field} DESC, '
+                    orders += f'"{order_field}" DESC, '
 
                 case _:  # pragma: no cover
                     assert_never(direction)

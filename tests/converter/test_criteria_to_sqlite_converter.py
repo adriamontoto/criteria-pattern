@@ -41,7 +41,7 @@ def test_criteria_to_sqlite_converter_with_empty_criteria_and_all_columns() -> N
     """
     query, parameters = CriteriaToSqliteConverter.convert(criteria=CriteriaMother.empty(), table='user')
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM "user";'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -57,7 +57,7 @@ def test_criteria_to_sqlite_converter_with_empty_criteria() -> None:
         columns=['id', 'name'],
     )
 
-    assert query == 'SELECT id, name FROM user;'
+    assert query == 'SELECT "id", "name" FROM "user";'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -74,7 +74,7 @@ def test_criteria_to_sqlite_converter_with_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" = :parameter_0;'
     assert parameters == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -91,7 +91,7 @@ def test_criteria_to_sqlite_converter_with_not_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name != :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" != :parameter_0;'
     assert parameters == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -108,7 +108,7 @@ def test_criteria_to_sqlite_converter_with_greater_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age > :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" > :parameter_0;'
     assert parameters == {'parameter_0': 18}
     assert_valid_sqlite_syntax(query=query)
 
@@ -125,7 +125,7 @@ def test_criteria_to_sqlite_converter_with_greater_or_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age >= :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" >= :parameter_0;'
     assert parameters == {'parameter_0': 18}
     assert_valid_sqlite_syntax(query=query)
 
@@ -142,7 +142,7 @@ def test_criteria_to_sqlite_converter_with_less_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age < :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" < :parameter_0;'
     assert parameters == {'parameter_0': 18}
     assert_valid_sqlite_syntax(query=query)
 
@@ -159,7 +159,7 @@ def test_criteria_to_sqlite_converter_with_less_or_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age <= :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" <= :parameter_0;'
     assert parameters == {'parameter_0': 18}
     assert_valid_sqlite_syntax(query=query)
 
@@ -176,7 +176,7 @@ def test_criteria_to_sqlite_converter_with_like_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name LIKE :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" LIKE :parameter_0;'
     assert parameters == {'parameter_0': 'John'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -193,7 +193,7 @@ def test_criteria_to_sqlite_converter_with_not_like_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name NOT LIKE :parameter_0;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" NOT LIKE :parameter_0;'
     assert parameters == {'parameter_0': 'John'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -210,7 +210,7 @@ def test_criteria_to_sqlite_converter_with_contains_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE '%' || :parameter_0 || '%';"
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" LIKE \'%\' || :parameter_0 || \'%\';'
     assert parameters == {'parameter_0': 'John'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -227,7 +227,7 @@ def test_criteria_to_sqlite_converter_with_not_contains_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE '%' || :parameter_0 || '%';"
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" NOT LIKE \'%\' || :parameter_0 || \'%\';'
     assert parameters == {'parameter_0': 'John'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -244,7 +244,7 @@ def test_criteria_to_sqlite_converter_with_starts_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE :parameter_0 || '%';"
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" LIKE :parameter_0 || \'%\';'
     assert parameters == {'parameter_0': 'John'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -261,7 +261,7 @@ def test_criteria_to_sqlite_converter_with_not_starts_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE :parameter_0 || '%';"
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" NOT LIKE :parameter_0 || \'%\';'
     assert parameters == {'parameter_0': 'John'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -278,7 +278,7 @@ def test_criteria_to_sqlite_converter_with_ends_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE '%' || :parameter_0;"
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" LIKE \'%\' || :parameter_0;'
     assert parameters == {'parameter_0': 'Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -295,7 +295,7 @@ def test_criteria_to_sqlite_converter_with_not_ends_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE '%' || :parameter_0;"
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" NOT LIKE \'%\' || :parameter_0;'
     assert parameters == {'parameter_0': 'Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -312,7 +312,7 @@ def test_criteria_to_sqlite_converter_with_between_filter_list() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN :parameter_0 AND :parameter_1;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" BETWEEN :parameter_0 AND :parameter_1;'
     assert parameters == {'parameter_0': 18, 'parameter_1': 30}
     assert_valid_sqlite_syntax(query=query)
 
@@ -329,7 +329,7 @@ def test_criteria_to_sqlite_converter_with_between_filter_tuple() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN :parameter_0 AND :parameter_1;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" BETWEEN :parameter_0 AND :parameter_1;'
     assert parameters == {'parameter_0': 18, 'parameter_1': 30}
     assert_valid_sqlite_syntax(query=query)
 
@@ -346,7 +346,7 @@ def test_criteria_to_sqlite_converter_with_not_between_filter_list() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN :parameter_0 AND :parameter_1;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" NOT BETWEEN :parameter_0 AND :parameter_1;'
     assert parameters == {'parameter_0': 18, 'parameter_1': 30}
     assert_valid_sqlite_syntax(query=query)
 
@@ -363,7 +363,7 @@ def test_criteria_to_sqlite_converter_with_not_between_filter_tuple() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN :parameter_0 AND :parameter_1;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "age" NOT BETWEEN :parameter_0 AND :parameter_1;'
     assert parameters == {'parameter_0': 18, 'parameter_1': 30}
     assert_valid_sqlite_syntax(query=query)
 
@@ -380,7 +380,7 @@ def test_criteria_to_sqlite_converter_with_is_null_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE email IS NULL;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "email" IS NULL;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -397,7 +397,7 @@ def test_criteria_to_sqlite_converter_with_is_not_null_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE email IS NOT NULL;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "email" IS NOT NULL;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -414,7 +414,7 @@ def test_criteria_to_sqlite_converter_with_in_filter() -> None:
         columns=['id', 'name', 'status'],
     )
 
-    assert query == 'SELECT id, name, status FROM user WHERE status IN (:parameter_0, :parameter_1, :parameter_2);'  # noqa: E501  # fmt: skip
+    assert query == 'SELECT "id", "name", "status" FROM "user" WHERE "status" IN (:parameter_0, :parameter_1, :parameter_2);'  # noqa: E501  # fmt: skip
     assert parameters == {'parameter_0': 'active', 'parameter_1': 'pending', 'parameter_2': 'inactive'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -431,7 +431,7 @@ def test_criteria_to_sqlite_converter_with_not_in_filter() -> None:
         columns=['id', 'name', 'status'],
     )
 
-    assert query == 'SELECT id, name, status FROM user WHERE status NOT IN (:parameter_0, :parameter_1);'
+    assert query == 'SELECT "id", "name", "status" FROM "user" WHERE "status" NOT IN (:parameter_0, :parameter_1);'
     assert parameters == {'parameter_0': 'deleted', 'parameter_1': 'banned'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -456,10 +456,10 @@ def test_criteria_to_sqlite_converter_with_and_criteria() -> None:
         columns=['*'],
     )
 
-    assert query1 == 'SELECT * FROM user WHERE (name = :parameter_0 AND email IS NOT NULL);'
+    assert query1 == 'SELECT * FROM "user" WHERE ("name" = :parameter_0 AND "email" IS NOT NULL);'
     assert parameters1 == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query1)
-    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL AND name = :parameter_0);'
+    assert query2 == 'SELECT * FROM "user" WHERE ("email" IS NOT NULL AND "name" = :parameter_0);'
     assert parameters2 == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query2)
 
@@ -476,10 +476,10 @@ def test_criteria_to_sqlite_converter_with_or_criteria() -> None:
     query1, parameters1 = CriteriaToSqliteConverter.convert(criteria=criteria1 | criteria2, table='user', columns=['*'])
     query2, parameters2 = CriteriaToSqliteConverter.convert(criteria=criteria2 | criteria1, table='user', columns=['*'])
 
-    assert query1 == 'SELECT * FROM user WHERE (name = :parameter_0 OR email IS NOT NULL);'
+    assert query1 == 'SELECT * FROM "user" WHERE ("name" = :parameter_0 OR "email" IS NOT NULL);'
     assert parameters1 == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query1)
-    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL OR name = :parameter_0);'
+    assert query2 == 'SELECT * FROM "user" WHERE ("email" IS NOT NULL OR "name" = :parameter_0);'
     assert parameters2 == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query2)
 
@@ -493,7 +493,7 @@ def test_criteria_to_sqlite_converter_with_not_criteria() -> None:
     criteria = CriteriaMother.with_filters(filters=[filter])
     query, parameters = CriteriaToSqliteConverter.convert(criteria=~criteria, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user WHERE NOT (name = :parameter_0);'
+    assert query == 'SELECT * FROM "user" WHERE NOT ("name" = :parameter_0);'
     assert parameters == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -515,7 +515,7 @@ def test_criteria_to_sqlite_converter_with_mixed_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == "SELECT * FROM user WHERE (name = :parameter_0 AND (email IS NOT NULL OR NOT (age < :parameter_1)));"  # noqa: E501 # fmt: skip
+    assert query == 'SELECT * FROM "user" WHERE ("name" = :parameter_0 AND ("email" IS NOT NULL OR NOT ("age" < :parameter_1)));'  # noqa: E501 # fmt: skip
     assert parameters == {'parameter_0': 'John Doe', 'parameter_1': 18}
     assert_valid_sqlite_syntax(query=query)
 
@@ -532,7 +532,7 @@ def test_criteria_to_sqlite_converter_with_asc_order() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user ORDER BY name ASC;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" ORDER BY "name" ASC;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -549,7 +549,7 @@ def test_criteria_to_sqlite_converter_with_desc_order() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user ORDER BY name DESC;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" ORDER BY "name" DESC;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -564,7 +564,7 @@ def test_criteria_to_sqlite_converter_with_multiple_orders_on_the_same_criteria(
     criteria = CriteriaMother.with_orders(orders=[order1, order2])
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user ORDER BY name ASC, email DESC;'
+    assert query == 'SELECT * FROM "user" ORDER BY "name" ASC, "email" DESC;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -581,7 +581,7 @@ def test_criteria_to_sqlite_converter_with_multiple_orders_on_different_criteria
     criteria2 = CriteriaMother.with_orders(orders=[order3])
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria1 & criteria2, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user ORDER BY name ASC, age ASC, email DESC;'
+    assert query == 'SELECT * FROM "user" ORDER BY "name" ASC, "age" ASC, "email" DESC;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -605,7 +605,7 @@ def test_criteria_to_sqlite_converter_with_filtered_and_ordered_criteria() -> No
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE (name = :parameter_0 AND (email IS NOT NULL OR NOT (age < :parameter_1))) ORDER BY email DESC, name ASC;"  # noqa: E501 # fmt: skip
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE ("name" = :parameter_0 AND ("email" IS NOT NULL OR NOT ("age" < :parameter_1))) ORDER BY "email" DESC, "name" ASC;'  # noqa: E501 # fmt: skip
     assert parameters == {'parameter_0': 'John Doe', 'parameter_1': 18}
     assert_valid_sqlite_syntax(query=query)
 
@@ -624,7 +624,7 @@ def test_criteria_to_sqlite_converter_with_columns_mapping() -> None:
         columns_mapping={'full_name': 'name'},
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = :parameter_0 ORDER BY name ASC;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" = :parameter_0 ORDER BY "name" ASC;'
     assert parameters == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -643,7 +643,7 @@ def test_criteria_to_sqlite_converter_with_columns_mapping_with_spaces() -> None
         columns_mapping={'full name': 'name'},
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = :parameter_0 ORDER BY name ASC;'
+    assert query == 'SELECT "id", "name", "email" FROM "user" WHERE "name" = :parameter_0 ORDER BY "name" ASC;'
     assert parameters == {'parameter_0': 'John Doe'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -844,7 +844,7 @@ def test_criteria_to_sqlite_converter_with_filter_value_injection() -> None:
         valid_columns=['id', 'name'],
     )
 
-    assert query == 'SELECT id, name FROM user WHERE id = :parameter_0;'
+    assert query == 'SELECT "id", "name" FROM "user" WHERE "id" = :parameter_0;'
     assert parameters == {'parameter_0': '1; DROP TABLE user;'}
     assert_valid_sqlite_syntax(query=query)
 
@@ -904,7 +904,7 @@ def test_criteria_to_sqlite_converter_with_pagination() -> None:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
 
     assert query == expected_query
     assert parameters == {}
@@ -919,7 +919,7 @@ def test_criteria_to_sqlite_converter_without_pagination() -> None:
     criteria = Criteria()
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM "user";'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -937,7 +937,7 @@ def test_criteria_to_sqlite_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user WHERE name = :parameter_0 LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" WHERE "name" = :parameter_0 LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
 
     assert query == expected_query
     assert parameters == {'parameter_0': 'John'}
@@ -957,7 +957,7 @@ def test_criteria_to_sqlite_converter_with_orders_and_pagination() -> None:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user ORDER BY name ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" ORDER BY "name" ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
 
     assert query == expected_query
     assert parameters == {}
@@ -982,7 +982,7 @@ def test_criteria_to_sqlite_converter_with_filters_orders_and_pagination() -> No
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT id, name, age FROM user WHERE age >= :parameter_0 ORDER BY name DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = f'SELECT "id", "name", "age" FROM "user" WHERE "age" >= :parameter_0 ORDER BY "name" DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
 
     assert query == expected_query
     assert parameters == {'parameter_0': 18}
@@ -997,7 +997,7 @@ def test_criteria_to_sqlite_converter_pagination_first_page() -> None:
     criteria = Criteria(page_size=10, page_number=1)
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 0;'
+    assert query == 'SELECT * FROM "user" LIMIT 10 OFFSET 0;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -1010,7 +1010,7 @@ def test_criteria_to_sqlite_converter_pagination_second_page() -> None:
     criteria = Criteria(page_size=10, page_number=2)
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 10;'
+    assert query == 'SELECT * FROM "user" LIMIT 10 OFFSET 10;'
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
 
@@ -1030,9 +1030,7 @@ def test_criteria_to_sqlite_converter_pagination_with_combined_criteria() -> Non
     query, parameters = CriteriaToSqliteConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = (
-        f'SELECT * FROM user WHERE (active = :parameter_0 AND age > :parameter_1) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
-    )
+    expected_query = f'SELECT * FROM "user" WHERE ("active" = :parameter_0 AND "age" > :parameter_1) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
 
     assert query == expected_query
     assert parameters == {'parameter_0': True, 'parameter_1': 18}
@@ -1049,7 +1047,7 @@ def test_criteria_to_sqlite_converter_with_page_size_only() -> None:
 
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" LIMIT {page_size};'  # noqa: S608
 
     assert query == expected_query
     assert parameters == {}
@@ -1068,7 +1066,7 @@ def test_criteria_to_sqlite_converter_with_filters_and_page_size_only() -> None:
 
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user WHERE {filter.field} = :parameter_0 LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" WHERE "{filter.field}" = :parameter_0 LIMIT {page_size};'  # noqa: S608
 
     assert query == expected_query
     assert parameters == {'parameter_0': filter.value}
@@ -1087,7 +1085,7 @@ def test_criteria_to_sqlite_converter_with_orders_and_page_size_only() -> None:
 
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" ORDER BY "{order.field}" ASC LIMIT {page_size};'  # noqa: S608
 
     assert query == expected_query
     assert parameters == {}

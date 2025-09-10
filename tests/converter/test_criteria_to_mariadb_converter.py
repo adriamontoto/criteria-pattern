@@ -41,7 +41,7 @@ def assert_valid_mariadb_syntax(*, query: str, parameters: list[Any]) -> None:
 
     parameterized_query = query
     for _, parameter in enumerate(parameters):
-        parameterized_query = parameterized_query.replace('%s', to_literal(parameter=parameter), count=1)
+        parameterized_query = parameterized_query.replace('%s', to_literal(parameter=parameter), 1)
 
     try:
         parsed = parse_one(sql=parameterized_query, dialect='mysql')
