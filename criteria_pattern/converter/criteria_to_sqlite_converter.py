@@ -1,5 +1,5 @@
 """
-Criteria to MySQL converter module.
+Criteria to SQLite converter module.
 """
 
 from collections.abc import Mapping, Sequence
@@ -10,23 +10,23 @@ from criteria_pattern.errors import InvalidColumnError, InvalidTableError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
-class CriteriaToMysqlConverter:
+class CriteriaToSqliteConverter:
     """
-    Criteria to MySQL converter.
+    Criteria to SQLite converter.
 
     Example:
     ```python
     from criteria_pattern import Criteria, Filter, Operator
-    from criteria_pattern.converter import CriteriaToMysqlConverter
+    from criteria_pattern.converter import CriteriaToSqliteConverter
 
     is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
     email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
     email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-    query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+    query, parameters = CriteriaToSqliteConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
     print(query)
     print(parameters)
-    # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE CONCAT('%', %(parameter_1)s) OR email LIKE CONCAT('%', %(parameter_2)s)));
+    # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%' || %(parameter_1)s OR email LIKE '%' || %(parameter_2)s));
     # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
     ```
     """  # noqa: E501  # fmt: skip
@@ -45,7 +45,7 @@ class CriteriaToMysqlConverter:
         valid_columns: Sequence[str] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
-        Convert the Criteria object to a MySQL query.
+        Convert the Criteria object to a SQLite query.
 
         Args:
             criteria (Criteria): Criteria to convert.
@@ -66,21 +66,21 @@ class CriteriaToMysqlConverter:
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
 
         Returns:
-            tuple[str, dict[str, Any]]: The MySQL query string and the query parameters as a dict.
+            tuple[str, dict[str, Any]]: The SQLite query string and the query parameters.
 
         Example:
         ```python
         from criteria_pattern import Criteria, Filter, Operator
-        from criteria_pattern.converter import CriteriaToMysqlConverter
+        from criteria_pattern.converter import CriteriaToSqliteConverter
 
         is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
         email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
         email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-        query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+        query, parameters = CriteriaToSqliteConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
         print(query)
         print(parameters)
-        # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE CONCAT('%', %(parameter_1)s) OR email LIKE CONCAT('%', %(parameter_2)s)));
+        # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%' || %(parameter_1)s OR email LIKE '%' || %(parameter_2)s));
         # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
         ```
         """  # noqa: E501  # fmt: skip
@@ -304,22 +304,22 @@ class CriteriaToMysqlConverter:
                     filters += f'{filter_field} NOT LIKE {placeholder}'
 
                 case Operator.CONTAINS:
-                    filters += f"{filter_field} LIKE CONCAT('%', {placeholder}, '%')"
+                    filters += f"{filter_field} LIKE '%' || {placeholder} || '%'"
 
                 case Operator.NOT_CONTAINS:
-                    filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')"
+                    filters += f"{filter_field} NOT LIKE '%' || {placeholder} || '%'"
 
                 case Operator.STARTS_WITH:
-                    filters += f"{filter_field} LIKE CONCAT({placeholder}, '%')"
+                    filters += f"{filter_field} LIKE {placeholder} || '%'"
 
                 case Operator.NOT_STARTS_WITH:
-                    filters += f"{filter_field} NOT LIKE CONCAT({placeholder}, '%')"
+                    filters += f"{filter_field} NOT LIKE {placeholder} || '%'"
 
                 case Operator.ENDS_WITH:
-                    filters += f"{filter_field} LIKE CONCAT('%', {placeholder})"
+                    filters += f"{filter_field} LIKE '%' || {placeholder}"
 
                 case Operator.NOT_ENDS_WITH:
-                    filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder})"
+                    filters += f"{filter_field} NOT LIKE '%' || {placeholder}"
 
                 case Operator.BETWEEN:
                     parameters.pop(parameter_name)
