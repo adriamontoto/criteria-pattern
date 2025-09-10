@@ -109,10 +109,16 @@ class SqlConverter:
             order_clause = cls._process_orders(criteria=criteria, columns_mapping=columns_mapping)
             query += f' ORDER BY {order_clause}'
 
+        if criteria.has_page_size():
+            query += f' LIMIT {criteria.page_size}'
+
+        if criteria.has_pagination():
+            query += f' OFFSET {criteria.page_size * (criteria.page_number - 1)}'  # type: ignore[operator]
+
         return f'{query};', parameters
 
     @classmethod
-    def _validate_table(cls, table: str, valid_tables: Sequence[str]) -> None:
+    def _validate_table(cls, *, table: str, valid_tables: Sequence[str]) -> None:
         """
         Validate the table name to prevent SQL injection.
 
@@ -129,6 +135,7 @@ class SqlConverter:
     @classmethod
     def _validate_columns(
         cls,
+        *,
         columns: Sequence[str],
         columns_mapping: Mapping[str, str],
         valid_columns: Sequence[str],
@@ -153,7 +160,7 @@ class SqlConverter:
                 raise InvalidColumnError(column=column, valid_columns=valid_columns)
 
     @classmethod
-    def _validate_criteria(cls, criteria: Criteria, valid_columns: Sequence[str]) -> None:
+    def _validate_criteria(cls, *, criteria: Criteria, valid_columns: Sequence[str]) -> None:
         """
         Validate the Criteria object to prevent SQL injection.
 
@@ -173,7 +180,7 @@ class SqlConverter:
                 raise InvalidColumnError(column=order.field, valid_columns=valid_columns)
 
     @classmethod
-    def _process_filters(cls, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:
+    def _process_filters(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:
         """
         Process the Criteria object to return an SQL WHERE clause.
 
@@ -189,6 +196,7 @@ class SqlConverter:
     @classmethod
     def _process_filters_recursive(  # noqa: C901
         cls,
+        *,
         criteria: Criteria,
         columns_mapping: Mapping[str, str],
         parameters_counter: int = 0,
@@ -387,7 +395,7 @@ class SqlConverter:
         return filters, parameters
 
     @classmethod
-    def _process_orders(cls, criteria: Criteria, columns_mapping: Mapping[str, str]) -> str:
+    def _process_orders(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> str:
         """
         Process the Criteria object to return an SQL ORDER BY clause.
 

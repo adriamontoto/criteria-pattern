@@ -19,6 +19,8 @@ from .filter import Filter
 from .filters import Filters
 from .order import Order
 from .orders import Orders
+from .page_number import PageNumber
+from .page_size import PageSize
 
 
 class Criteria(BaseModel):
@@ -31,20 +33,34 @@ class Criteria(BaseModel):
 
     criteria = Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='John')])
     print(criteria)
-    # >>> Criteria(filters=[Filter(field='name', operator=EQUAL, value='John')], orders=[])
+    # >>> Criteria(filters=[Filter(field='name', operator=EQUAL, value='John')], orders=[], page_size=None, page_number=None)
     ```
-    """
+    """  # noqa: E501
 
     _filters: Filters
     _orders: Orders
+    _page_size: PageSize | None
+    _page_number: PageNumber | None
 
-    def __init__(self, *, filters: list[Filter[Any]] | None = None, orders: list[Order] | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        filters: list[Filter[Any]] | None = None,
+        orders: list[Order] | None = None,
+        page_size: int | None = None,
+        page_number: int | None = None,
+    ) -> None:
         """
         Criteria constructor.
 
         Args:
             filters (list[Filter[Any]] | None, optional): List of filters. Defaults to [].
             orders (list[Order] | None, optional): List of orders. Defaults to [].
+            page_size (int | None, optional): Page size for pagination, must be >= 1. Defaults to None.
+            page_number (int | None, optional): Page number for pagination, must be >= 1. Defaults to None.
+
+        Raises:
+            ValueError: If `page_number` is provided but `page_size` is not.
 
         Example:
         ```python
@@ -52,11 +68,16 @@ class Criteria(BaseModel):
 
         criteria = Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='John')])
         print(criteria)
-        # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[])
+        # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[], page_size=None, page_number=None)
         ```
         """  # noqa: E501
+        if page_number is not None and page_size is None:
+            raise ValueError(f'Criteria page_number <<<{page_number}>>> cannot be provided without page_size.')
+
         self._filters = Filters(value=filters if filters is not None else [], title='Criteria', parameter='filters')
         self._orders = Orders(value=orders if orders is not None else [], title='Criteria', parameter='orders')
+        self._page_size = PageSize(value=page_size, title='Criteria', parameter='page_size') if page_size is not None else None  # noqa: E501  # fmt: skip
+        self._page_number = PageNumber(value=page_number, title='Criteria', parameter='page_number') if page_number is not None else None  # noqa: E501  # fmt: skip
 
     def __and__(self, criteria: Criteria) -> AndCriteria:
         """
@@ -82,7 +103,7 @@ class Criteria(BaseModel):
         criteria3 = criteria1 & criteria2
         criteria3 = criteria1.and_(criteria=criteria2)
         print(criteria3)
-        # >>> AndCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]))
+        # >>> AndCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]), page_size=None, page_number=None)
         ```
         """  # noqa: E501
         return AndCriteria(left=self, right=criteria)
@@ -111,7 +132,7 @@ class Criteria(BaseModel):
         criteria3 = criteria1 & criteria2
         criteria3 = criteria1.and_(criteria=criteria2)
         print(criteria3)
-        # >>> AndCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]))
+        # >>> AndCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]), page_size=None, page_number=None)
         ```
         """  # noqa: E501
         return self & criteria
@@ -140,7 +161,7 @@ class Criteria(BaseModel):
         criteria3 = criteria1 | criteria2
         criteria3 = criteria1.or_(criteria=criteria2)
         print(criteria3)
-        # >>> OrCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]))
+        # >>> OrCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]), page_size=None, page_number=None)
         ```
         """  # noqa: E501
         return OrCriteria(left=self, right=criteria)
@@ -169,7 +190,7 @@ class Criteria(BaseModel):
         criteria3 = criteria1 | criteria2
         criteria3 = criteria1.or_(criteria=criteria2)
         print(criteria3)
-        # >>> OrCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]))
+        # >>> OrCriteria(left=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), right=Criteria(filters=[Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=18))], orders=[]), page_size=None, page_number=None)
         ```
         """  # noqa: E501
         return self | criteria
@@ -192,7 +213,7 @@ class Criteria(BaseModel):
         not_criteria = ~criteria
         not_criteria = criteria.not_()
         print(not_criteria)
-        # >>> NotCriteria(criteria=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]))
+        # >>> NotCriteria(criteria=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), page_size=None, page_number=None)
         ```
         """  # noqa: E501
         return NotCriteria(criteria=self)
@@ -215,7 +236,7 @@ class Criteria(BaseModel):
         not_criteria = ~criteria
         not_criteria = criteria.not_()
         print(not_criteria)
-        # >>> NotCriteria(criteria=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]))
+        # >>> NotCriteria(criteria=Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='John'))], orders=[]), page_size=None, page_number=None)
         ```
         """  # noqa: E501
         return ~self
@@ -261,6 +282,44 @@ class Criteria(BaseModel):
         """
         return self._orders.value
 
+    @property
+    def page_size(self) -> int | None:
+        """
+        Get criteria page size.
+
+        Returns:
+            int | None: Page size for pagination, or None if not set.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria
+
+        criteria = Criteria(page_size=10, page_number=1)
+        print(criteria.page_size)
+        # >>> 10
+        ```
+        """
+        return self._page_size.value if self._page_size is not None else None
+
+    @property
+    def page_number(self) -> int | None:
+        """
+        Get criteria page number.
+
+        Returns:
+            int | None: Page number for pagination, or None if not set.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria
+
+        criteria = Criteria(page_size=10, page_number=1)
+        print(criteria.page_number)
+        # >>> 1
+        ```
+        """
+        return self._page_number.value if self._page_number is not None else None
+
     def has_filters(self) -> bool:
         """
         Check if criteria has filters.
@@ -296,6 +355,42 @@ class Criteria(BaseModel):
         ```
         """
         return bool(self.orders)
+
+    def has_page_size(self) -> bool:
+        """
+        Check if criteria has page size.
+
+        Returns:
+            bool: True if criteria has page size, False otherwise.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria
+
+        criteria = Criteria(page_size=10)
+        print(criteria.has_page_size())
+        # >>> True
+        ```
+        """
+        return self.page_size is not None
+
+    def has_pagination(self) -> bool:
+        """
+        Check if criteria has pagination.
+
+        Returns:
+            bool: True if criteria has pagination, False otherwise.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria
+
+        criteria = Criteria(page_size=10, page_number=1)
+        print(criteria.has_pagination())
+        # >>> True
+        ```
+        """
+        return self.page_size is not None and self.page_number is not None
 
 
 class AndCriteria(Criteria):
@@ -360,6 +455,28 @@ class AndCriteria(Criteria):
             list[Order]: List of orders.
         """
         return self.left.orders + self.right.orders
+
+    @property
+    @override
+    def page_size(self) -> int | None:
+        """
+        Get page size from left criteria (pagination is taken from left side).
+
+        Returns:
+            int | None: Page size for pagination, or None if not set.
+        """
+        return self.left.page_size
+
+    @property
+    @override
+    def page_number(self) -> int | None:
+        """
+        Get page number from left criteria (pagination is taken from left side).
+
+        Returns:
+            int | None: Page number for pagination, or None if not set.
+        """
+        return self.left.page_number
 
     @property
     def left(self) -> Criteria:
@@ -444,6 +561,28 @@ class OrCriteria(Criteria):
             list[Order]: List of orders.
         """
         return self.left.orders + self.right.orders
+
+    @property
+    @override
+    def page_size(self) -> int | None:
+        """
+        Get page size from left criteria (pagination is taken from left side).
+
+        Returns:
+            int | None: Page size for pagination, or None if not set.
+        """
+        return self.left.page_size
+
+    @property
+    @override
+    def page_number(self) -> int | None:
+        """
+        Get page number from left criteria (pagination is taken from left side).
+
+        Returns:
+            int | None: Page number for pagination, or None if not set.
+        """
+        return self.left.page_number
 
     @property
     def left(self) -> Criteria:
@@ -535,3 +674,25 @@ class NotCriteria(Criteria):
             list[Order]: List of orders.
         """
         return self.criteria.orders
+
+    @property
+    @override
+    def page_size(self) -> int | None:
+        """
+        Get page size from wrapped criteria.
+
+        Returns:
+            int | None: Page size for pagination, or None if not set.
+        """
+        return self.criteria.page_size
+
+    @property
+    @override
+    def page_number(self) -> int | None:
+        """
+        Get page number from wrapped criteria.
+
+        Returns:
+            int | None: Page number for pagination, or None if not set.
+        """
+        return self.criteria.page_number
