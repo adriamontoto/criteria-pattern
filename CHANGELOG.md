@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.3.0 (2025-09-10)
+
+### 🐛 Bug Fixes
+
+- Remove redundant colons in error messages for InvalidColumnError and InvalidTableError
+  ([`631bfcc`](https://github.com/adriamontoto/criteria-pattern/commit/631bfcce1d355ed64b657a98e18cd2dc36def147))
+
+### ✨ Features
+
+- Implement criteria pagination
+  ([`0b89c05`](https://github.com/adriamontoto/criteria-pattern/commit/0b89c057ce10b3348134f03975ff2d9cff4bc008))
+
+
 ## v1.2.0 (2025-09-09)
 
 ### ✨ Features
