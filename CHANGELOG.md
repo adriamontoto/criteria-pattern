@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v2.0.0 (2025-09-10)
+
+### ✨ Features
+
+- Change raw sql converter name to postgresql
+  ([`83ce2b1`](https://github.com/adriamontoto/criteria-pattern/commit/83ce2b14fe88606dd7313721ae05dc93e65dbae3))
+
+- Implement criteria to mysql and mariadb converters
+  ([`73a67ff`](https://github.com/adriamontoto/criteria-pattern/commit/73a67ff369812370e2f3ab9e03f36309aef816e9))
+
+
 ## v1.3.0 (2025-09-10)
 
 ### 🐛 Bug Fixes
