@@ -3,6 +3,8 @@ from .filter import FilterMother
 from .filters_mother import FiltersMother
 from .order import OrderMother
 from .orders_mother import OrdersMother
+from .page_number_mother import PageNumberMother
+from .page_size_mother import PageSizeMother
 
 __all__ = (
     'CriteriaMother',
@@ -10,4 +12,6 @@ __all__ = (
     'FiltersMother',
     'OrderMother',
     'OrdersMother',
+    'PageNumberMother',
+    'PageSizeMother',
 )

@@ -1,6 +1,6 @@
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
-from .models import Criteria, Direction, Filter, Operator, Order
+from .models import Criteria, Direction, Filter, Operator, Order, PageNumber, PageSize
 
 __all__ = (
     'Criteria',
@@ -8,4 +8,6 @@ __all__ = (
     'Filter',
     'Operator',
     'Order',
+    'PageNumber',
+    'PageSize',
 )

@@ -4,6 +4,7 @@ Test SqlConverter class.
 
 from typing import Any
 
+from object_mother_pattern import IntegerMother
 from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
@@ -600,7 +601,7 @@ def test_sql_converter_with_table_injection() -> None:
     """
     with assert_raises(
         expected_exception=InvalidTableError,
-        match='Invalid table specified: <<<user; DROP TABLE user;>>>. Valid tables are: <<<user>>>.',
+        match='Invalid table specified <<<user; DROP TABLE user;>>>. Valid tables are <<<user>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.create(),
@@ -646,7 +647,7 @@ def test_sql_converter_with_column_injection() -> None:
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+        match='Invalid column specified <<<id; DROP TABLE user;>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.create(),
@@ -664,7 +665,7 @@ def test_sql_converter_with_column_injection_with_star_invalid() -> None:
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match=r'Invalid column specified: <<<\*>>>. Valid columns are: <<<id, name>>>.',
+        match=r'Invalid column specified <<<\*>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.create(),
@@ -696,7 +697,7 @@ def test_sql_converter_with_column_injection_with_star_and_columns() -> None:
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match=r'Invalid column specified: <<<\*>>>. Valid columns are: <<<id, name>>>.',
+        match=r'Invalid column specified <<<\*>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.create(),
@@ -714,7 +715,7 @@ def test_sql_converter_with_column_mapping_injection() -> None:
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+        match='Invalid column specified <<<id; DROP TABLE user;>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.create(),
@@ -750,7 +751,7 @@ def test_sql_converter_with_filter_field_injection() -> None:
 
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+        match='Invalid column specified <<<id; DROP TABLE user;>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.with_filters(filters=[filter]),
@@ -788,7 +789,7 @@ def test_sql_converter_with_order_field_injection() -> None:
 
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+        match='Invalid column specified <<<id; DROP TABLE user;>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=CriteriaMother.with_orders(orders=[order]),
@@ -811,7 +812,7 @@ def test_sql_converter_with_two_order_fields_injection() -> None:
 
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match='Invalid column specified: <<<id; DROP TABLE user;>>>. Valid columns are: <<<id, name>>>.',
+        match='Invalid column specified <<<id; DROP TABLE user;>>>. Valid columns are <<<id, name>>>.',
     ):
         SqlConverter.convert(
             criteria=criteria1 & criteria2,
@@ -820,3 +821,188 @@ def test_sql_converter_with_two_order_fields_injection() -> None:
             check_criteria_injection=True,
             valid_columns=['id', 'name'],
         )
+
+
+@mark.unit_testing
+def test_sql_converter_with_pagination() -> None:
+    """
+    Test SqlConverter class with pagination.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = f'SELECT * FROM user LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+
+    assert query == expected_query
+    assert parameters == {}
+
+
+@mark.unit_testing
+def test_sql_converter_without_pagination() -> None:
+    """
+    Test SqlConverter class without pagination.
+    """
+    criteria = Criteria()
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    assert query == 'SELECT * FROM user;'
+    assert parameters == {}
+
+
+@mark.unit_testing
+def test_sql_converter_with_filters_and_pagination() -> None:
+    """
+    Test SqlConverter class with filters and pagination.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John')
+    criteria = Criteria(filters=[filter], page_size=page_size, page_number=page_number)
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = f'SELECT * FROM user WHERE name = %(parameter_0)s LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+
+    assert query == expected_query
+    assert parameters == {'parameter_0': 'John'}
+
+
+@mark.unit_testing
+def test_sql_converter_with_orders_and_pagination() -> None:
+    """
+    Test SqlConverter class with orders and pagination.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    order = Order(field='name', direction=Direction.ASC)
+    criteria = Criteria(orders=[order], page_size=page_size, page_number=page_number)
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = f'SELECT * FROM user ORDER BY name ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+
+    assert query == expected_query
+    assert parameters == {}
+
+
+@mark.unit_testing
+def test_sql_converter_with_filters_orders_and_pagination() -> None:
+    """
+    Test SqlConverter class with filters, orders, and pagination.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    filter = Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)
+    order = Order(field='name', direction=Direction.DESC)
+    criteria = Criteria(filters=[filter], orders=[order], page_size=page_size, page_number=page_number)
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user', columns=['id', 'name', 'age'])
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = f'SELECT id, name, age FROM user WHERE age >= %(parameter_0)s ORDER BY name DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
+
+    assert query == expected_query
+    assert parameters == {'parameter_0': 18}
+
+
+@mark.unit_testing
+def test_sql_converter_pagination_first_page() -> None:
+    """
+    Test SqlConverter class with pagination for first page.
+    """
+    criteria = Criteria(page_size=10, page_number=1)
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 0;'
+    assert parameters == {}
+
+
+@mark.unit_testing
+def test_sql_converter_pagination_second_page() -> None:
+    """
+    Test SqlConverter class with pagination for second page.
+    """
+    criteria = Criteria(page_size=10, page_number=2)
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 10;'
+    assert parameters == {}
+
+
+@mark.unit_testing
+def test_sql_converter_pagination_with_combined_criteria() -> None:
+    """
+    Test SqlConverter class with pagination using combined criteria.
+    """
+    filter1 = Filter(field='active', operator=Operator.EQUAL, value=True)
+    filter2 = Filter(field='age', operator=Operator.GREATER, value=18)
+
+    criteria1 = Criteria(filters=[filter1], page_size=20, page_number=3)
+    criteria2 = Criteria(filters=[filter2])
+
+    combined_criteria = criteria1 & criteria2
+    query, parameters = SqlConverter.convert(criteria=combined_criteria, table='user')
+
+    expected_offset = (3 - 1) * 20
+    expected_query = f'SELECT * FROM user WHERE (active = %(parameter_0)s AND age > %(parameter_1)s) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
+
+    assert query == expected_query
+    assert parameters == {'parameter_0': True, 'parameter_1': 18}
+
+
+@mark.unit_testing
+def test_sql_converter_with_page_size_only() -> None:
+    """
+    Test SqlConverter generates LIMIT without OFFSET when only page_size is provided.
+    """
+    page_size = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size)
+
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    expected_query = f'SELECT * FROM user LIMIT {page_size};'  # noqa: S608
+
+    assert query == expected_query
+    assert parameters == {}
+
+
+@mark.unit_testing
+def test_sql_converter_with_filters_and_page_size_only() -> None:
+    """
+    Test SqlConverter with filters and LIMIT without OFFSET.
+    """
+    filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+    page_size = IntegerMother.positive()
+
+    criteria = Criteria(filters=[filter], page_size=page_size)
+
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    expected_query = f'SELECT * FROM user WHERE {filter.field} = %(parameter_0)s LIMIT {page_size};'  # noqa: S608
+
+    assert query == expected_query
+    assert parameters == {'parameter_0': filter.value}
+
+
+@mark.unit_testing
+def test_sql_converter_with_orders_and_page_size_only() -> None:
+    """
+    Test SqlConverter with orders and LIMIT without OFFSET.
+    """
+    order = OrderMother.create(direction=Direction.ASC)
+    page_size = IntegerMother.positive()
+
+    criteria = Criteria(orders=[order], page_size=page_size)
+
+    query, parameters = SqlConverter.convert(criteria=criteria, table='user')
+
+    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT {page_size};'  # noqa: S608
+
+    assert query == expected_query
+    assert parameters == {}
