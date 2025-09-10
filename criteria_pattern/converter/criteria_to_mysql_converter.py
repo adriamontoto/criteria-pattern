@@ -1,5 +1,5 @@
 """
-Criteria to Postgresql converter module.
+Criteria to MySQL converter module.
 """
 
 from collections.abc import Mapping, Sequence
@@ -10,20 +10,20 @@ from criteria_pattern.errors import InvalidColumnError, InvalidTableError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
-class CriteriaToPostgresqlConverter:
+class CriteriaToMysqlConverter:
     """
-    Criteria to Postgresql converter.
+    Criteria to MySQL converter.
 
     Example:
     ```python
     from criteria_pattern import Criteria, Filter, Operator
-    from criteria_pattern.converter import CriteriaToPostgresqlConverter
+    from criteria_pattern.converter import CriteriaToMysqlConverter
 
     is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
     email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
     email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-    query, parameters = CriteriaToPostgresqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
     print(query)
     print(parameters)
     # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
@@ -45,7 +45,7 @@ class CriteriaToPostgresqlConverter:
         valid_columns: Sequence[str] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
-        Convert the Criteria object to a Postgresql query.
+        Convert the Criteria object to a MySQL query.
 
         Args:
             criteria (Criteria): Criteria to convert.
@@ -66,18 +66,18 @@ class CriteriaToPostgresqlConverter:
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
 
         Returns:
-            tuple[str, dict[str, Any]]: The Postgresql query string and the query parameters.
+            tuple[str, dict[str, Any]]: The MySQL query string and the query parameters as a dict.
 
         Example:
         ```python
         from criteria_pattern import Criteria, Filter, Operator
-        from criteria_pattern.converter import CriteriaToPostgresqlConverter
+        from criteria_pattern.converter import CriteriaToMysqlConverter
 
         is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
         email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
         email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-        query, parameters = CriteriaToPostgresqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+        query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
         print(query)
         print(parameters)
         # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
@@ -304,22 +304,22 @@ class CriteriaToPostgresqlConverter:
                     filters += f'{filter_field} NOT LIKE {placeholder}'
 
                 case Operator.CONTAINS:
-                    filters += f"{filter_field} LIKE '%%' || {placeholder} || '%%'"
+                    filters += f"{filter_field} LIKE CONCAT('%', {placeholder}, '%')"
 
                 case Operator.NOT_CONTAINS:
-                    filters += f"{filter_field} NOT LIKE '%%' || {placeholder} || '%%'"
+                    filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')"
 
                 case Operator.STARTS_WITH:
-                    filters += f"{filter_field} LIKE {placeholder} || '%%'"
+                    filters += f"{filter_field} LIKE CONCAT({placeholder}, '%')"
 
                 case Operator.NOT_STARTS_WITH:
-                    filters += f"{filter_field} NOT LIKE {placeholder} || '%%'"
+                    filters += f"{filter_field} NOT LIKE CONCAT({placeholder}, '%')"
 
                 case Operator.ENDS_WITH:
-                    filters += f"{filter_field} LIKE '%%' || {placeholder}"
+                    filters += f"{filter_field} LIKE CONCAT('%', {placeholder})"
 
                 case Operator.NOT_ENDS_WITH:
-                    filters += f"{filter_field} NOT LIKE '%%' || {placeholder}"
+                    filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder})"
 
                 case Operator.BETWEEN:
                     parameters.pop(parameter_name)
