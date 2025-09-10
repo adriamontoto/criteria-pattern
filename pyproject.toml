@@ -58,7 +58,7 @@ release = ['build>=1.2.2', 'python-semantic-release>=10.0.2']
 test = [
     'pytest>=8.0.0',
     'pytest-randomly>=3.0.0',
-    'object-mother-pattern>=3.1.1',
+    'object-mother-pattern>=3.6.0',
     { include-group = 'coverage' },
 ]
 all = [

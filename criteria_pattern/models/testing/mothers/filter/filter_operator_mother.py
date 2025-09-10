@@ -11,7 +11,7 @@ else:
 
 from object_mother_pattern.models import BaseMother
 
-from criteria_pattern.models.filter import FilterOperator
+from criteria_pattern.models.filter import FilterOperator, Operator
 
 from .operator_mother import OperatorMother
 
@@ -58,4 +58,13 @@ class FilterOperatorMother(BaseMother[FilterOperator]):
         if value is not None:
             return FilterOperator(value=value)
 
-        return FilterOperator(value=OperatorMother.create())
+        return FilterOperator(
+            value=OperatorMother.create(
+                exclude=(
+                    Operator.BETWEEN,
+                    Operator.NOT_BETWEEN,
+                    Operator.IN,
+                    Operator.NOT_IN,
+                )
+            )
+        )

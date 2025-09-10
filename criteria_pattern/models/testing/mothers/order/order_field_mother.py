@@ -60,4 +60,4 @@ class OrderFieldMother(BaseMother[OrderField]):
         if value is not None:
             return OrderField(value=value)
 
-        return OrderField(value=StringMother.create())
+        return OrderField(value=StringMother.create(min_length=5))
