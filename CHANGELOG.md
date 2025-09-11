@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.2.0 (2025-09-11)
+
+### 📦 Build System
+
+- Using sqlglot[rs] for faster runtime
+  ([`0a4bbe4`](https://github.com/adriamontoto/criteria-pattern/commit/0a4bbe41df5325d028bacf4de647f3351503a720))
+
+### ✨ Features
+
+- Implement url to criteria converter and its tests
+  ([`c5b5b37`](https://github.com/adriamontoto/criteria-pattern/commit/c5b5b37282e679f65e3bec4b7496229160818c20))
+
+
 ## v2.1.1 (2025-09-10)
 
 ### 🐛 Bug Fixes
