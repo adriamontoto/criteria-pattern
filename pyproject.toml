@@ -155,6 +155,7 @@ ignore = [
     'D401',   # First line of docstring should be in imperative mood.
     'D300',   # Checks for docstrings that use '''triple single quotes''' instead of 'triple double quotes'.
     'RUF100', # Checks for unused noqa directives.
+    'RUF043', # Checks for containing groups in patterns in match= statements.
 ]
 
 [tool.ruff.lint.per-file-ignores]
