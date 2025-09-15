@@ -499,6 +499,239 @@ def test_criteria_to_sqlite_converter_with_not_criteria() -> None:
 
 
 @mark.unit_testing
+def test_criteria_to_sqlite_converter_with_and_criteria_empty_left() -> None:
+    """
+    Test CriteriaToSqliteConverter class with an AND Criteria where left side is empty.
+    """
+    empty_criteria = Criteria()
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John Doe')
+    criteria_with_filter = CriteriaMother.with_filters(filters=[filter])
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=empty_criteria & criteria_with_filter,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John Doe'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_and_criteria_empty_right() -> None:
+    """
+    Test CriteriaToSqliteConverter class with an AND Criteria where right side is empty.
+    """
+    empty_criteria = Criteria()
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John Doe')
+    criteria_with_filter = CriteriaMother.with_filters(filters=[filter])
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=criteria_with_filter & empty_criteria,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John Doe'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_and_criteria_both_empty() -> None:
+    """
+    Test CriteriaToSqliteConverter class with an AND Criteria where both sides are empty.
+    """
+    empty_criteria1 = Criteria()
+    empty_criteria2 = Criteria()
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=empty_criteria1 & empty_criteria2,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user";'
+    assert parameters == {}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_or_criteria_empty_left() -> None:
+    """
+    Test CriteriaToSqliteConverter class with an OR Criteria where left side is empty.
+    """
+    empty_criteria = Criteria()
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John Doe')
+    criteria_with_filter = CriteriaMother.with_filters(filters=[filter])
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=empty_criteria | criteria_with_filter,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John Doe'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_or_criteria_empty_right() -> None:
+    """
+    Test CriteriaToSqliteConverter class with an OR Criteria where right side is empty.
+    """
+    empty_criteria = Criteria()
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John Doe')
+    criteria_with_filter = CriteriaMother.with_filters(filters=[filter])
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=criteria_with_filter | empty_criteria,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John Doe'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_or_criteria_both_empty() -> None:
+    """
+    Test CriteriaToSqliteConverter class with an OR Criteria where both sides are empty.
+    """
+    empty_criteria1 = Criteria()
+    empty_criteria2 = Criteria()
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=empty_criteria1 | empty_criteria2,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user";'
+    assert parameters == {}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_not_empty_criteria() -> None:
+    """
+    Test CriteriaToSqliteConverter class with a NOT of empty Criteria.
+    """
+    empty_criteria = Criteria()
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=~empty_criteria,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user";'
+    assert parameters == {}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_complex_empty_combination() -> None:
+    """
+    Test CriteriaToSqliteConverter with complex combinations including empty criteria.
+    This replicates the issue from main.py adapted for SQLite.
+    """
+    criteria = Criteria()
+    orders = [Order(field='created_date', direction=Direction.DESC), Order(field='identifier', direction=Direction.ASC)]
+    match_by_organization = Criteria(
+        filters=[Filter(field='organization_identifier', operator=Operator.EQUAL, value='test')],
+        orders=orders,
+    )
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=match_by_organization & criteria,
+        table='test_table',
+    )
+
+    assert query == 'SELECT * FROM "test_table" WHERE "organization_identifier" = :parameter_0 ORDER BY "created_date" DESC, "identifier" ASC;'  # noqa: E501 # fmt: skip
+    assert parameters == {'parameter_0': 'test'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_nested_empty_and_criteria() -> None:
+    """
+    Test CriteriaToSqliteConverter with nested AND where both sides are empty.
+    This forces the recursive processor to hit the branch where both conditions are empty.
+    """
+    empty_criteria1 = Criteria()
+    empty_criteria2 = Criteria()
+    filter_criteria = Filter(field='name', operator=Operator.EQUAL, value='John')
+    main_criteria = CriteriaMother.with_filters(filters=[filter_criteria])
+
+    nested_empty = empty_criteria1 & empty_criteria2
+    combined = main_criteria & nested_empty
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=combined,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_nested_empty_or_criteria() -> None:
+    """
+    Test CriteriaToSqliteConverter with nested OR where both sides are empty.
+    This forces the recursive processor to hit the branch where both conditions are empty.
+    """
+    empty_criteria1 = Criteria()
+    empty_criteria2 = Criteria()
+    filter_criteria = Filter(field='name', operator=Operator.EQUAL, value='John')
+    main_criteria = CriteriaMother.with_filters(filters=[filter_criteria])
+
+    nested_empty = empty_criteria1 | empty_criteria2
+    combined = main_criteria | nested_empty
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=combined,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_nested_empty_not_criteria() -> None:
+    """
+    Test CriteriaToSqliteConverter with nested NOT of empty criteria.
+    This forces the recursive processor to hit the branch where NOT condition is empty.
+    """
+    empty_criteria = Criteria()
+    filter_criteria = Filter(field='name', operator=Operator.EQUAL, value='John')
+    main_criteria = CriteriaMother.with_filters(filters=[filter_criteria])
+
+    not_empty = ~empty_criteria
+    combined = main_criteria & not_empty
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=combined,
+        table='user',
+        columns=['*'],
+    )
+
+    assert query == 'SELECT * FROM "user" WHERE "name" = :parameter_0;'
+    assert parameters == {'parameter_0': 'John'}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
 def test_criteria_to_sqlite_converter_with_mixed_criteria() -> None:
     """
     Test CriteriaToSqliteConverter class with a mixed Criteria object.

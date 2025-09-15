@@ -235,7 +235,14 @@ class CriteriaToMysqlConverter:
             parameters.extend(left_parameters)
             parameters.extend(right_parameters)
 
-            filters += f'({left_conditions} AND {right_conditions})'
+            if left_conditions and right_conditions:
+                filters += f'({left_conditions} AND {right_conditions})'
+
+            elif left_conditions:
+                filters += left_conditions
+
+            elif right_conditions:
+                filters += right_conditions
 
             return filters, parameters
 
@@ -257,7 +264,14 @@ class CriteriaToMysqlConverter:
             parameters.extend(left_parameters)
             parameters.extend(right_parameters)
 
-            filters += f'({left_conditions} OR {right_conditions})'
+            if left_conditions and right_conditions:
+                filters += f'({left_conditions} OR {right_conditions})'
+
+            elif left_conditions:
+                filters += left_conditions
+
+            elif right_conditions:
+                filters += right_conditions
 
             return filters, parameters
 
@@ -271,7 +285,8 @@ class CriteriaToMysqlConverter:
 
             parameters.extend(not_parameters)
 
-            filters += f'NOT ({not_conditions})'
+            if not_conditions:
+                filters += f'NOT ({not_conditions})'
 
             return filters, parameters
 
