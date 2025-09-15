@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.0.1 (2025-09-15)
+
+### 🐛 Bug Fixes
+
+- Solve a bug while using multiple filters in the same criteria
+  ([`3051d00`](https://github.com/adriamontoto/criteria-pattern/commit/3051d0026edd9de9d5b28eccc304f0383bd9a2a4))
+
+
 ## v3.0.0 (2025-09-15)
 
 ### ✨ Features
