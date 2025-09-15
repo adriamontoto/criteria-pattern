@@ -8,7 +8,7 @@ from object_mother_pattern.mothers import IntegerMother, StringMother
 from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
-from criteria_pattern.converter import UrlToCriteriaConverter
+from criteria_pattern.converters import UrlToCriteriaConverter
 from criteria_pattern.errors import InvalidColumnError
 
 

@@ -9,7 +9,7 @@ from pytest import mark, raises as assert_raises
 from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
-from criteria_pattern.converter import CriteriaToPostgresqlConverter
+from criteria_pattern.converters import CriteriaToPostgresqlConverter
 from criteria_pattern.errors import InvalidColumnError, InvalidTableError
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
