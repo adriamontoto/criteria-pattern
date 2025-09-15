@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.0.2 (2025-09-15)
+
+### 🐛 Bug Fixes
+
+- Return pagination size and number in combined criteria
+  ([`241a09c`](https://github.com/adriamontoto/criteria-pattern/commit/241a09cf32110ec6ae03e41fb196a0f985d10b95))
+
+
 ## v3.0.1 (2025-09-15)
 
 ### 🐛 Bug Fixes
