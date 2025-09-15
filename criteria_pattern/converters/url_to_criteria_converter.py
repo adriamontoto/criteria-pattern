@@ -8,7 +8,7 @@ from typing import Any, ClassVar
 from urllib.parse import parse_qs, unquote_plus, urlparse
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
-from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError
+from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError
 
 
 class UrlToCriteriaConverter:
@@ -66,8 +66,10 @@ class UrlToCriteriaConverter:
         fields_mapping: Mapping[str, str] | None = None,
         check_field_injection: bool = False,
         check_operator_injection: bool = False,
+        check_direction_injection: bool = False,
         valid_fields: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
+        valid_directions: Sequence[Direction] | None = None,
     ) -> Criteria:
         """
         Converts an URL query string into a Criteria object.
@@ -77,8 +79,10 @@ class UrlToCriteriaConverter:
             fields_mapping (Mapping[str, str], optional): Mapping of field names to aliases. Default to empty dict.
             check_field_injection (bool, optional): Whether to check for field injection.
             check_operator_injection (bool, optional): Whether to check for operator injection.
+            check_direction_injection (bool, optional): Whether to check for direction injection.
             valid_fields (Sequence[str], optional): A list of valid field names. Default to empty list.
             valid_operators (Sequence[Operator], optional): A list of valid operators. Default to empty list.
+            valid_directions (Sequence[Direction], optional): A list of valid directions. Default to empty list.
 
         Raises:
             TypeError: If the filter index is not an integer.
@@ -93,6 +97,7 @@ class UrlToCriteriaConverter:
             InvalidColumnError: If an invalid field name is found in filters.
             InvalidColumnError: If an invalid field name is found in orders.
             InvalidOperatorError: If an invalid operator is found in filters.
+            InvalidDirectionError: If an invalid direction is found in orders.
 
         Example:
         ```python
@@ -107,6 +112,7 @@ class UrlToCriteriaConverter:
         valid_fields = valid_fields or []
         fields_mapping = fields_mapping or {}
         valid_operators = valid_operators or []
+        valid_directions = valid_directions or []
 
         query_params = parse_qs(qs=urlparse(url=url).query, keep_blank_values=True)
 
@@ -127,6 +133,9 @@ class UrlToCriteriaConverter:
 
         if check_operator_injection:
             cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
+
+        if check_direction_injection:
+            cls._validate_directions(criteria=criteria, valid_directions=valid_directions)
 
         return criteria
 
@@ -417,3 +426,22 @@ class UrlToCriteriaConverter:
         for filter in criteria.filters:
             if filter.operator not in valid_operators:
                 raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
+
+    @classmethod
+    def _validate_directions(cls, *, criteria: Criteria, valid_directions: Sequence[Direction]) -> None:
+        """
+        Validate the Criteria object directions to prevent injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_directions (Sequence[Direction]): List of valid directions to use.
+
+        Raises:
+            InvalidDirectionError: If the direction is not in the list of valid directions.
+        """
+        for order in criteria.orders:
+            if order.direction not in valid_directions:
+                raise InvalidDirectionError(
+                    direction=Direction(value=order.direction),
+                    valid_directions=valid_directions,
+                )

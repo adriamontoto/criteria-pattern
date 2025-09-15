@@ -9,7 +9,7 @@ from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import UrlToCriteriaConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError
+from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError
 
 
 @mark.unit_testing
@@ -1432,4 +1432,89 @@ def test_url_to_criteria_converter_with_complex_url_operator_injection() -> None
             url=url,
             check_operator_injection=True,
             valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_direction_injection_check_disabled() -> None:
+    """
+    Test UrlToCriteriaConverter class with direction injection when check_direction_injection is disabled.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=DESC'
+
+    UrlToCriteriaConverter.convert(
+        url=url,
+        valid_directions=[Direction.ASC],
+    )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_direction_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with direction injection.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_valid_direction() -> None:
+    """
+    Test UrlToCriteriaConverter class with valid direction.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=ASC'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_direction_injection=True,
+        valid_directions=[Direction.ASC, Direction.DESC],
+    )
+
+    assert len(criteria.orders) == 1
+    assert criteria.orders[0].field == 'name'
+    assert criteria.orders[0].direction == Direction.ASC
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_multiple_orders_direction_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with multiple orders where one has invalid direction.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=ASC&orders[1][field]=age&orders[1][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_complex_url_direction_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with complex URL containing invalid direction.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER&filters[0][value]=18&orders[0][field]=name&orders[0][direction]=ASC&orders[1][field]=created_at&orders[1][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
         )

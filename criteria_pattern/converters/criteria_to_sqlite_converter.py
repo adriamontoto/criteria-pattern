@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, Direction, Operator
-from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError, InvalidTableError
+from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError, InvalidTableError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
@@ -42,9 +42,11 @@ class CriteriaToSqliteConverter:
         check_column_injection: bool = False,
         check_criteria_injection: bool = False,
         check_operator_injection: bool = False,
+        check_direction_injection: bool = False,
         valid_tables: Sequence[str] | None = None,
         valid_columns: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
+        valid_directions: Sequence[Direction] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
         Convert the Criteria object to a SQLite query.
@@ -62,14 +64,18 @@ class CriteriaToSqliteConverter:
             Default to False.
             check_operator_injection (bool, optional): Raise an error if the operator is not in the list of valid
             operators. Default to False.
+            check_direction_injection (bool, optional): Raise an error if the direction is not in the list of valid
+            directions. Default to False.
             valid_tables (Sequence[str], optional): List of valid tables to query. Default to empty list.
             valid_columns (Sequence[str], optional): List of valid columns to select. Default to empty list.
             valid_operators (Sequence[Operator], optional): List of valid operators to use. Default to empty list.
+            valid_directions (Sequence[Direction], optional): List of valid directions to use. Default to empty list.
 
         Raises:
             InvalidTableError: If the table is not in the list of valid tables (only if check_table_injection=True).
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
             InvalidOperatorError: If the operator is not in the list of valid operators (only if check_operator_injection=True).
+            InvalidDirectionError: If the direction is not in the list of valid directions (only if check_direction_injection=True).
 
         Returns:
             tuple[str, dict[str, Any]]: The SQLite query string and the query parameters.
@@ -95,6 +101,7 @@ class CriteriaToSqliteConverter:
         valid_tables = valid_tables or []
         valid_columns = valid_columns or []
         valid_operators = valid_operators or []
+        valid_directions = valid_directions or []
 
         if check_table_injection:
             cls._validate_table(table=table, valid_tables=valid_tables)
@@ -107,6 +114,9 @@ class CriteriaToSqliteConverter:
 
         if check_operator_injection:
             cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
+
+        if check_direction_injection:
+            cls._validate_directions(criteria=criteria, valid_directions=valid_directions)
 
         quoted_columns = ['*' if column == '*' else f'"{column}"' for column in columns]
         quoted_table = '.'.join(f'"{part}"' for part in table.split('.'))
@@ -206,6 +216,25 @@ class CriteriaToSqliteConverter:
         for filter in criteria.filters:
             if filter.operator not in valid_operators:
                 raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
+
+    @classmethod
+    def _validate_directions(cls, *, criteria: Criteria, valid_directions: Sequence[Direction]) -> None:
+        """
+        Validate the Criteria object directions to prevent SQL injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_directions (Sequence[Direction]): List of valid directions to use.
+
+        Raises:
+            InvalidDirectionError: If the direction is not in the list of valid directions.
+        """
+        for order in criteria.orders:
+            if order.direction not in valid_directions:
+                raise InvalidDirectionError(
+                    direction=Direction(value=order.direction),
+                    valid_directions=valid_directions,
+                )
 
     @classmethod
     def _process_filters(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:

@@ -10,7 +10,7 @@ from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToPostgresqlConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError, InvalidTableError
+from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError, InvalidTableError
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
 
@@ -1248,6 +1248,103 @@ def test_criteria_to_postgresql_converter_with_complex_criteria_operator_injecti
             columns=['id', 'name', 'age'],
             check_operator_injection=True,
             valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_postgresql_converter_with_direction_injection_check_disabled() -> None:
+    """
+    Test CriteriaToPostgresqlConverter class with direction injection when check_direction_injection is disabled.
+    """
+    order: Order = OrderMother.create()
+
+    CriteriaToPostgresqlConverter.convert(
+        criteria=CriteriaMother.with_orders(orders=[order]),
+        table='user',
+        columns=['id', 'name'],
+        valid_directions=[Direction.ASC],
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_postgresql_converter_with_direction_injection() -> None:
+    """
+    Test CriteriaToPostgresqlConverter class with direction injection.
+    """
+    order: Order = OrderMother.create(direction=Direction.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToPostgresqlConverter.convert(
+            criteria=CriteriaMother.with_orders(orders=[order]),
+            table='user',
+            columns=['id', 'name'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_postgresql_converter_with_valid_direction() -> None:
+    """
+    Test CriteriaToPostgresqlConverter class with valid direction.
+    """
+    order: Order = OrderMother.create(field='id', direction=Direction.ASC)
+
+    query, parameters = CriteriaToPostgresqlConverter.convert(
+        criteria=CriteriaMother.with_orders(orders=[order]),
+        table='user',
+        columns=['id', 'name'],
+        check_direction_injection=True,
+        valid_directions=[Direction.ASC, Direction.DESC],
+    )
+
+    assert query == 'SELECT "id", "name" FROM "user" ORDER BY "id" ASC;'
+    assert parameters == {}
+    assert_valid_postgresql_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_postgresql_converter_with_multiple_orders_direction_injection() -> None:
+    """
+    Test CriteriaToPostgresqlConverter class with multiple orders where one has invalid direction.
+    """
+    order1: Order = OrderMother.create(direction=Direction.ASC)
+    order2: Order = OrderMother.create(direction=Direction.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToPostgresqlConverter.convert(
+            criteria=CriteriaMother.with_orders(orders=[order1, order2]),
+            table='user',
+            columns=['id', 'name'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_postgresql_converter_with_complex_criteria_direction_injection() -> None:
+    """
+    Test CriteriaToPostgresqlConverter class with complex criteria containing invalid direction.
+    """
+    criteria1 = CriteriaMother.create(orders=[OrderMother.create(direction=Direction.ASC)])
+    criteria2 = CriteriaMother.create(orders=[OrderMother.create(direction=Direction.DESC)])
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToPostgresqlConverter.convert(
+            criteria=criteria1 & criteria2,
+            table='user',
+            columns=['id', 'name', 'age'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
         )
 
 
