@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.0.0 (2025-09-15)
+
+### ✨ Features
+
+- Rename converter folder to converters
+  ([`0524679`](https://github.com/adriamontoto/criteria-pattern/commit/052467950b46a569ca793c2a792c26e3014e31ec))
+
+
 ## v2.2.0 (2025-09-11)
 
 ### 📦 Build System
