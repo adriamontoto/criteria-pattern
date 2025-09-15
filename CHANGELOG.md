@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.1.0 (2025-09-15)
+
+### ✨ Features
+
+- Implement operator validation to converters
+  ([`7afa9c1`](https://github.com/adriamontoto/criteria-pattern/commit/7afa9c1ed694508019eddf1680945662888f2ad8))
+
+
 ## v3.0.3 (2025-09-15)
 
 ### 🐛 Bug Fixes
