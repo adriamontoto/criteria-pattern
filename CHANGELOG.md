@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.0.3 (2025-09-15)
+
+### 🐛 Bug Fixes
+
+- Solve filtering issue when single filter
+  ([`4125e29`](https://github.com/adriamontoto/criteria-pattern/commit/4125e29065a7d9e5558ba1f44f4d1de9adf0846d))
+
+
 ## v3.0.2 (2025-09-15)
 
 ### 🐛 Bug Fixes
