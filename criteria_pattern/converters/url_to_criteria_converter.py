@@ -8,7 +8,7 @@ from typing import Any, ClassVar
 from urllib.parse import parse_qs, unquote_plus, urlparse
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
-from criteria_pattern.errors import InvalidColumnError
+from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError
 
 
 class UrlToCriteriaConverter:
@@ -65,7 +65,9 @@ class UrlToCriteriaConverter:
         url: str,
         fields_mapping: Mapping[str, str] | None = None,
         check_field_injection: bool = False,
+        check_operator_injection: bool = False,
         valid_fields: Sequence[str] | None = None,
+        valid_operators: Sequence[Operator] | None = None,
     ) -> Criteria:
         """
         Converts an URL query string into a Criteria object.
@@ -74,7 +76,9 @@ class UrlToCriteriaConverter:
             url (str): The URL containing the query string.
             fields_mapping (Mapping[str, str], optional): Mapping of field names to aliases. Default to empty dict.
             check_field_injection (bool, optional): Whether to check for field injection.
+            check_operator_injection (bool, optional): Whether to check for operator injection.
             valid_fields (Sequence[str], optional): A list of valid field names. Default to empty list.
+            valid_operators (Sequence[Operator], optional): A list of valid operators. Default to empty list.
 
         Raises:
             TypeError: If the filter index is not an integer.
@@ -88,6 +92,7 @@ class UrlToCriteriaConverter:
             ValueError: If the order has unsupported direction.
             InvalidColumnError: If an invalid field name is found in filters.
             InvalidColumnError: If an invalid field name is found in orders.
+            InvalidOperatorError: If an invalid operator is found in filters.
 
         Example:
         ```python
@@ -101,6 +106,7 @@ class UrlToCriteriaConverter:
         """  # noqa: E501  # fmt: skip
         valid_fields = valid_fields or []
         fields_mapping = fields_mapping or {}
+        valid_operators = valid_operators or []
 
         query_params = parse_qs(qs=urlparse(url=url).query, keep_blank_values=True)
 
@@ -118,6 +124,9 @@ class UrlToCriteriaConverter:
 
         if check_field_injection:
             cls._validate_fields(criteria=criteria, valid_fields=valid_fields)
+
+        if check_operator_injection:
+            cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
 
         return criteria
 
@@ -392,3 +401,19 @@ class UrlToCriteriaConverter:
         for order in criteria.orders:
             if order.field not in valid_fields:
                 raise InvalidColumnError(column=order.field, valid_columns=valid_fields)
+
+    @classmethod
+    def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
+        """
+        Validate the Criteria object operators to prevent injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_operators (Sequence[Operator]): List of valid operators to use.
+
+        Raises:
+            InvalidOperatorError: If the operator is not in the list of valid operators.
+        """
+        for filter in criteria.filters:
+            if filter.operator not in valid_operators:
+                raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)

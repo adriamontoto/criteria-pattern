@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, Direction, Operator
-from criteria_pattern.errors import InvalidColumnError, InvalidTableError
+from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError, InvalidTableError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
@@ -41,8 +41,10 @@ class CriteriaToMysqlConverter:
         check_table_injection: bool = False,
         check_column_injection: bool = False,
         check_criteria_injection: bool = False,
+        check_operator_injection: bool = False,
         valid_tables: Sequence[str] | None = None,
         valid_columns: Sequence[str] | None = None,
+        valid_operators: Sequence[Operator] | None = None,
     ) -> tuple[str, list[Any]]:
         """
         Convert the Criteria object to a MySQL query.
@@ -58,12 +60,16 @@ class CriteriaToMysqlConverter:
             Default to False.
             check_column_injection (bool, optional): Raise an error if the column is not in the list of valid columns.
             Default to False.
+            check_operator_injection (bool, optional): Raise an error if the operator is not in the list of valid
+            operators. Default to False.
             valid_tables (Sequence[str], optional): List of valid tables to query. Default to empty list.
             valid_columns (Sequence[str], optional): List of valid columns to select. Default to empty list.
+            valid_operators (Sequence[Operator], optional): List of valid operators to use. Default to empty list.
 
         Raises:
             InvalidTableError: If the table is not in the list of valid tables (only if check_table_injection=True).
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
+            InvalidOperatorError: If the operator is not in the list of valid operators (only if check_operator_injection=True).
 
         Returns:
             tuple[str, list[Any]]: The MySQL query string and the query parameters as a list.
@@ -88,6 +94,7 @@ class CriteriaToMysqlConverter:
         columns_mapping = columns_mapping or {}
         valid_tables = valid_tables or []
         valid_columns = valid_columns or []
+        valid_operators = valid_operators or []
 
         if check_table_injection:
             cls._validate_table(table=table, valid_tables=valid_tables)
@@ -97,6 +104,9 @@ class CriteriaToMysqlConverter:
 
         if check_criteria_injection:
             cls._validate_criteria(criteria=criteria, valid_columns=valid_columns)
+
+        if check_operator_injection:
+            cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
 
         query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
         parameters: list[Any] = []
@@ -178,6 +188,22 @@ class CriteriaToMysqlConverter:
         for order in criteria.orders:
             if order.field not in valid_columns:
                 raise InvalidColumnError(column=order.field, valid_columns=valid_columns)
+
+    @classmethod
+    def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
+        """
+        Validate the Criteria object operators to prevent SQL injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_operators (Sequence[Operator]): List of valid operators to use.
+
+        Raises:
+            InvalidOperatorError: If the operator is not in the list of valid operators.
+        """
+        for filter in criteria.filters:
+            if filter.operator not in valid_operators:
+                raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
 
     @classmethod
     def _process_filters(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, list[Any]]:

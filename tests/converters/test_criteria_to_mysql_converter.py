@@ -10,7 +10,7 @@ from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToMysqlConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidTableError
+from criteria_pattern.errors import InvalidColumnError, InvalidOperatorError, InvalidTableError
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
 
@@ -1144,6 +1144,104 @@ def test_criteria_to_mysql_converter_with_two_order_fields_injection() -> None:
             columns=['id', 'name'],
             check_criteria_injection=True,
             valid_columns=['id', 'name'],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_operator_injection_check_disabled() -> None:
+    """
+    Test CriteriaToMysqlConverter class with operator injection when check_operator_injection is disabled.
+    """
+    filter: Filter[Any] = FilterMother.create()
+
+    CriteriaToMysqlConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name'],
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_operator_injection() -> None:
+    """
+    Test CriteriaToMysqlConverter class with operator injection.
+    """
+    filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToMysqlConverter.convert(
+            criteria=CriteriaMother.with_filters(filters=[filter]),
+            table='user',
+            columns=['id', 'name'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_valid_operator() -> None:
+    """
+    Test CriteriaToMysqlConverter class with valid operator.
+    """
+    filter: Filter[Any] = FilterMother.create(field='id', operator=Operator.GREATER, value=1)
+
+    query, parameters = CriteriaToMysqlConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name'],
+        check_operator_injection=True,
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+    assert query == 'SELECT id, name FROM user WHERE id > %s;'
+    assert parameters == [1]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_multiple_filters_operator_injection() -> None:
+    """
+    Test CriteriaToMysqlConverter class with multiple filters where one has invalid operator.
+    """
+    filter1: Filter[Any] = FilterMother.create(operator=Operator.GREATER)
+    filter2: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToMysqlConverter.convert(
+            criteria=CriteriaMother.with_filters(filters=[filter1, filter2]),
+            table='user',
+            columns=['id', 'name'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_complex_criteria_operator_injection() -> None:
+    """
+    Test CriteriaToMysqlConverter class with complex criteria containing invalid operator.
+    """
+    criteria1 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.GREATER)])
+    criteria2 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.LESS)])
+    criteria3 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.LIKE)])
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<LIKE>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToMysqlConverter.convert(
+            criteria=criteria1 & (criteria2 | criteria3),
+            table='user',
+            columns=['id', 'name', 'age'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
         )
 
 
