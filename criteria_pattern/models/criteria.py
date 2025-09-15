@@ -465,6 +465,9 @@ class AndCriteria(Criteria):
         Returns:
             int | None: Page size for pagination, or None if not set.
         """
+        if self.left.page_size is None:
+            return self.right.page_size
+
         return self.left.page_size
 
     @property
@@ -476,6 +479,9 @@ class AndCriteria(Criteria):
         Returns:
             int | None: Page number for pagination, or None if not set.
         """
+        if self.left.page_number is None:
+            return self.right.page_number
+
         return self.left.page_number
 
     @property
@@ -571,6 +577,9 @@ class OrCriteria(Criteria):
         Returns:
             int | None: Page size for pagination, or None if not set.
         """
+        if self.left.page_size is None:
+            return self.right.page_size
+
         return self.left.page_size
 
     @property
@@ -582,6 +591,9 @@ class OrCriteria(Criteria):
         Returns:
             int | None: Page number for pagination, or None if not set.
         """
+        if self.left.page_number is None:
+            return self.right.page_number
+
         return self.left.page_number
 
     @property

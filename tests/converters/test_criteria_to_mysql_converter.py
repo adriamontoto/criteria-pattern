@@ -1131,3 +1131,147 @@ def test_criteria_to_mysql_converter_with_multiple_filters_in_same_criteria() ->
     assert query == expected_query
     assert parameters == expected_parameters
     assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_and_criteria_pagination_left_has_right_none() -> None:
+    """
+    Test CriteriaToMysqlConverter with AndCriteria where left has pagination, right has none.
+    Should use left pagination.
+    """
+    left_criteria = Criteria(
+        filters=[Filter(field='age', operator=Operator.GREATER, value=18)],
+        page_size=10,
+        page_number=2,
+    )
+    right_criteria = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='active')])
+
+    and_criteria = left_criteria & right_criteria
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=and_criteria, table='user')
+
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active']
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_and_criteria_pagination_left_none_right_has() -> None:
+    """
+    Test CriteriaToMysqlConverter with AndCriteria where left has no pagination, right has pagination.
+    Should fallback to right pagination (NEW BEHAVIOR).
+    """
+    left_criteria = Criteria(filters=[Filter(field='age', operator=Operator.GREATER, value=18)])
+    right_criteria = Criteria(
+        filters=[Filter(field='status', operator=Operator.EQUAL, value='active')],
+        page_size=15,
+        page_number=3,
+    )
+
+    and_criteria = left_criteria & right_criteria
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=and_criteria, table='user')
+
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active']
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_and_criteria_pagination_both_have() -> None:
+    """
+    Test CriteriaToMysqlConverter with AndCriteria where both have pagination.
+    Should use left pagination (existing behavior).
+    """
+    left_criteria = Criteria(
+        filters=[Filter(field='age', operator=Operator.GREATER, value=18)],
+        page_size=10,
+        page_number=2,
+    )
+    right_criteria = Criteria(
+        filters=[Filter(field='status', operator=Operator.EQUAL, value='active')],
+        page_size=20,
+        page_number=5,
+    )
+
+    and_criteria = left_criteria & right_criteria
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=and_criteria, table='user')
+
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active']
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_and_criteria_pagination_both_none() -> None:
+    """
+    Test CriteriaToMysqlConverter with AndCriteria where neither has pagination.
+    Should have no pagination (existing behavior).
+    """
+    left_criteria = Criteria(filters=[Filter(field='age', operator=Operator.GREATER, value=18)])
+    right_criteria = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='active')])
+
+    and_criteria = left_criteria & right_criteria
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=and_criteria, table='user')
+
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s);'
+    expected_parameters = [18, 'active']
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_or_criteria_pagination_left_has_right_none() -> None:
+    """
+    Test CriteriaToMysqlConverter with OrCriteria where left has pagination, right has none.
+    Should use left pagination.
+    """
+    left_criteria = Criteria(
+        filters=[Filter(field='age', operator=Operator.GREATER, value=18)],
+        page_size=10,
+        page_number=2,
+    )
+    right_criteria = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='active')])
+
+    or_criteria = left_criteria | right_criteria
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=or_criteria, table='user')
+
+    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT 10 OFFSET 10;'
+    expected_parameters = [18, 'active']
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_or_criteria_pagination_left_none_right_has() -> None:
+    """
+    Test CriteriaToMysqlConverter with OrCriteria where left has no pagination, right has pagination.
+    Should fallback to right pagination (NEW BEHAVIOR).
+    """
+    left_criteria = Criteria(filters=[Filter(field='age', operator=Operator.GREATER, value=18)])
+    right_criteria = Criteria(
+        filters=[Filter(field='status', operator=Operator.EQUAL, value='active')],
+        page_size=15,
+        page_number=3,
+    )
+
+    or_criteria = left_criteria | right_criteria
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=or_criteria, table='user')
+
+    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT 15 OFFSET 30;'
+    expected_parameters = [18, 'active']
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
