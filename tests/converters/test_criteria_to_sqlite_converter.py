@@ -1090,3 +1090,23 @@ def test_criteria_to_sqlite_converter_with_orders_and_page_size_only() -> None:
     assert query == expected_query
     assert parameters == {}
     assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_multiple_filters_in_same_criteria() -> None:
+    """
+    Test CriteriaToSqliteConverter class with multiple filters in the same Criteria object.
+    This should produce AND conditions between filters.
+    """
+    filter1 = Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)
+    filter2 = Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')
+
+    criteria = Criteria(filters=[filter1, filter2])
+    query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
+
+    expected_query = 'SELECT * FROM "user" WHERE "age" >= :parameter_0 AND "email" LIKE \'%\' || :parameter_1;'
+    expected_parameters = {'parameter_0': 18, 'parameter_1': '@gmail.com'}
+
+    assert query == expected_query
+    assert parameters == expected_parameters
+    assert_valid_sqlite_syntax(query=query)

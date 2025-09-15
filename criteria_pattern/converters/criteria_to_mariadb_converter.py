@@ -15,7 +15,7 @@ class CriteriaToMariadbConverter(CriteriaToMysqlConverter):
     Example:
     ```python
     from criteria_pattern import Criteria, Filter, Operator
-    from criteria_pattern.converter import CriteriaToMariadbConverter
+    from criteria_pattern.converters import CriteriaToMariadbConverter
 
     is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
     email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])

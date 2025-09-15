@@ -17,7 +17,7 @@ class UrlToCriteriaConverter:
 
     Example:
     ```python
-    from criteria_pattern.converter import UrlToCriteriaConverter
+    from criteria_pattern.converters import UrlToCriteriaConverter
 
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=Doe&filters[1][field]=age&filters[1][operator]=GREATER_OR_EQUAL&filters[1][value]=18&orders[1][field]=age&orders[1][direction]=DESC'
     criteria = UrlToCriteriaConverter.convert(url=url)
@@ -91,7 +91,7 @@ class UrlToCriteriaConverter:
 
         Example:
         ```python
-        from criteria_pattern.converter import UrlToCriteriaConverter
+        from criteria_pattern.converters import UrlToCriteriaConverter
 
         url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=Doe&filters[1][field]=age&filters[1][operator]=GREATER_OR_EQUAL&filters[1][value]=18&orders[1][field]=age&orders[1][direction]=DESC'
         criteria = UrlToCriteriaConverter.convert(url=url)

@@ -17,7 +17,7 @@ class CriteriaToMysqlConverter:
     Example:
     ```python
     from criteria_pattern import Criteria, Filter, Operator
-    from criteria_pattern.converter import CriteriaToMysqlConverter
+    from criteria_pattern.converters import CriteriaToMysqlConverter
 
     is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
     email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
@@ -71,7 +71,7 @@ class CriteriaToMysqlConverter:
         Example:
         ```python
         from criteria_pattern import Criteria, Filter, Operator
-        from criteria_pattern.converter import CriteriaToMysqlConverter
+        from criteria_pattern.converters import CriteriaToMysqlConverter
 
         is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
         email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
@@ -275,6 +275,7 @@ class CriteriaToMysqlConverter:
 
             return filters, parameters
 
+        filter_conditions = []
         for filter in criteria.filters:
             filter_field = columns_mapping.get(filter.field, filter.field)
             placeholder = '%s'
@@ -282,59 +283,59 @@ class CriteriaToMysqlConverter:
             operator = Operator(value=filter.operator)
             match operator:
                 case Operator.EQUAL:
-                    filters += f'{filter_field} = {placeholder}'
+                    filter_conditions.append(f'{filter_field} = {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.NOT_EQUAL:
-                    filters += f'{filter_field} != {placeholder}'
+                    filter_conditions.append(f'{filter_field} != {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.GREATER:
-                    filters += f'{filter_field} > {placeholder}'
+                    filter_conditions.append(f'{filter_field} > {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.GREATER_OR_EQUAL:
-                    filters += f'{filter_field} >= {placeholder}'
+                    filter_conditions.append(f'{filter_field} >= {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.LESS:
-                    filters += f'{filter_field} < {placeholder}'
+                    filter_conditions.append(f'{filter_field} < {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.LESS_OR_EQUAL:
-                    filters += f'{filter_field} <= {placeholder}'
+                    filter_conditions.append(f'{filter_field} <= {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.LIKE:
-                    filters += f'{filter_field} LIKE {placeholder}'
+                    filter_conditions.append(f'{filter_field} LIKE {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.NOT_LIKE:
-                    filters += f'{filter_field} NOT LIKE {placeholder}'
+                    filter_conditions.append(f'{filter_field} NOT LIKE {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.CONTAINS:
-                    filters += f"{filter_field} LIKE CONCAT('%', {placeholder}, '%')"
+                    filter_conditions.append(f"{filter_field} LIKE CONCAT('%', {placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.NOT_CONTAINS:
-                    filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')"
+                    filter_conditions.append(f"{filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.STARTS_WITH:
-                    filters += f"{filter_field} LIKE CONCAT({placeholder}, '%')"
+                    filter_conditions.append(f"{filter_field} LIKE CONCAT({placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.NOT_STARTS_WITH:
-                    filters += f"{filter_field} NOT LIKE CONCAT({placeholder}, '%')"
+                    filter_conditions.append(f"{filter_field} NOT LIKE CONCAT({placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.ENDS_WITH:
-                    filters += f"{filter_field} LIKE CONCAT('%', {placeholder})"
+                    filter_conditions.append(f"{filter_field} LIKE CONCAT('%', {placeholder})")
                     parameters.append(filter.value)
 
                 case Operator.NOT_ENDS_WITH:
-                    filters += f"{filter_field} NOT LIKE CONCAT('%', {placeholder})"
+                    filter_conditions.append(f"{filter_field} NOT LIKE CONCAT('%', {placeholder})")
                     parameters.append(filter.value)
 
                 case Operator.BETWEEN:
@@ -342,20 +343,20 @@ class CriteriaToMysqlConverter:
                     end_placeholder = '%s'
                     parameters.append(filter.value[0])
                     parameters.append(filter.value[1])
-                    filters += f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}'
+                    filter_conditions.append(f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}')
 
                 case Operator.NOT_BETWEEN:
                     start_placeholder = '%s'
                     end_placeholder = '%s'
                     parameters.append(filter.value[0])
                     parameters.append(filter.value[1])
-                    filters += f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}'
+                    filter_conditions.append(f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}')
 
                 case Operator.IS_NULL:
-                    filters += f'{filter_field} IS NULL'
+                    filter_conditions.append(f'{filter_field} IS NULL')
 
                 case Operator.IS_NOT_NULL:
-                    filters += f'{filter_field} IS NOT NULL'
+                    filter_conditions.append(f'{filter_field} IS NOT NULL')
 
                 case Operator.IN:
                     values = filter.value
@@ -363,7 +364,7 @@ class CriteriaToMysqlConverter:
                     for value in values:
                         parameters.append(value)
                         placeholders.append('%s')
-                    filters += f'{filter_field} IN ({", ".join(placeholders)})'
+                    filter_conditions.append(f'{filter_field} IN ({", ".join(placeholders)})')
 
                 case Operator.NOT_IN:
                     values = filter.value
@@ -371,10 +372,12 @@ class CriteriaToMysqlConverter:
                     for value in values:
                         parameters.append(value)
                         placeholders_not_in.append('%s')
-                    filters += f'{filter_field} NOT IN ({", ".join(placeholders_not_in)})'
+                    filter_conditions.append(f'{filter_field} NOT IN ({", ".join(placeholders_not_in)})')
 
                 case _:  # pragma: no cover
                     assert_never(operator)
+
+        filters = ' AND '.join(filter_conditions)
 
         return filters, parameters
 
