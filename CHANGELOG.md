@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.2.0 (2025-09-15)
+
+### ✨ Features
+
+- Implement directions validation to converters
+  ([`d015d33`](https://github.com/adriamontoto/criteria-pattern/commit/d015d333b5190f52a0d8f46cb20bfc155169fcbf))
+
+
 ## v3.1.0 (2025-09-15)
 
 ### ✨ Features
