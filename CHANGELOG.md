@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.6.0 (2025-09-16)
+
+### ✨ Features
+
+- Replace TypeError and ValueError to IntegrityError
+  ([`3591109`](https://github.com/adriamontoto/criteria-pattern/commit/3591109ebfc4ef07e6c38502d6211dc1bdd871ea))
+
+
 ## v3.5.1 (2025-09-16)
 
 ### 🐛 Bug Fixes
