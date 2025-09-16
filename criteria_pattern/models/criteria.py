@@ -15,6 +15,8 @@ from typing import Any
 
 from value_object_pattern.models import BaseModel
 
+from criteria_pattern.errors import IntegrityError
+
 from .filter import Filter
 from .filters import Filters
 from .order import Order
@@ -60,7 +62,7 @@ class Criteria(BaseModel):
             page_number (int | None, optional): Page number for pagination, must be >= 1. Defaults to None.
 
         Raises:
-            ValueError: If `page_number` is provided but `page_size` is not.
+            IntegrityError: If `page_number` is provided but `page_size` is not.
 
         Example:
         ```python
@@ -72,7 +74,7 @@ class Criteria(BaseModel):
         ```
         """  # noqa: E501
         if page_number is not None and page_size is None:
-            raise ValueError(f'Criteria page_number <<<{page_number}>>> cannot be provided without page_size.')
+            raise IntegrityError(message=f'Criteria page_number <<<{page_number}>>> cannot be provided without page_size.')  # noqa: E501  # fmt: skip
 
         self._filters = Filters(value=filters if filters is not None else [], title='Criteria', parameter='filters')
         self._orders = Orders(value=orders if orders is not None else [], title='Criteria', parameter='orders')

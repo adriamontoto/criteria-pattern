@@ -7,6 +7,7 @@ from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Filter, Order, PageNumber, PageSize
+from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 from criteria_pattern.models.filters import Filters
 from criteria_pattern.models.orders import Orders
@@ -430,7 +431,7 @@ def test_criteria_model_pagination_validation_page_number_without_page_size() ->
     page_number = IntegerMother.positive()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_number <<<{page_number}>>> cannot be provided without page_size.',
     ):
         Criteria(page_number=page_number)

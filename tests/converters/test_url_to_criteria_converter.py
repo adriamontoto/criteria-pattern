@@ -10,6 +10,7 @@ from pytest import mark, raises as assert_raises
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import UrlToCriteriaConverter
 from criteria_pattern.errors import (
+    IntegrityError,
     InvalidColumnError,
     InvalidDirectionError,
     InvalidOperatorError,
@@ -634,7 +635,7 @@ def test_url_to_criteria_converter_with_missing_filter_field() -> None:
     url = 'https://api.example.com/users?filters[0][operator]=EQUAL&filters[0][value]=test'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has missing field.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -648,7 +649,7 @@ def test_url_to_criteria_converter_with_missing_filter_operator() -> None:
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][value]=test'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has missing operator.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -662,7 +663,7 @@ def test_url_to_criteria_converter_with_missing_filter_value() -> None:
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has missing value.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -676,7 +677,7 @@ def test_url_to_criteria_converter_with_invalid_operator() -> None:
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=INVALID_OP&filters[0][value]=test'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has unsupported operator <<<INVALID_OP>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -690,7 +691,7 @@ def test_url_to_criteria_converter_with_missing_order_field() -> None:
     url = 'https://api.example.com/users?orders[0][direction]=ASC'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[0\\]>>> has missing field.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -704,7 +705,7 @@ def test_url_to_criteria_converter_with_missing_order_direction() -> None:
     url = 'https://api.example.com/users?orders[0][field]=name'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[0\\]>>> has missing direction.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -718,7 +719,7 @@ def test_url_to_criteria_converter_with_invalid_direction() -> None:
     url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=INVALID_DIR'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[0\\]>>> has unsupported direction <<<INVALID_DIR>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -732,7 +733,7 @@ def test_url_to_criteria_converter_with_invalid_filter_index() -> None:
     url = 'https://api.example.com/users?filters[abc][field]=name&filters[abc][operator]=EQUAL&filters[abc][value]=test'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[abc\\]>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -746,7 +747,7 @@ def test_url_to_criteria_converter_with_invalid_order_index() -> None:
     url = 'https://api.example.com/users?orders[xyz][field]=name&orders[xyz][direction]=ASC'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[xyz\\]>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -760,7 +761,7 @@ def test_url_to_criteria_converter_with_between_insufficient_values() -> None:
     url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=BETWEEN&filters[0][value]=18'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has invalid value <<<18>>> for operator <<<BETWEEN>>>.',  # noqa: E501
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -774,7 +775,7 @@ def test_url_to_criteria_converter_with_between_too_many_values() -> None:
     url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=BETWEEN&filters[0][value]=18,25,30'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has invalid value <<<18,25,30>>> for operator <<<BETWEEN>>>.',  # noqa: E501
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -788,7 +789,7 @@ def test_url_to_criteria_converter_with_in_empty_values() -> None:
     url = 'https://api.example.com/users?filters[0][field]=status&filters[0][operator]=IN&filters[0][value]=,,'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has invalid value <<<,,>>> for operator <<<IN>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -852,7 +853,7 @@ def test_url_to_criteria_converter_with_field_limit_exceeded() -> None:
     url = f'https://api.example.com/users?filters[100][field]={field_name}&filters[100][operator]=EQUAL&filters[100][value]={field_value}'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[100\\]>>> exceeds maximum limit of <<<100>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -867,7 +868,7 @@ def test_url_to_criteria_converter_with_order_limit_exceeded() -> None:
     url = f'https://api.example.com/users?orders[100][field]={field_name}&orders[100][direction]=ASC'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[100\\]>>> exceeds maximum limit of <<<100>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -1311,13 +1312,13 @@ def test_url_to_criteria_converter_with_leading_trailing_spaces_in_values() -> N
 @mark.unit_testing
 def test_url_to_criteria_converter_with_non_numeric_page_number() -> None:
     """
-    Test UrlToCriteriaConverter class to trigger lines 351-352 - ValueError exception in _parse_page_number.
+    Test UrlToCriteriaConverter class to trigger lines 351-352 - IntegrityError exception in _parse_page_number.
     """
     invalid_page_number = StringMother.alpha()
     url = f'https://api.example.com/users?page_number={invalid_page_number}'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_number <<<{invalid_page_number}>>> cannot be provided without page_size.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -1326,7 +1327,7 @@ def test_url_to_criteria_converter_with_non_numeric_page_number() -> None:
 @mark.unit_testing
 def test_url_to_criteria_converter_with_non_numeric_page_size() -> None:
     """
-    Test UrlToCriteriaConverter class to trigger lines 372-373 - ValueError exception in _parse_page_size.
+    Test UrlToCriteriaConverter class to trigger lines 372-373 - IntegrityError exception in _parse_page_size.
     """
     invalid_page_size = StringMother.alpha()
     url = f'https://api.example.com/users?page_size={invalid_page_size}'

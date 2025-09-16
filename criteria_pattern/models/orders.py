@@ -5,6 +5,8 @@ Orders module.
 from value_object_pattern import validation
 from value_object_pattern.models.collections import ListValueObject
 
+from criteria_pattern.errors import IntegrityError
+
 from .order import Order
 
 
@@ -53,7 +55,7 @@ class Orders(ListValueObject[Order]):
             value (list[Order]): The provided list of orders.
 
         Raises:
-            ValueError: If the list has duplicate fields.
+            IntegrityError: If the list has duplicate fields.
         """
         order_fields = [order.field for order in value]
         if len(order_fields) != len(set(order_fields)):
@@ -61,12 +63,12 @@ class Orders(ListValueObject[Order]):
 
     def _raise_value_has_duplicate_fields(self, value: list[Order]) -> None:
         """
-        Raises a ValueError if the provided list of orders has duplicate fields.
+        Raises a IntegrityError if the provided list of orders has duplicate fields.
 
         Args:
             value (list[Order]): The provided list of orders.
 
         Raises:
-            ValueError: If the list has duplicate fields.
+            IntegrityError: If the list has duplicate fields.
         """
-        raise ValueError(f'Orders values <<<{", ".join(order.field for order in value)}>>> must have unique fields.')
+        raise IntegrityError(message=f'Orders values <<<{", ".join(order.field for order in value)}>>> must have unique fields.')  # noqa: E501  # fmt: skip

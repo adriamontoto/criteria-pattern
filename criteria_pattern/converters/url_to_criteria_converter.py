@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, unquote_plus, urlparse
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.errors import (
+    IntegrityError,
     InvalidColumnError,
     InvalidDirectionError,
     InvalidOperatorError,
@@ -96,15 +97,15 @@ class UrlToCriteriaConverter:
             max_page_number (int, optional): Maximum allowed page_number to prevent integer overflow. Default to 1000000.
 
         Raises:
-            TypeError: If the filter index is not an integer.
-            ValueError: If the filter has missing field.
-            ValueError: If the filter has missing operator.
-            ValueError: If the filter has unsupported operator.
-            ValueError: If the filter has missing value.
-            TypeError: If the order index is not an integer.
-            ValueError: If the order has missing field.
-            ValueError: If the order has missing direction.
-            ValueError: If the order has unsupported direction.
+            IntegrityError: If the filter index is not an integer.
+            IntegrityError: If the filter has missing field.
+            IntegrityError: If the filter has missing operator.
+            IntegrityError: If the filter has unsupported operator.
+            IntegrityError: If the filter has missing value.
+            IntegrityError: If the order index is not an integer.
+            IntegrityError: If the order has missing field.
+            IntegrityError: If the order has missing direction.
+            IntegrityError: If the order has unsupported direction.
             InvalidColumnError: If an invalid field name is found in filters.
             InvalidColumnError: If an invalid field name is found in orders.
             InvalidOperatorError: If an invalid operator is found in filters.
@@ -173,11 +174,11 @@ class UrlToCriteriaConverter:
             fields_mapping (Mapping[str, str]): The mapping of external to internal field names.
 
         Raises:
-            TypeError: If the filter index is not an integer.
-            ValueError: If the filter has missing field.
-            ValueError: If the filter has missing operator.
-            ValueError: If the filter has unsupported operator.
-            ValueError: If the filter has missing value.
+            IntegrityError: If the filter index is not an integer.
+            IntegrityError: If the filter has missing field.
+            IntegrityError: If the filter has missing operator.
+            IntegrityError: If the filter has unsupported operator.
+            IntegrityError: If the filter has missing value.
 
         Returns:
             list[Filter]: The parsed list of filter criteria.
@@ -195,36 +196,36 @@ class UrlToCriteriaConverter:
                 index = int(index_string)
 
             except ValueError as exception:
-                raise TypeError(f'UrlToCriteriaConverter filter <<<filters[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
             if index >= cls._MAX_FIELDS:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
 
             bucket.setdefault(index, {})[key] = values[0]
 
         for idx in sorted(bucket):
             field_name = bucket[idx].get('field')
             if field_name is None:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing field.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing field.')
 
             operator_raw = bucket[idx].get('operator')
             if operator_raw is None:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing operator.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing operator.')  # noqa: E501  # fmt: skip
 
             value_raw = bucket[idx].get('value')
             if value_raw is None:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing value.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing value.')
 
             operator_key = operator_raw.upper().strip()
             operator = cls._OPERATOR_MAPPING.get(operator_key)
             if not operator:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has unsupported operator <<<{operator_raw}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has unsupported operator <<<{operator_raw}>>>.')  # noqa: E501  # fmt: skip
 
             try:
                 parsed_value = cls._parse_filter_value(raw_value=value_raw, operator=operator)
 
-            except ValueError as exception:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has invalid value <<<{value_raw}>>> for operator <<<{operator.value}>>>.') from exception  # noqa: E501  # fmt: skip
+            except IntegrityError as exception:
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has invalid value <<<{value_raw}>>> for operator <<<{operator.value}>>>.') from exception  # noqa: E501  # fmt: skip
 
             actual_field = fields_mapping.get(field_name, field_name)
             filters.append(Filter(field=actual_field, operator=operator, value=parsed_value))
@@ -241,8 +242,8 @@ class UrlToCriteriaConverter:
             operator (Operator): The operator to use for parsing.
 
         Raises:
-            ValueError: If the raw value is missing.
-            ValueError: If the raw value was expected to have two comma-separated values.
+            IntegrityError: If the raw value is missing.
+            IntegrityError: If the raw value was expected to have two comma-separated values.
 
         Returns:
             Any: The parsed filter value.
@@ -251,20 +252,20 @@ class UrlToCriteriaConverter:
             return None
 
         if raw_value is None:
-            raise ValueError('UrlToCriteriaConverter filter has missing value.')  # pragma: no cover
+            raise IntegrityError(message='UrlToCriteriaConverter filter has missing value.')  # pragma: no cover
 
         raw_value = unquote_plus(string=raw_value)
         if operator in (Operator.BETWEEN, Operator.NOT_BETWEEN):
             parts = [part.strip() for part in raw_value.split(',')]
             if len(parts) != 2:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects exactly two comma-separated values.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects exactly two comma-separated values.')  # noqa: E501  # fmt: skip
 
             return [cls._convert_primitive(value=part) for part in parts]
 
         if operator in (Operator.IN, Operator.NOT_IN):
             parts = [part.strip() for part in raw_value.split(',') if part.strip()]
             if not parts:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects at least one comma-separated value.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects at least one comma-separated value.')  # noqa: E501  # fmt: skip
 
             return [cls._convert_primitive(value=part) for part in parts]
 
@@ -320,10 +321,10 @@ class UrlToCriteriaConverter:
             fields_mapping (Mapping[str, str]): The mapping of external to internal field names.
 
         Raises:
-            TypeError: If the order index is not an integer.
-            ValueError: If the order has missing field.
-            ValueError: If the order has missing direction.
-            ValueError: If the order has unsupported direction.
+            IntegrityError: If the order index is not an integer.
+            IntegrityError: If the order has missing field.
+            IntegrityError: If the order has missing direction.
+            IntegrityError: If the order has unsupported direction.
 
         Returns:
             list[Order]: The parsed list of order criteria.
@@ -341,26 +342,26 @@ class UrlToCriteriaConverter:
                 index = int(index_string)
 
             except ValueError as exception:
-                raise TypeError(f'UrlToCriteriaConverter order <<<orders[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
             if index >= cls._MAX_FIELDS:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
 
             bucket.setdefault(index, {})[key] = values[0]
 
         for idx in sorted(bucket):
             field_name = bucket[idx].get('field')
             if field_name is None:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing field.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing field.')
 
             direction_raw = bucket[idx].get('direction')
             if direction_raw is None:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing direction.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing direction.')
 
             direction_key = direction_raw.upper().strip()
             direction = cls._DIRECTION_MAPPING.get(direction_key)
             if not direction:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has unsupported direction <<<{direction_raw}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has unsupported direction <<<{direction_raw}>>>.')  # noqa: E501  # fmt: skip
 
             actual_field = fields_mapping.get(field_name, field_name)
             orders.append(Order(field=actual_field, direction=direction))

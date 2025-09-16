@@ -4,7 +4,7 @@ Invalid operator error exception.
 
 from collections.abc import Sequence
 
-from criteria_pattern import Operator
+from criteria_pattern.models.filter.operator import Operator
 
 from .criteria_pattern_base_error import CriteriaPatternBaseError
 

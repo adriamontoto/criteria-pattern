@@ -4,7 +4,7 @@ Invalid direction error exception.
 
 from collections.abc import Sequence
 
-from criteria_pattern import Direction
+from criteria_pattern.models.order.direction import Direction
 
 from .criteria_pattern_base_error import CriteriaPatternBaseError
 
