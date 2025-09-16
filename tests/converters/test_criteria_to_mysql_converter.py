@@ -1747,13 +1747,13 @@ def test_criteria_to_mysql_converter_with_page_size_bounds_exceeded() -> None:
 
     with assert_raises(
         expected_exception=PaginationBoundsError,
-        match=f'Pagination <<<page_size>>> <<<{page_size}>>> exceeds maximum allowed value <<<1>>>.',
+        match=f'Pagination <<<page_size>>> <<<{page_size}>>> exceeds maximum allowed value <<<0>>>.',
     ):
         CriteriaToMysqlConverter.convert(
             criteria=criteria,
             table='user',
             check_pagination_bounds=True,
-            max_page_size=1,
+            max_page_size=0,
         )
 
 
@@ -1768,13 +1768,13 @@ def test_criteria_to_mysql_converter_with_page_number_bounds_exceeded() -> None:
 
     with assert_raises(
         expected_exception=PaginationBoundsError,
-        match=f'Pagination <<<page_number>>> <<<{page_number}>>> exceeds maximum allowed value <<<1>>>.',
+        match=f'Pagination <<<page_number>>> <<<{page_number}>>> exceeds maximum allowed value <<<0>>>.',
     ):
         CriteriaToMysqlConverter.convert(
             criteria=criteria,
             table='user',
             check_pagination_bounds=True,
-            max_page_number=1,
+            max_page_number=0,
         )
 
 
