@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.5.0 (2025-09-16)
+
+### ✨ Features
+
+- Implement IntegrityError
+  ([`cc90a9d`](https://github.com/adriamontoto/criteria-pattern/commit/cc90a9dea8b981bbd9790420d9ba1e0cd8e463bd))
+
+
 ## v3.4.0 (2025-09-16)
 
 ### ✨ Features
