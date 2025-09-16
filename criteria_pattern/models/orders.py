@@ -2,6 +2,15 @@
 Orders module.
 """
 
+from sys import version_info
+
+if version_info >= (3, 12):
+    from typing import override  # pragma: no cover
+else:
+    from typing_extensions import override  # pragma: no cover
+
+from typing import Any, NoReturn
+
 from value_object_pattern import validation
 from value_object_pattern.models.collections import ListValueObject
 
@@ -72,3 +81,29 @@ class Orders(ListValueObject[Order]):
             IntegrityError: If the list has duplicate fields.
         """
         raise IntegrityError(message=f'Orders values <<<{", ".join(order.field for order in value)}>>> must have unique fields.')  # noqa: E501  # fmt: skip
+
+    @override
+    def _raise_value_is_not_list(self, value: Any) -> NoReturn:
+        """
+        Raises a IntegrityError if the value object `value` is not a list.
+
+        Args:
+            value (Any): The provided value.
+
+        Raises:
+            IntegrityError: If the `value` is not a list.
+        """
+        raise IntegrityError(message=f'ListValueObject value <<<{value}>>> must be a list. Got <<<{type(value).__name__}>>> type.')  # noqa: E501  # fmt: skip # pragma: no cover
+
+    @override
+    def _raise_value_is_not_of_type(self, value: Any) -> NoReturn:
+        """
+        Raises a IntegrityError if the value object `value` is not of type `T`.
+
+        Args:
+            value (Any): The provided value.
+
+        Raises:
+            IntegrityError: If the `value` is not of type `T`.
+        """
+        raise IntegrityError(message=f'ListValueObject value <<<{value}>>> must be of type <<<{self._type.__name__}>>> type. Got <<<{type(value).__name__}>>> type.')  # type: ignore[attr-defined]  # noqa: E501  # fmt: skip

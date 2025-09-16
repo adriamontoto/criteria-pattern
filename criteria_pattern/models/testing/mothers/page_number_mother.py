@@ -40,8 +40,8 @@ class PageNumberMother(BaseMother[PageNumber]):
             value (int | None, optional): Page number value. Defaults to None.
 
         Raises:
-            TypeError: If `value` is not an integer.
-            ValueError: If `value` is not a positive integer.
+            IntegrityError: If `value` is not an integer.
+            IntegrityError: If `value` is not a positive integer.
 
         Returns:
             PageNumber: A random page number value.

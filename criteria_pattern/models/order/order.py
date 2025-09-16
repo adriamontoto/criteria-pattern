@@ -34,11 +34,11 @@ class Order(BaseModel):
             direction (Direction): Order direction that will be used to order the field.
 
         Raises:
-            TypeError: If the provided `field` is not a string.
-            ValueError: If the provided `field` is empty.
-            ValueError: If the provided `field` is not trimmed.
-            ValueError: If the provided `field` is not alphanumeric.
-            TypeError: If the provided `direction` is not a Direction.
+            IntegrityError: If the provided `field` is not a string.
+            IntegrityError: If the provided `field` is empty.
+            IntegrityError: If the provided `field` is not trimmed.
+            IntegrityError: If the provided `field` is not alphanumeric.
+            IntegrityError: If the provided `direction` is not a Direction.
 
         Example:
         ```python

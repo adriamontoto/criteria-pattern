@@ -1333,7 +1333,7 @@ def test_url_to_criteria_converter_with_non_numeric_page_size() -> None:
     url = f'https://api.example.com/users?pageSize={invalid_page_size}'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_size <<<{invalid_page_size}>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -1349,7 +1349,7 @@ def test_url_to_criteria_converter_with_both_non_numeric_pagination() -> None:
     url = f'https://api.example.com/users?pageSize={invalid_page_size}&pageNumber={invalid_page_number}'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_size <<<{invalid_page_size}>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)

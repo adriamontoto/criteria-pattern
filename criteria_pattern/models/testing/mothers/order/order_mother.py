@@ -43,11 +43,11 @@ class OrderMother(BaseMother[Order]):
             direction (str | None, optional): The direction to use. Defaults to None.
 
         Raises:
-            TypeError: If `field` is not a string.
-            ValueError: If `field` is empty.
-            ValueError: If `field` is not trimmed.
-            ValueError: If `field` contains non-alphanumeric characters.
-            TypeError: If `direction` is not an OrderDirection.
+            IntegrityError: If `field` is not a string.
+            IntegrityError: If `field` is empty.
+            IntegrityError: If `field` is not trimmed.
+            IntegrityError: If `field` contains non-alphanumeric characters.
+            IntegrityError: If `direction` is not an OrderDirection.
 
         Returns:
             Order: A random order value with the specified parameters.

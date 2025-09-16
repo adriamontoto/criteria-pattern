@@ -40,8 +40,8 @@ class PageSizeMother(BaseMother[PageSize]):
             value (int | None, optional): Page size value. Defaults to None.
 
         Raises:
-            TypeError: If `value` is not an integer.
-            ValueError: If `value` is not a positive integer.
+            IntegrityError: If `value` is not an integer.
+            IntegrityError: If `value` is not a positive integer.
 
         Returns:
             PageSize: A random page size value.

@@ -426,7 +426,7 @@ def test_criteria_model_without_pagination() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_validation_page_number_without_page_size() -> None:
     """
-    Test Criteria model raises ValueError when page_number is provided without page_size.
+    Test Criteria model raises IntegrityError when page_number is provided without page_size.
     """
     page_number = IntegerMother.positive()
 
@@ -454,10 +454,10 @@ def test_criteria_model_pagination_with_page_size_only() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_size_type() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_size type.
+    Test Criteria model raises IntegrityError for invalid page_size type.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_size <<<.*>>> must be an integer. Got <<<.*>>> type.',
     ):
         Criteria(page_size=IntegerMother.invalid_type(), page_number=IntegerMother.positive())
@@ -466,10 +466,10 @@ def test_criteria_model_pagination_invalid_page_size_type() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_size() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_size.
+    Test Criteria model raises IntegrityError for invalid page_size.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_size <<<0>>> must be a positive integer.',
     ):
         Criteria(page_size=0, page_number=IntegerMother.positive())
@@ -478,12 +478,12 @@ def test_criteria_model_pagination_invalid_page_size() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_size_random() -> None:
     """
-    Test Criteria model raises ValueError for random invalid page_size.
+    Test Criteria model raises IntegrityError for random invalid page_size.
     """
     page_size = IntegerMother.negative_or_zero()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=rf'Criteria page_size <<<{page_size}>>> must be a positive integer.',
     ):
         Criteria(page_size=page_size, page_number=IntegerMother.positive())
@@ -492,10 +492,10 @@ def test_criteria_model_pagination_invalid_page_size_random() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_number_type() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_number type.
+    Test Criteria model raises IntegrityError for invalid page_number type.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_number <<<.*>>> must be an integer. Got <<<.*>>> type.',
     ):
         Criteria(page_size=IntegerMother.positive(), page_number=IntegerMother.invalid_type())
@@ -504,10 +504,10 @@ def test_criteria_model_pagination_invalid_page_number_type() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_number() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_number.
+    Test Criteria model raises IntegrityError for invalid page_number.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_number <<<0>>> must be a positive integer.',
     ):
         Criteria(page_size=IntegerMother.positive(), page_number=0)
@@ -516,12 +516,12 @@ def test_criteria_model_pagination_invalid_page_number() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_number_random() -> None:
     """
-    Test Criteria model raises ValueError for random invalid page_number.
+    Test Criteria model raises IntegrityError for random invalid page_number.
     """
     page_number = IntegerMother.negative_or_zero()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=rf'Criteria page_number <<<{page_number}>>> must be a positive integer.',
     ):
         Criteria(page_size=IntegerMother.positive(), page_number=page_number)

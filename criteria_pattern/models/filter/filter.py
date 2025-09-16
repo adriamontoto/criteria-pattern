@@ -41,12 +41,12 @@ class Filter(BaseModel, Generic[T]):  # noqa: UP046
             value (T): Value that will be used to filter the field.
 
         Raises:
-            TypeError: If the provided `field` is not a string.
-            ValueError: If the provided `field` is empty.
-            ValueError: If the provided `field` is not trimmed.
-            ValueError: If the provided `field` is not alphanumeric.
-            TypeError: If the provided `operator` is not an Operator.
-            TypeError: If the provided `value` is not of type `T`.
+            IntegrityError: If the provided `field` is not a string.
+            IntegrityError: If the provided `field` is empty.
+            IntegrityError: If the provided `field` is not trimmed.
+            IntegrityError: If the provided `field` is not alphanumeric.
+            IntegrityError: If the provided `operator` is not an Operator.
+            IntegrityError: If the provided `value` is not of type `T`.
 
         Example:
         ```python

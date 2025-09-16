@@ -5,6 +5,7 @@ Test PageSize value object.
 from object_mother_pattern import IntegerMother
 from pytest import mark, raises as assert_raises
 
+from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models import PageSize
 
 
@@ -23,10 +24,10 @@ def test_page_size_value_object_happy_path() -> None:
 @mark.unit_testing
 def test_page_size_value_object_invalid_type() -> None:
     """
-    Test PageSize value object raises TypeError when invalid type is provided.
+    Test PageSize value object raises IntegrityError when invalid type is provided.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'PageSize value <<<.*>>> must be an integer. Got <<<.*>>> type.',
     ):
         PageSize(value=IntegerMother.invalid_type())
@@ -35,10 +36,10 @@ def test_page_size_value_object_invalid_type() -> None:
 @mark.unit_testing
 def test_page_size_value_object_zero_value() -> None:
     """
-    Test PageSize value object raises ValueError when zero is provided.
+    Test PageSize value object raises IntegrityError when zero is provided.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'PageSize value <<<0>>> must be a positive integer.',
     ):
         PageSize(value=0)
@@ -47,12 +48,12 @@ def test_page_size_value_object_zero_value() -> None:
 @mark.unit_testing
 def test_page_size_value_object_negative_value() -> None:
     """
-    Test PageSize value object raises ValueError when negative integer is provided.
+    Test PageSize value object raises IntegrityError when negative integer is provided.
     """
     negative_integer = IntegerMother.negative_or_zero()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=rf'PageSize value <<<{negative_integer}>>> must be a positive integer.',
     ):
         PageSize(value=negative_integer)

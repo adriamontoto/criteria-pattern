@@ -5,6 +5,7 @@ Test Filters model.
 from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
+from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models.filter import Filter
 from criteria_pattern.models.filters import Filters
 from criteria_pattern.models.testing.mothers import FiltersMother
@@ -37,10 +38,10 @@ def test_orders_model_empty() -> None:
 @mark.unit_testing
 def test_orders_model_invalid_type_raises_type_error() -> None:
     """
-    Test Filters model with invalid type raises TypeError.
+    Test Filters model with invalid type raises IntegrityError.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Filters value <<<.*>>> must be of type <<<Filter>>> type. Got <<<.*>>> type.',
     ):
         Filters(value=[BaseMother.invalid_type()])

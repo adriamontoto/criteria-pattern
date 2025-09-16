@@ -38,10 +38,10 @@ def test_orders_model_empty() -> None:
 @mark.unit_testing
 def test_orders_model_invalid_type_raises_type_error() -> None:
     """
-    Test Orders model with invalid type raises TypeError.
+    Test Orders model with invalid type raises IntegrityError.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Orders value <<<.*>>> must be of type <<<Order>>> type. Got <<<.*>>> type.',
     ):
         Orders(value=[BaseMother.invalid_type()])
