@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.4.0 (2025-09-16)
+
+### ✨ Features
+
+- Implement pagination bounds validation to criteria converters and URL converter
+  ([`e223adf`](https://github.com/adriamontoto/criteria-pattern/commit/e223adf7c92d4e12863fef2e3dd399c7b10e0881))
+
+
 ## v3.3.0 (2025-09-16)
 
 ### ✨ Features
