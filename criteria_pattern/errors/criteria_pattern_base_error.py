@@ -1,18 +1,18 @@
 """
-SQL converter base exception.
+Criteria pattern base error.
 """
 
 
-class SqlConverterError(Exception):
+class CriteriaPatternBaseError(Exception):
     """
-    SQL converter base exception.
+    Criteria pattern base error.
     """
 
     _message: str
 
     def __init__(self, *, message: str) -> None:
         """
-        SQL converter base exception constructor.
+        Criteria pattern base error constructor.
 
         Args:
             message (str): Exception message.

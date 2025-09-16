@@ -6,10 +6,10 @@ from collections.abc import Sequence
 
 from criteria_pattern import Direction
 
-from .sql_converter_error import SqlConverterError
+from .criteria_pattern_base_error import CriteriaPatternBaseError
 
 
-class InvalidDirectionError(SqlConverterError):
+class InvalidDirectionError(CriteriaPatternBaseError):
     """
     Exception raised when an invalid direction is specified in an ORDER BY operation.
 

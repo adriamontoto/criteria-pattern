@@ -2,10 +2,10 @@
 Pagination bounds error module.
 """
 
-from .sql_converter_error import SqlConverterError
+from .criteria_pattern_base_error import CriteriaPatternBaseError
 
 
-class PaginationBoundsError(SqlConverterError):
+class PaginationBoundsError(CriteriaPatternBaseError):
     """
     Pagination bounds error class.
 

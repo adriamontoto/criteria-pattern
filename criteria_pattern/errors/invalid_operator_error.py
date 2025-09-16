@@ -6,10 +6,10 @@ from collections.abc import Sequence
 
 from criteria_pattern import Operator
 
-from .sql_converter_error import SqlConverterError
+from .criteria_pattern_base_error import CriteriaPatternBaseError
 
 
-class InvalidOperatorError(SqlConverterError):
+class InvalidOperatorError(CriteriaPatternBaseError):
     """
     Exception raised when an invalid operator is specified in a SQL operation.
 

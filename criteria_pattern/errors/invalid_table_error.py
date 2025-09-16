@@ -4,10 +4,10 @@ Invalid table error exception.
 
 from collections.abc import Sequence
 
-from .sql_converter_error import SqlConverterError
+from .criteria_pattern_base_error import CriteriaPatternBaseError
 
 
-class InvalidTableError(SqlConverterError):
+class InvalidTableError(CriteriaPatternBaseError):
     """
     Exception raised when an invalid table is specified in a SQL operation.
 
