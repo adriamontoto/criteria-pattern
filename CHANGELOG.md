@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.3.0 (2025-09-16)
+
+### ✨ Features
+
+- Move pagination parameters to query placeholders
+  ([`1c4a8a8`](https://github.com/adriamontoto/criteria-pattern/commit/1c4a8a8c0631432ddfd6e64d60ac4c0aa2fa4483))
+
+
 ## v3.2.0 (2025-09-15)
 
 ### ✨ Features
