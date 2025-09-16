@@ -371,7 +371,7 @@ class UrlToCriteriaConverter:
     @classmethod
     def _parse_page_number(cls, *, query_parameters: Mapping[str, Sequence[str]]) -> int | None:
         """
-        Parse the 'page_number' query parameter.
+        Parse the 'pageNumber' query parameter.
 
         Args:
             query_parameters (Mapping[str, Sequence[str]]): The query parameters from the URL.
@@ -379,7 +379,7 @@ class UrlToCriteriaConverter:
         Returns:
             int | None: The parsed page number or None if not present.
         """
-        values = query_parameters.get('page_number')
+        values = query_parameters.get('pageNumber')
         if not values:
             return None
 
@@ -392,7 +392,7 @@ class UrlToCriteriaConverter:
     @classmethod
     def _parse_page_size(cls, *, query_parameters: Mapping[str, Sequence[str]]) -> int | None:
         """
-        Parse the 'page_size' query parameter.
+        Parse the 'pageSize' query parameter.
 
         Args:
             query_parameters (Mapping[str, Sequence[str]]): The query parameters from the URL.
@@ -400,7 +400,7 @@ class UrlToCriteriaConverter:
         Returns:
             int | None: The parsed page size or None if not present.
         """
-        values = query_parameters.get('page_size')
+        values = query_parameters.get('pageSize')
         if not values:
             return None
 
