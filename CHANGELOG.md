@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.5.1 (2025-09-16)
+
+### 🐛 Bug Fixes
+
+- Update query parameter names from 'page_number' and 'page_size' to 'pageNumber' and 'pageSize'
+  ([`535d4ca`](https://github.com/adriamontoto/criteria-pattern/commit/535d4cafa3066806ea2b0eb3804e59222622f922))
+
+
 ## v3.5.0 (2025-09-16)
 
 ### ✨ Features
