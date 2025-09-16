@@ -122,20 +122,29 @@ class CriteriaToSqliteConverter:
         quoted_table = '.'.join(f'"{part}"' for part in table.split('.'))
         query = f'SELECT {", ".join(quoted_columns)} FROM {quoted_table}'  # noqa: S608  # nosec
         parameters: dict[str, Any] = {}
+        parameters_counter = 0
 
         if criteria.has_filters():
             where_clause, parameters = cls._process_filters(criteria=criteria, columns_mapping=columns_mapping)
             query += f' WHERE {where_clause}'
+            parameters_counter = len(parameters)
 
         if criteria.has_orders():
             order_clause = cls._process_orders(criteria=criteria, columns_mapping=columns_mapping)
             query += f' ORDER BY {order_clause}'
 
         if criteria.has_page_size():
-            query += f' LIMIT {criteria.page_size}'
+            limit_parameter = f'limit_{parameters_counter}'
+            parameters[limit_parameter] = criteria.page_size
+            query += f' LIMIT :{limit_parameter}'
+            parameters_counter += 1
 
         if criteria.has_pagination():
-            query += f' OFFSET {criteria.page_size * (criteria.page_number - 1)}'  # type: ignore[operator]
+            offset_parameter = f'offset_{parameters_counter}'
+            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[operator]
+            parameters[offset_parameter] = offset_value
+            query += f' OFFSET :{offset_parameter}'
+            parameters_counter += 1
 
         return f'{query};', parameters
 

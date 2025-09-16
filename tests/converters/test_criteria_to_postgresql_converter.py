@@ -1360,10 +1360,10 @@ def test_criteria_to_postgresql_converter_with_pagination() -> None:
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM "user" LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" LIMIT %(limit_0)s OFFSET %(offset_1)s;'
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1393,10 +1393,10 @@ def test_criteria_to_postgresql_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM "user" WHERE "name" = %(parameter_0)s LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" WHERE "name" = %(parameter_0)s LIMIT %(limit_1)s OFFSET %(offset_2)s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {'parameter_0': 'John'}
+    assert parameters == {'parameter_0': 'John', 'limit_1': page_size, 'offset_2': expected_offset}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1413,10 +1413,10 @@ def test_criteria_to_postgresql_converter_with_orders_and_pagination() -> None:
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM "user" ORDER BY "name" ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" ORDER BY "name" ASC LIMIT %(limit_0)s OFFSET %(offset_1)s;'
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1438,10 +1438,10 @@ def test_criteria_to_postgresql_converter_with_filters_orders_and_pagination() -
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT "id", "name", "age" FROM "user" WHERE "age" >= %(parameter_0)s ORDER BY "name" DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = 'SELECT "id", "name", "age" FROM "user" WHERE "age" >= %(parameter_0)s ORDER BY "name" DESC LIMIT %(limit_1)s OFFSET %(offset_2)s;'  # noqa: S608, E501
 
     assert query == expected_query
-    assert parameters == {'parameter_0': 18}
+    assert parameters == {'parameter_0': 18, 'limit_1': page_size, 'offset_2': expected_offset}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1453,8 +1453,8 @@ def test_criteria_to_postgresql_converter_pagination_first_page() -> None:
     criteria = Criteria(page_size=10, page_number=1)
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM "user" LIMIT 10 OFFSET 0;'
-    assert parameters == {}
+    assert query == 'SELECT * FROM "user" LIMIT %(limit_0)s OFFSET %(offset_1)s;'
+    assert parameters == {'limit_0': 10, 'offset_1': 0}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1466,8 +1466,8 @@ def test_criteria_to_postgresql_converter_pagination_second_page() -> None:
     criteria = Criteria(page_size=10, page_number=2)
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM "user" LIMIT 10 OFFSET 10;'
-    assert parameters == {}
+    assert query == 'SELECT * FROM "user" LIMIT %(limit_0)s OFFSET %(offset_1)s;'
+    assert parameters == {'limit_0': 10, 'offset_1': 10}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1486,10 +1486,10 @@ def test_criteria_to_postgresql_converter_pagination_with_combined_criteria() ->
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = f'SELECT * FROM "user" WHERE ("active" = %(parameter_0)s AND "age" > %(parameter_1)s) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = 'SELECT * FROM "user" WHERE ("active" = %(parameter_0)s AND "age" > %(parameter_1)s) LIMIT %(limit_2)s OFFSET %(offset_3)s;'  # noqa: E501  # fmt: skip
 
     assert query == expected_query
-    assert parameters == {'parameter_0': True, 'parameter_1': 18}
+    assert parameters == {'parameter_0': True, 'parameter_1': 18, 'limit_2': 20, 'offset_3': expected_offset}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1503,10 +1503,10 @@ def test_criteria_to_postgresql_converter_with_page_size_only() -> None:
 
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM "user" LIMIT {page_size};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" LIMIT %(limit_0)s;'
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1522,10 +1522,10 @@ def test_criteria_to_postgresql_converter_with_filters_and_page_size_only() -> N
 
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM "user" WHERE "{filter.field}" = %(parameter_0)s LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" WHERE "{filter.field}" = %(parameter_0)s LIMIT %(limit_1)s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {'parameter_0': filter.value}
+    assert parameters == {'parameter_0': filter.value, 'limit_1': page_size}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1541,10 +1541,10 @@ def test_criteria_to_postgresql_converter_with_orders_and_page_size_only() -> No
 
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM "user" ORDER BY "{order.field}" ASC LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" ORDER BY "{order.field}" ASC LIMIT %(limit_0)s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size}
     assert_valid_postgresql_syntax(query=query)
 
 
@@ -1584,8 +1584,8 @@ def test_criteria_to_postgresql_converter_and_criteria_pagination_left_has_right
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s AND "status" = %(parameter_1)s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s AND "status" = %(parameter_1)s) LIMIT %(limit_2)s OFFSET %(offset_3)s;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 10, 'offset_3': 10}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1608,8 +1608,8 @@ def test_criteria_to_postgresql_converter_and_criteria_pagination_left_none_righ
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s AND "status" = %(parameter_1)s) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s AND "status" = %(parameter_1)s) LIMIT %(limit_2)s OFFSET %(offset_3)s;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 15, 'offset_3': 30}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1636,8 +1636,8 @@ def test_criteria_to_postgresql_converter_and_criteria_pagination_both_have() ->
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s AND "status" = %(parameter_1)s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s AND "status" = %(parameter_1)s) LIMIT %(limit_2)s OFFSET %(offset_3)s;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 10, 'offset_3': 10}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1680,8 +1680,8 @@ def test_criteria_to_postgresql_converter_or_criteria_pagination_left_has_right_
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s OR "status" = %(parameter_1)s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s OR "status" = %(parameter_1)s) LIMIT %(limit_2)s OFFSET %(offset_3)s;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 10, 'offset_3': 10}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1704,8 +1704,8 @@ def test_criteria_to_postgresql_converter_or_criteria_pagination_left_none_right
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToPostgresqlConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s OR "status" = %(parameter_1)s) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > %(parameter_0)s OR "status" = %(parameter_1)s) LIMIT %(limit_2)s OFFSET %(offset_3)s;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 15, 'offset_3': 30}
 
     assert query == expected_query
     assert parameters == expected_parameters

@@ -1355,10 +1355,10 @@ def test_criteria_to_mariadb_converter_with_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1388,10 +1388,10 @@ def test_criteria_to_mariadb_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user WHERE name = %s LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM user WHERE name = %s LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == ['John']
+    assert parameters == ['John', page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1408,10 +1408,10 @@ def test_criteria_to_mariadb_converter_with_orders_and_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user ORDER BY name ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM user ORDER BY name ASC LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1433,12 +1433,10 @@ def test_criteria_to_mariadb_converter_with_filters_orders_and_pagination() -> N
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = (
-        f'SELECT id, name, age FROM user WHERE age >= %s ORDER BY name DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
-    )
+    expected_query = 'SELECT id, name, age FROM user WHERE age >= %s ORDER BY name DESC LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == [18]
+    assert parameters == [18, page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1450,8 +1448,8 @@ def test_criteria_to_mariadb_converter_pagination_first_page() -> None:
     criteria = Criteria(page_size=10, page_number=1)
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 0;'
-    assert parameters == []
+    assert query == 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    assert parameters == [10, 0]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1463,8 +1461,8 @@ def test_criteria_to_mariadb_converter_pagination_second_page() -> None:
     criteria = Criteria(page_size=10, page_number=2)
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 10;'
-    assert parameters == []
+    assert query == 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    assert parameters == [10, 10]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1483,10 +1481,10 @@ def test_criteria_to_mariadb_converter_pagination_with_combined_criteria() -> No
     query, parameters = CriteriaToMariadbConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = f'SELECT * FROM user WHERE (active = %s AND age > %s) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = 'SELECT * FROM user WHERE (active = %s AND age > %s) LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == [True, 18]
+    assert parameters == [True, 18, 20, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1500,10 +1498,10 @@ def test_criteria_to_mariadb_converter_with_page_size_only() -> None:
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user LIMIT {page_size};'  # noqa: S608
+    expected_query = 'SELECT * FROM user LIMIT %s;'
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1519,10 +1517,10 @@ def test_criteria_to_mariadb_converter_with_filters_and_page_size_only() -> None
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user WHERE {filter.field} = %s LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM user WHERE {filter.field} = %s LIMIT %s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == [filter.value]
+    assert parameters == [filter.value, page_size]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1538,10 +1536,10 @@ def test_criteria_to_mariadb_converter_with_orders_and_page_size_only() -> None:
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT %s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1581,8 +1579,8 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_has_right_no
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1605,8 +1603,8 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_none_right_h
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active', 15, 30]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1633,8 +1631,8 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_both_have() -> No
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1677,8 +1675,8 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_has_right_non
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT 10 OFFSET 10;'
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT %s OFFSET %s;'
+    expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1701,8 +1699,8 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_none_right_ha
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT 15 OFFSET 30;'
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT %s OFFSET %s;'
+    expected_parameters = [18, 'active', 15, 30]
 
     assert query == expected_query
     assert parameters == expected_parameters

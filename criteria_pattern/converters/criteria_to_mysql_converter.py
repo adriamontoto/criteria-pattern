@@ -120,20 +120,27 @@ class CriteriaToMysqlConverter:
 
         query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
         parameters: list[Any] = []
+        parameters_counter = 0
 
         if criteria.has_filters():
             where_clause, parameters = cls._process_filters(criteria=criteria, columns_mapping=columns_mapping)
             query += f' WHERE {where_clause}'
+            parameters_counter = len(parameters)
 
         if criteria.has_orders():
             order_clause = cls._process_orders(criteria=criteria, columns_mapping=columns_mapping)
             query += f' ORDER BY {order_clause}'
 
         if criteria.has_page_size():
-            query += f' LIMIT {criteria.page_size}'
+            parameters.append(criteria.page_size)
+            query += ' LIMIT %s'
+            parameters_counter += 1
 
         if criteria.has_pagination():
-            query += f' OFFSET {criteria.page_size * (criteria.page_number - 1)}'  # type: ignore[operator]
+            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[operator]
+            parameters.append(offset_value)
+            query += ' OFFSET %s'
+            parameters_counter += 1
 
         return f'{query};', parameters
 
