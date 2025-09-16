@@ -8,7 +8,12 @@ from typing import Any, ClassVar
 from urllib.parse import parse_qs, unquote_plus, urlparse
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
-from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    PaginationBoundsError,
+)
 
 
 class UrlToCriteriaConverter:
@@ -67,9 +72,12 @@ class UrlToCriteriaConverter:
         check_field_injection: bool = False,
         check_operator_injection: bool = False,
         check_direction_injection: bool = False,
+        check_pagination_bounds: bool = False,
         valid_fields: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
         valid_directions: Sequence[Direction] | None = None,
+        max_page_size: int = 10000,
+        max_page_number: int = 1000000,
     ) -> Criteria:
         """
         Converts an URL query string into a Criteria object.
@@ -80,9 +88,12 @@ class UrlToCriteriaConverter:
             check_field_injection (bool, optional): Whether to check for field injection.
             check_operator_injection (bool, optional): Whether to check for operator injection.
             check_direction_injection (bool, optional): Whether to check for direction injection.
+            check_pagination_bounds (bool, optional): Whether to check pagination parameters bounds.
             valid_fields (Sequence[str], optional): A list of valid field names. Default to empty list.
             valid_operators (Sequence[Operator], optional): A list of valid operators. Default to empty list.
             valid_directions (Sequence[Direction], optional): A list of valid directions. Default to empty list.
+            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Default to 10000.
+            max_page_number (int, optional): Maximum allowed page_number to prevent integer overflow. Default to 1000000.
 
         Raises:
             TypeError: If the filter index is not an integer.
@@ -98,6 +109,7 @@ class UrlToCriteriaConverter:
             InvalidColumnError: If an invalid field name is found in orders.
             InvalidOperatorError: If an invalid operator is found in filters.
             InvalidDirectionError: If an invalid direction is found in orders.
+            PaginationBoundsError: If pagination parameters exceed maximum bounds.
 
         Example:
         ```python
@@ -136,6 +148,13 @@ class UrlToCriteriaConverter:
 
         if check_direction_injection:
             cls._validate_directions(criteria=criteria, valid_directions=valid_directions)
+
+        if check_pagination_bounds:
+            cls._validate_pagination_bounds(
+                criteria=criteria,
+                max_page_size=max_page_size,
+                max_page_number=max_page_number,
+            )
 
         return criteria
 
@@ -445,3 +464,22 @@ class UrlToCriteriaConverter:
                     direction=Direction(value=order.direction),
                     valid_directions=valid_directions,
                 )
+
+    @classmethod
+    def _validate_pagination_bounds(cls, *, criteria: Criteria, max_page_size: int, max_page_number: int) -> None:
+        """
+        Validate the Criteria object pagination parameters to prevent integer overflow.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            max_page_size (int): Maximum allowed page_size.
+            max_page_number (int): Maximum allowed page_number.
+
+        Raises:
+            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+        """
+        if criteria.page_size is not None and criteria.page_size > max_page_size:
+            raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
+
+        if criteria.page_number is not None and criteria.page_number > max_page_number:
+            raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)

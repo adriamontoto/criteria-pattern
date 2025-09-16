@@ -10,7 +10,13 @@ from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToSqliteConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError, InvalidTableError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    InvalidTableError,
+    PaginationBoundsError,
+)
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
 
@@ -1684,3 +1690,105 @@ def test_criteria_to_sqlite_converter_or_criteria_pagination_left_none_right_has
     assert query == expected_query
     assert parameters == expected_parameters
     assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_pagination_bounds_check_disabled() -> None:
+    """
+    Test CriteriaToSqliteConverter with pagination bounds check disabled (should not raise).
+    """
+    page_size = IntegerMother.positive(max=50000)
+    page_number = IntegerMother.positive(max=50000)
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'
+
+    assert query == expected_query
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_page_size_bounds_exceeded() -> None:
+    """
+    Test CriteriaToSqliteConverter raises PaginationBoundsError when page_size exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_size>>> <<<{page_size}>>> exceeds maximum allowed value <<<1>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_size=1,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_page_number_bounds_exceeded() -> None:
+    """
+    Test CriteriaToSqliteConverter raises PaginationBoundsError when page_number exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_number>>> <<<{page_number}>>> exceeds maximum allowed value <<<1>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_number=1,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_valid_pagination_bounds() -> None:
+    """
+    Test CriteriaToSqliteConverter with valid pagination parameters within bounds.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=10000,
+    )
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'
+
+    assert query == expected_query
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_none_pagination_bounds_check() -> None:
+    """
+    Test CriteriaToSqliteConverter with no pagination and bounds checking enabled.
+    """
+    criteria = CriteriaMother.without_pagination()
+
+    CriteriaToSqliteConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=IntegerMother.positive(),
+        max_page_number=IntegerMother.positive(),
+    )

@@ -9,7 +9,12 @@ from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import UrlToCriteriaConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    PaginationBoundsError,
+)
 
 
 @mark.unit_testing
@@ -1517,4 +1522,156 @@ def test_url_to_criteria_converter_with_complex_url_direction_injection() -> Non
             url=url,
             check_direction_injection=True,
             valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_pagination_bounds_check_disabled() -> None:
+    """
+    Test UrlToCriteriaConverter with pagination bounds check disabled (should not raise).
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
+
+    criteria = UrlToCriteriaConverter.convert(url=url)
+
+    assert criteria.page_size == 50000
+    assert criteria.page_number == 2000000
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_page_size_bounds_exceeded() -> None:
+    """
+    Test UrlToCriteriaConverter raises PaginationBoundsError when page_size exceeds limit.
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=1'
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match='Pagination <<<page_size>>> <<<50000>>> exceeds maximum allowed value <<<10000>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_size=10000,
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_page_number_bounds_exceeded() -> None:
+    """
+    Test UrlToCriteriaConverter raises PaginationBoundsError when page_number exceeds limit.
+    """
+    url = 'https://api.example.com/users?page_size=100&page_number=2000000'
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match='Pagination <<<page_number>>> <<<2000000>>> exceeds maximum allowed value <<<1000000>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_number=1000000,
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_valid_pagination_bounds() -> None:
+    """
+    Test UrlToCriteriaConverter with valid pagination parameters within bounds.
+    """
+    url = 'https://api.example.com/users?page_size=100&page_number=1000'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=1000000,
+    )
+
+    assert criteria.page_size == 100
+    assert criteria.page_number == 1000
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_custom_pagination_bounds() -> None:
+    """
+    Test UrlToCriteriaConverter with custom pagination bounds.
+    """
+    url = 'https://api.example.com/users?page_size=500&page_number=50000'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=1000,
+        max_page_number=100000,
+    )
+
+    assert criteria.page_size == 500
+    assert criteria.page_number == 50000
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_none_pagination_bounds_check() -> None:
+    """
+    Test UrlToCriteriaConverter with no pagination and bounds checking enabled.
+    """
+    url = 'https://api.example.com/users'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=1000000,
+    )
+
+    assert criteria.page_size is None
+    assert criteria.page_number is None
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_pagination_and_filters_bounds_check() -> None:
+    """
+    Test UrlToCriteriaConverter with pagination and filters together with bounds checking.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=John&page_size=100&page_number=5'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=1000,
+        max_page_number=100,
+    )
+
+    assert criteria.page_size == 100
+    assert criteria.page_number == 5
+    assert len(criteria.filters) == 1
+    assert criteria.filters[0].field == 'name'
+    assert criteria.filters[0].operator == Operator.EQUAL
+    assert criteria.filters[0].value == 'John'
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_pagination_bounds_both_exceeded() -> None:
+    """
+    Test UrlToCriteriaConverter raises PaginationBoundsError for page_size when both exceed limits.
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match='Pagination <<<page_size>>> <<<50000>>> exceeds maximum allowed value <<<10000>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_size=10000,
+            max_page_number=1000000,
         )

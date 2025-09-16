@@ -10,7 +10,13 @@ from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToMysqlConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidDirectionError, InvalidOperatorError, InvalidTableError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    InvalidTableError,
+    PaginationBoundsError,
+)
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
 
@@ -1709,3 +1715,105 @@ def test_criteria_to_mysql_converter_or_criteria_pagination_left_none_right_has(
     assert query == expected_query
     assert parameters == expected_parameters
     assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_pagination_bounds_check_disabled() -> None:
+    """
+    Test CriteriaToMysqlConverter with pagination bounds check disabled (should not raise).
+    """
+    page_size = IntegerMother.positive(max=50000)
+    page_number = IntegerMother.positive(max=50000)
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+
+    assert query == expected_query
+    assert parameters == [page_size, expected_offset]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_page_size_bounds_exceeded() -> None:
+    """
+    Test CriteriaToMysqlConverter raises PaginationBoundsError when page_size exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_size>>> <<<{page_size}>>> exceeds maximum allowed value <<<1>>>.',
+    ):
+        CriteriaToMysqlConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_size=1,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_page_number_bounds_exceeded() -> None:
+    """
+    Test CriteriaToMysqlConverter raises PaginationBoundsError when page_number exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_number>>> <<<{page_number}>>> exceeds maximum allowed value <<<1>>>.',
+    ):
+        CriteriaToMysqlConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_number=1,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_valid_pagination_bounds() -> None:
+    """
+    Test CriteriaToMysqlConverter with valid pagination parameters within bounds.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToMysqlConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=10000,
+    )
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+
+    assert query == expected_query
+    assert parameters == [page_size, expected_offset]
+    assert_valid_mysql_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mysql_converter_with_none_pagination_bounds_check() -> None:
+    """
+    Test CriteriaToMysqlConverter with no pagination and bounds checking enabled.
+    """
+    criteria = CriteriaMother.without_pagination()
+
+    CriteriaToMysqlConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=IntegerMother.positive(),
+        max_page_number=IntegerMother.positive(),
+    )
