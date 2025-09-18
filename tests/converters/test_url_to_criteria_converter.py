@@ -395,7 +395,7 @@ def test_url_to_criteria_converter_with_pagination() -> None:
     """
     page_size = IntegerMother.positive()
     page_number = IntegerMother.positive()
-    url = f'https://api.example.com/users?pageSize={page_size}&pageNumber={page_number}'
+    url = f'https://api.example.com/users?page_size={page_size}&page_number={page_number}'
     criteria = UrlToCriteriaConverter.convert(url=url)
 
     expected = Criteria(filters=None, orders=None, page_size=page_size, page_number=page_number)
@@ -408,7 +408,7 @@ def test_url_to_criteria_converter_with_page_size_only() -> None:
     """
     Test UrlToCriteriaConverter class with only page_size.
     """
-    url = 'https://api.example.com/users?pageSize=10'
+    url = 'https://api.example.com/users?page_size=10'
     criteria = UrlToCriteriaConverter.convert(url=url)
 
     expected = Criteria(filters=None, orders=None, page_size=10, page_number=None)
@@ -421,7 +421,7 @@ def test_url_to_criteria_converter_with_filters_and_pagination() -> None:
     """
     Test UrlToCriteriaConverter class with filters and pagination.
     """
-    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER_OR_EQUAL&filters[0][value]=18&pageSize=20&pageNumber=3'
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER_OR_EQUAL&filters[0][value]=18&page_size=20&page_number=3'
     criteria = UrlToCriteriaConverter.convert(url=url)
 
     expected_filter = Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)
@@ -435,7 +435,7 @@ def test_url_to_criteria_converter_with_orders_and_pagination() -> None:
     """
     Test UrlToCriteriaConverter class with orders and pagination.
     """
-    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=ASC&pageSize=20&pageNumber=3'
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=ASC&page_size=20&page_number=3'
     criteria = UrlToCriteriaConverter.convert(url=url)
 
     expected_order = Order(field='name', direction=Direction.ASC)
@@ -449,7 +449,7 @@ def test_url_to_criteria_converter_with_filters_orders_and_pagination() -> None:
     """
     Test UrlToCriteriaConverter class with filters, orders, and pagination.
     """
-    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER_OR_EQUAL&filters[0][value]=18&orders[0][field]=name&orders[0][direction]=DESC&pageSize=20&pageNumber=3'
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER_OR_EQUAL&filters[0][value]=18&orders[0][field]=name&orders[0][direction]=DESC&page_size=20&page_number=3'
     criteria = UrlToCriteriaConverter.convert(url=url)
 
     expected_filter = Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)
@@ -886,7 +886,7 @@ def test_url_to_criteria_converter_with_complex_combined_criteria() -> None:
     age_value = IntegerMother.positive()
     page_size = IntegerMother.positive()
     page_number = IntegerMother.positive()
-    url = f'https://api.example.com/users?filters[0][field]={name_field}&filters[0][operator]=EQUAL&filters[0][value]={name_value}&filters[1][field]={email_field}&filters[1][operator]=IS_NOT_NULL&filters[1][value]=&filters[2][field]={age_field}&filters[2][operator]=LESS&filters[2][value]={age_value}&orders[0][field]={email_field}&orders[0][direction]=DESC&orders[1][field]={name_field}&orders[1][direction]=ASC&pageSize={page_size}&pageNumber={page_number}'  # noqa: E501  # fmt: skip
+    url = f'https://api.example.com/users?filters[0][field]={name_field}&filters[0][operator]=EQUAL&filters[0][value]={name_value}&filters[1][field]={email_field}&filters[1][operator]=IS_NOT_NULL&filters[1][value]=&filters[2][field]={age_field}&filters[2][operator]=LESS&filters[2][value]={age_value}&orders[0][field]={email_field}&orders[0][direction]=DESC&orders[1][field]={name_field}&orders[1][direction]=ASC&page_size={page_size}&page_number={page_number}'  # noqa: E501  # fmt: skip
     criteria = UrlToCriteriaConverter.convert(url=url)
 
     expected_filter1 = Filter(field=name_field, operator=Operator.EQUAL, value=name_value)
@@ -1315,7 +1315,7 @@ def test_url_to_criteria_converter_with_non_numeric_page_number() -> None:
     Test UrlToCriteriaConverter class to trigger lines 351-352 - IntegrityError exception in _parse_page_number.
     """
     invalid_page_number = StringMother.alpha()
-    url = f'https://api.example.com/users?pageNumber={invalid_page_number}'
+    url = f'https://api.example.com/users?page_number={invalid_page_number}'
 
     with assert_raises(
         expected_exception=IntegrityError,
@@ -1330,7 +1330,7 @@ def test_url_to_criteria_converter_with_non_numeric_page_size() -> None:
     Test UrlToCriteriaConverter class to trigger lines 372-373 - IntegrityError exception in _parse_page_size.
     """
     invalid_page_size = StringMother.alpha()
-    url = f'https://api.example.com/users?pageSize={invalid_page_size}'
+    url = f'https://api.example.com/users?page_size={invalid_page_size}'
 
     with assert_raises(
         expected_exception=IntegrityError,
@@ -1346,7 +1346,7 @@ def test_url_to_criteria_converter_with_both_non_numeric_pagination() -> None:
     """
     invalid_page_size = StringMother.alpha()
     invalid_page_number = StringMother.alpha()
-    url = f'https://api.example.com/users?pageSize={invalid_page_size}&pageNumber={invalid_page_number}'
+    url = f'https://api.example.com/users?page_size={invalid_page_size}&page_number={invalid_page_number}'
 
     with assert_raises(
         expected_exception=IntegrityError,
@@ -1531,7 +1531,7 @@ def test_url_to_criteria_converter_with_pagination_bounds_check_disabled() -> No
     """
     Test UrlToCriteriaConverter with pagination bounds check disabled (should not raise).
     """
-    url = 'https://api.example.com/users?pageSize=50000&pageNumber=2000000'
+    url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
 
     criteria = UrlToCriteriaConverter.convert(url=url)
 
@@ -1546,7 +1546,7 @@ def test_url_to_criteria_converter_with_page_size_bounds_exceeded() -> None:
     """
     Test UrlToCriteriaConverter raises PaginationBoundsError when page_size exceeds limit.
     """
-    url = 'https://api.example.com/users?pageSize=50000&pageNumber=1'
+    url = 'https://api.example.com/users?page_size=50000&page_number=1'
 
     with assert_raises(
         expected_exception=PaginationBoundsError,
@@ -1564,7 +1564,7 @@ def test_url_to_criteria_converter_with_page_number_bounds_exceeded() -> None:
     """
     Test UrlToCriteriaConverter raises PaginationBoundsError when page_number exceeds limit.
     """
-    url = 'https://api.example.com/users?pageSize=100&pageNumber=2000000'
+    url = 'https://api.example.com/users?page_size=100&page_number=2000000'
 
     with assert_raises(
         expected_exception=PaginationBoundsError,
@@ -1582,7 +1582,7 @@ def test_url_to_criteria_converter_with_valid_pagination_bounds() -> None:
     """
     Test UrlToCriteriaConverter with valid pagination parameters within bounds.
     """
-    url = 'https://api.example.com/users?pageSize=100&pageNumber=1000'
+    url = 'https://api.example.com/users?page_size=100&page_number=1000'
 
     criteria = UrlToCriteriaConverter.convert(
         url=url,
@@ -1602,7 +1602,7 @@ def test_url_to_criteria_converter_with_custom_pagination_bounds() -> None:
     """
     Test UrlToCriteriaConverter with custom pagination bounds.
     """
-    url = 'https://api.example.com/users?pageSize=500&pageNumber=50000'
+    url = 'https://api.example.com/users?page_size=500&page_number=50000'
 
     criteria = UrlToCriteriaConverter.convert(
         url=url,
@@ -1642,7 +1642,7 @@ def test_url_to_criteria_converter_with_pagination_and_filters_bounds_check() ->
     """
     Test UrlToCriteriaConverter with pagination and filters together with bounds checking.
     """
-    url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=John&pageSize=100&pageNumber=5'
+    url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=John&page_size=100&page_number=5'
 
     criteria = UrlToCriteriaConverter.convert(
         url=url,
@@ -1664,7 +1664,7 @@ def test_url_to_criteria_converter_with_pagination_bounds_both_exceeded() -> Non
     """
     Test UrlToCriteriaConverter raises PaginationBoundsError for page_size when both exceed limits.
     """
-    url = 'https://api.example.com/users?pageSize=50000&pageNumber=2000000'
+    url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
 
     with assert_raises(
         expected_exception=PaginationBoundsError,
