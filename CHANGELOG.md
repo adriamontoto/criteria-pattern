@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.7.0 (2025-09-22)
+
+### ✨ Features
+
+- Implement clean_pagination method to Criteria and its subclasses to clear pagination attributes
+  ([`ac03c6e`](https://github.com/adriamontoto/criteria-pattern/commit/ac03c6e9e4879616635b47e10363719ac6807f53))
+
+
 ## v3.6.1 (2025-09-18)
 
 ### 🐛 Bug Fixes
