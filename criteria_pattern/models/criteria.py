@@ -394,6 +394,28 @@ class Criteria(BaseModel):
         """
         return self.page_size is not None and self.page_number is not None
 
+    def clean_pagination(self) -> Criteria:
+        """
+        Remove pagination from this criteria by clearing page_size and page_number.
+
+        Returns:
+            Criteria: The same criteria instance with pagination cleared.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria
+
+        criteria = Criteria(page_size=10, page_number=1)
+        criteria.clean_pagination()
+        print(criteria.page_size, criteria.page_number)
+        # >>> None None
+        ```
+        """
+        self._page_size = None
+        self._page_number = None
+
+        return self
+
 
 class AndCriteria(Criteria):
     """
@@ -505,6 +527,19 @@ class AndCriteria(Criteria):
             Criteria: Right criteria.
         """
         return self._right
+
+    @override
+    def clean_pagination(self) -> Criteria:
+        """
+        Remove pagination from both sides of the AND criteria.
+
+        Returns:
+            Criteria: The same AndCriteria instance with pagination cleared from children.
+        """
+        self.left.clean_pagination()
+        self.right.clean_pagination()
+
+        return self
 
 
 class OrCriteria(Criteria):
@@ -618,6 +653,19 @@ class OrCriteria(Criteria):
         """
         return self._right
 
+    @override
+    def clean_pagination(self) -> Criteria:
+        """
+        Remove pagination from both sides of the OR criteria.
+
+        Returns:
+            Criteria: The same OrCriteria instance with pagination cleared from children.
+        """
+        self.left.clean_pagination()
+        self.right.clean_pagination()
+
+        return self
+
 
 class NotCriteria(Criteria):
     """
@@ -710,3 +758,15 @@ class NotCriteria(Criteria):
             int | None: Page number for pagination, or None if not set.
         """
         return self.criteria.page_number
+
+    @override
+    def clean_pagination(self) -> Criteria:
+        """
+        Remove pagination from the wrapped criteria.
+
+        Returns:
+            Criteria: The same NotCriteria instance with pagination cleared from the wrapped criteria.
+        """
+        self.criteria.clean_pagination()
+
+        return self
