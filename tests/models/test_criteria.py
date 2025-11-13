@@ -7,6 +7,7 @@ from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Filter, Order, PageNumber, PageSize
+from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 from criteria_pattern.models.filters import Filters
 from criteria_pattern.models.orders import Orders
@@ -425,12 +426,12 @@ def test_criteria_model_without_pagination() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_validation_page_number_without_page_size() -> None:
     """
-    Test Criteria model raises ValueError when page_number is provided without page_size.
+    Test Criteria model raises IntegrityError when page_number is provided without page_size.
     """
     page_number = IntegerMother.positive()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_number <<<{page_number}>>> cannot be provided without page_size.',
     ):
         Criteria(page_number=page_number)
@@ -453,10 +454,10 @@ def test_criteria_model_pagination_with_page_size_only() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_size_type() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_size type.
+    Test Criteria model raises IntegrityError for invalid page_size type.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_size <<<.*>>> must be an integer. Got <<<.*>>> type.',
     ):
         Criteria(page_size=IntegerMother.invalid_type(), page_number=IntegerMother.positive())
@@ -465,10 +466,10 @@ def test_criteria_model_pagination_invalid_page_size_type() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_size() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_size.
+    Test Criteria model raises IntegrityError for invalid page_size.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_size <<<0>>> must be a positive integer.',
     ):
         Criteria(page_size=0, page_number=IntegerMother.positive())
@@ -477,12 +478,12 @@ def test_criteria_model_pagination_invalid_page_size() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_size_random() -> None:
     """
-    Test Criteria model raises ValueError for random invalid page_size.
+    Test Criteria model raises IntegrityError for random invalid page_size.
     """
     page_size = IntegerMother.negative_or_zero()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=rf'Criteria page_size <<<{page_size}>>> must be a positive integer.',
     ):
         Criteria(page_size=page_size, page_number=IntegerMother.positive())
@@ -491,10 +492,10 @@ def test_criteria_model_pagination_invalid_page_size_random() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_number_type() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_number type.
+    Test Criteria model raises IntegrityError for invalid page_number type.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_number <<<.*>>> must be an integer. Got <<<.*>>> type.',
     ):
         Criteria(page_size=IntegerMother.positive(), page_number=IntegerMother.invalid_type())
@@ -503,10 +504,10 @@ def test_criteria_model_pagination_invalid_page_number_type() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_number() -> None:
     """
-    Test Criteria model raises ValueError for invalid page_number.
+    Test Criteria model raises IntegrityError for invalid page_number.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Criteria page_number <<<0>>> must be a positive integer.',
     ):
         Criteria(page_size=IntegerMother.positive(), page_number=0)
@@ -515,12 +516,12 @@ def test_criteria_model_pagination_invalid_page_number() -> None:
 @mark.unit_testing
 def test_criteria_model_pagination_invalid_page_number_random() -> None:
     """
-    Test Criteria model raises ValueError for random invalid page_number.
+    Test Criteria model raises IntegrityError for random invalid page_number.
     """
     page_number = IntegerMother.negative_or_zero()
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=rf'Criteria page_number <<<{page_number}>>> must be a positive integer.',
     ):
         Criteria(page_size=IntegerMother.positive(), page_number=page_number)
@@ -576,3 +577,92 @@ def test_not_criteria_pagination_from_wrapped() -> None:
     assert negated_criteria.page_size == page_size
     assert negated_criteria.page_number == page_number
     assert negated_criteria.has_pagination()
+
+
+@mark.unit_testing
+def test_criteria_model_clean_pagination_clears_page_size_and_number() -> None:
+    """
+    Test clean_pagination clears pagination attributes on base Criteria.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    criteria = CriteriaMother.create(page_size=page_size, page_number=page_number)
+    assert criteria.has_pagination()
+
+    criteria.clean_pagination()
+
+    assert criteria.page_size is None
+    assert criteria.page_number is None
+    assert not criteria.has_page_size()
+    assert not criteria.has_pagination()
+
+
+@mark.unit_testing
+def test_and_criteria_clean_pagination_propagates_to_children() -> None:
+    """
+    Test clean_pagination on AndCriteria propagates to left and right criteria.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    left_criteria = CriteriaMother.create(page_size=page_size, page_number=page_number)
+    right_criteria = CriteriaMother.create()
+    combined = left_criteria & right_criteria
+
+    assert combined.has_pagination()
+    assert type(combined) is AndCriteria
+
+    combined.clean_pagination()
+
+    assert combined.page_size is None
+    assert combined.page_number is None
+    assert not combined.has_pagination()
+    assert left_criteria.page_size is None and left_criteria.page_number is None
+    assert right_criteria.page_size is None and right_criteria.page_number is None
+
+
+@mark.unit_testing
+def test_or_criteria_clean_pagination_propagates_to_children() -> None:
+    """
+    Test clean_pagination on OrCriteria propagates to left and right criteria.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    left_criteria = CriteriaMother.create(page_size=page_size, page_number=page_number)
+    right_criteria = CriteriaMother.create()
+    combined = left_criteria | right_criteria
+
+    assert combined.has_pagination()
+    assert type(combined) is OrCriteria
+
+    combined.clean_pagination()
+
+    assert combined.page_size is None
+    assert combined.page_number is None
+    assert not combined.has_pagination()
+    assert left_criteria.page_size is None and left_criteria.page_number is None
+    assert right_criteria.page_size is None and right_criteria.page_number is None
+
+
+@mark.unit_testing
+def test_not_criteria_clean_pagination_propagates_to_wrapped() -> None:
+    """
+    Test clean_pagination on NotCriteria propagates to wrapped criteria.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+
+    base = CriteriaMother.create(page_size=page_size, page_number=page_number)
+    negated = ~base
+
+    assert negated.has_pagination()
+    assert type(negated) is NotCriteria
+
+    negated.clean_pagination()
+
+    assert negated.page_size is None
+    assert negated.page_number is None
+    assert not negated.has_pagination()
+    assert base.page_size is None and base.page_number is None

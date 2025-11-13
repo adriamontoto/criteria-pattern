@@ -8,7 +8,13 @@ from typing import Any, ClassVar
 from urllib.parse import parse_qs, unquote_plus, urlparse
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
-from criteria_pattern.errors import InvalidColumnError
+from criteria_pattern.errors import (
+    IntegrityError,
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    PaginationBoundsError,
+)
 
 
 class UrlToCriteriaConverter:
@@ -65,7 +71,14 @@ class UrlToCriteriaConverter:
         url: str,
         fields_mapping: Mapping[str, str] | None = None,
         check_field_injection: bool = False,
+        check_operator_injection: bool = False,
+        check_direction_injection: bool = False,
+        check_pagination_bounds: bool = False,
         valid_fields: Sequence[str] | None = None,
+        valid_operators: Sequence[Operator] | None = None,
+        valid_directions: Sequence[Direction] | None = None,
+        max_page_size: int = 10000,
+        max_page_number: int = 1000000,
     ) -> Criteria:
         """
         Converts an URL query string into a Criteria object.
@@ -74,20 +87,30 @@ class UrlToCriteriaConverter:
             url (str): The URL containing the query string.
             fields_mapping (Mapping[str, str], optional): Mapping of field names to aliases. Default to empty dict.
             check_field_injection (bool, optional): Whether to check for field injection.
+            check_operator_injection (bool, optional): Whether to check for operator injection.
+            check_direction_injection (bool, optional): Whether to check for direction injection.
+            check_pagination_bounds (bool, optional): Whether to check pagination parameters bounds.
             valid_fields (Sequence[str], optional): A list of valid field names. Default to empty list.
+            valid_operators (Sequence[Operator], optional): A list of valid operators. Default to empty list.
+            valid_directions (Sequence[Direction], optional): A list of valid directions. Default to empty list.
+            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Default to 10000.
+            max_page_number (int, optional): Maximum allowed page_number to prevent integer overflow. Default to 1000000.
 
         Raises:
-            TypeError: If the filter index is not an integer.
-            ValueError: If the filter has missing field.
-            ValueError: If the filter has missing operator.
-            ValueError: If the filter has unsupported operator.
-            ValueError: If the filter has missing value.
-            TypeError: If the order index is not an integer.
-            ValueError: If the order has missing field.
-            ValueError: If the order has missing direction.
-            ValueError: If the order has unsupported direction.
+            IntegrityError: If the filter index is not an integer.
+            IntegrityError: If the filter has missing field.
+            IntegrityError: If the filter has missing operator.
+            IntegrityError: If the filter has unsupported operator.
+            IntegrityError: If the filter has missing value.
+            IntegrityError: If the order index is not an integer.
+            IntegrityError: If the order has missing field.
+            IntegrityError: If the order has missing direction.
+            IntegrityError: If the order has unsupported direction.
             InvalidColumnError: If an invalid field name is found in filters.
             InvalidColumnError: If an invalid field name is found in orders.
+            InvalidOperatorError: If an invalid operator is found in filters.
+            InvalidDirectionError: If an invalid direction is found in orders.
+            PaginationBoundsError: If pagination parameters exceed maximum bounds.
 
         Example:
         ```python
@@ -101,6 +124,8 @@ class UrlToCriteriaConverter:
         """  # noqa: E501  # fmt: skip
         valid_fields = valid_fields or []
         fields_mapping = fields_mapping or {}
+        valid_operators = valid_operators or []
+        valid_directions = valid_directions or []
 
         query_params = parse_qs(qs=urlparse(url=url).query, keep_blank_values=True)
 
@@ -119,6 +144,19 @@ class UrlToCriteriaConverter:
         if check_field_injection:
             cls._validate_fields(criteria=criteria, valid_fields=valid_fields)
 
+        if check_operator_injection:
+            cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
+
+        if check_direction_injection:
+            cls._validate_directions(criteria=criteria, valid_directions=valid_directions)
+
+        if check_pagination_bounds:
+            cls._validate_pagination_bounds(
+                criteria=criteria,
+                max_page_size=max_page_size,
+                max_page_number=max_page_number,
+            )
+
         return criteria
 
     @classmethod
@@ -136,11 +174,11 @@ class UrlToCriteriaConverter:
             fields_mapping (Mapping[str, str]): The mapping of external to internal field names.
 
         Raises:
-            TypeError: If the filter index is not an integer.
-            ValueError: If the filter has missing field.
-            ValueError: If the filter has missing operator.
-            ValueError: If the filter has unsupported operator.
-            ValueError: If the filter has missing value.
+            IntegrityError: If the filter index is not an integer.
+            IntegrityError: If the filter has missing field.
+            IntegrityError: If the filter has missing operator.
+            IntegrityError: If the filter has unsupported operator.
+            IntegrityError: If the filter has missing value.
 
         Returns:
             list[Filter]: The parsed list of filter criteria.
@@ -158,36 +196,36 @@ class UrlToCriteriaConverter:
                 index = int(index_string)
 
             except ValueError as exception:
-                raise TypeError(f'UrlToCriteriaConverter filter <<<filters[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
             if index >= cls._MAX_FIELDS:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
 
             bucket.setdefault(index, {})[key] = values[0]
 
         for idx in sorted(bucket):
             field_name = bucket[idx].get('field')
             if field_name is None:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing field.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing field.')
 
             operator_raw = bucket[idx].get('operator')
             if operator_raw is None:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing operator.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing operator.')  # noqa: E501  # fmt: skip
 
             value_raw = bucket[idx].get('value')
             if value_raw is None:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing value.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has missing value.')
 
             operator_key = operator_raw.upper().strip()
             operator = cls._OPERATOR_MAPPING.get(operator_key)
             if not operator:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has unsupported operator <<<{operator_raw}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has unsupported operator <<<{operator_raw}>>>.')  # noqa: E501  # fmt: skip
 
             try:
                 parsed_value = cls._parse_filter_value(raw_value=value_raw, operator=operator)
 
-            except ValueError as exception:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has invalid value <<<{value_raw}>>> for operator <<<{operator.value}>>>.') from exception  # noqa: E501  # fmt: skip
+            except IntegrityError as exception:
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has invalid value <<<{value_raw}>>> for operator <<<{operator.value}>>>.') from exception  # noqa: E501  # fmt: skip
 
             actual_field = fields_mapping.get(field_name, field_name)
             filters.append(Filter(field=actual_field, operator=operator, value=parsed_value))
@@ -204,8 +242,8 @@ class UrlToCriteriaConverter:
             operator (Operator): The operator to use for parsing.
 
         Raises:
-            ValueError: If the raw value is missing.
-            ValueError: If the raw value was expected to have two comma-separated values.
+            IntegrityError: If the raw value is missing.
+            IntegrityError: If the raw value was expected to have two comma-separated values.
 
         Returns:
             Any: The parsed filter value.
@@ -214,20 +252,20 @@ class UrlToCriteriaConverter:
             return None
 
         if raw_value is None:
-            raise ValueError('UrlToCriteriaConverter filter has missing value.')  # pragma: no cover
+            raise IntegrityError(message='UrlToCriteriaConverter filter has missing value.')  # pragma: no cover
 
         raw_value = unquote_plus(string=raw_value)
         if operator in (Operator.BETWEEN, Operator.NOT_BETWEEN):
             parts = [part.strip() for part in raw_value.split(',')]
             if len(parts) != 2:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects exactly two comma-separated values.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects exactly two comma-separated values.')  # noqa: E501  # fmt: skip
 
             return [cls._convert_primitive(value=part) for part in parts]
 
         if operator in (Operator.IN, Operator.NOT_IN):
             parts = [part.strip() for part in raw_value.split(',') if part.strip()]
             if not parts:
-                raise ValueError(f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects at least one comma-separated value.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects at least one comma-separated value.')  # noqa: E501  # fmt: skip
 
             return [cls._convert_primitive(value=part) for part in parts]
 
@@ -283,10 +321,10 @@ class UrlToCriteriaConverter:
             fields_mapping (Mapping[str, str]): The mapping of external to internal field names.
 
         Raises:
-            TypeError: If the order index is not an integer.
-            ValueError: If the order has missing field.
-            ValueError: If the order has missing direction.
-            ValueError: If the order has unsupported direction.
+            IntegrityError: If the order index is not an integer.
+            IntegrityError: If the order has missing field.
+            IntegrityError: If the order has missing direction.
+            IntegrityError: If the order has unsupported direction.
 
         Returns:
             list[Order]: The parsed list of order criteria.
@@ -304,26 +342,26 @@ class UrlToCriteriaConverter:
                 index = int(index_string)
 
             except ValueError as exception:
-                raise TypeError(f'UrlToCriteriaConverter order <<<orders[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
             if index >= cls._MAX_FIELDS:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
 
             bucket.setdefault(index, {})[key] = values[0]
 
         for idx in sorted(bucket):
             field_name = bucket[idx].get('field')
             if field_name is None:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing field.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing field.')
 
             direction_raw = bucket[idx].get('direction')
             if direction_raw is None:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing direction.')
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has missing direction.')
 
             direction_key = direction_raw.upper().strip()
             direction = cls._DIRECTION_MAPPING.get(direction_key)
             if not direction:
-                raise ValueError(f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has unsupported direction <<<{direction_raw}>>>.')  # noqa: E501  # fmt: skip
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{idx}]>>> has unsupported direction <<<{direction_raw}>>>.')  # noqa: E501  # fmt: skip
 
             actual_field = fields_mapping.get(field_name, field_name)
             orders.append(Order(field=actual_field, direction=direction))
@@ -392,3 +430,57 @@ class UrlToCriteriaConverter:
         for order in criteria.orders:
             if order.field not in valid_fields:
                 raise InvalidColumnError(column=order.field, valid_columns=valid_fields)
+
+    @classmethod
+    def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
+        """
+        Validate the Criteria object operators to prevent injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_operators (Sequence[Operator]): List of valid operators to use.
+
+        Raises:
+            InvalidOperatorError: If the operator is not in the list of valid operators.
+        """
+        for filter in criteria.filters:
+            if filter.operator not in valid_operators:
+                raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
+
+    @classmethod
+    def _validate_directions(cls, *, criteria: Criteria, valid_directions: Sequence[Direction]) -> None:
+        """
+        Validate the Criteria object directions to prevent injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_directions (Sequence[Direction]): List of valid directions to use.
+
+        Raises:
+            InvalidDirectionError: If the direction is not in the list of valid directions.
+        """
+        for order in criteria.orders:
+            if order.direction not in valid_directions:
+                raise InvalidDirectionError(
+                    direction=Direction(value=order.direction),
+                    valid_directions=valid_directions,
+                )
+
+    @classmethod
+    def _validate_pagination_bounds(cls, *, criteria: Criteria, max_page_size: int, max_page_number: int) -> None:
+        """
+        Validate the Criteria object pagination parameters to prevent integer overflow.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            max_page_size (int): Maximum allowed page_size.
+            max_page_number (int): Maximum allowed page_number.
+
+        Raises:
+            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+        """
+        if criteria.page_size is not None and criteria.page_size > max_page_size:
+            raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
+
+        if criteria.page_number is not None and criteria.page_number > max_page_number:
+            raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)

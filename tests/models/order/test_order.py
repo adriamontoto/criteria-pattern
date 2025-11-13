@@ -6,6 +6,7 @@ from object_mother_pattern import StringMother
 from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
+from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models.order import Order, OrderDirection, OrderField
 from criteria_pattern.models.testing.mothers import OrderMother
 from criteria_pattern.models.testing.mothers.order import OrderDirectionMother, OrderFieldMother
@@ -114,10 +115,10 @@ def test_order_model_to_primitives_method_happy_path() -> None:
 @mark.unit_testing
 def test_order_model_field_invalid_type() -> None:
     """
-    Test Order model raises TypeError when field is not a string.
+    Test Order model raises IntegrityError when field is not a string.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Order field <<<.*>>> must be a string. Got <<<.*>>> type.',
     ):
         Order(field=StringMother.invalid_type(), direction=OrderDirectionMother.create().value.value)
@@ -126,10 +127,10 @@ def test_order_model_field_invalid_type() -> None:
 @mark.unit_testing
 def test_order_model_field_empty_value() -> None:
     """
-    Test Order model raises ValueError when field is empty.
+    Test Order model raises IntegrityError when field is empty.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Order field <<<>>> is an empty string. Only non-empty strings are allowed.',
     ):
         Order(field=StringMother.empty(), direction=OrderDirectionMother.create().value.value)
@@ -138,10 +139,10 @@ def test_order_model_field_empty_value() -> None:
 @mark.unit_testing
 def test_order_model_field_not_trimmed() -> None:
     """
-    Test Order model raises ValueError when field has leading/trailing whitespace.
+    Test Order model raises IntegrityError when field has leading/trailing whitespace.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Order field <<<.*>>> contains leading or trailing whitespaces. Only trimmed values are allowed.',
     ):
         Order(field=StringMother.not_trimmed(), direction=OrderDirectionMother.create().value.value)
@@ -150,10 +151,10 @@ def test_order_model_field_not_trimmed() -> None:
 @mark.unit_testing
 def test_order_model_field_non_printable() -> None:
     """
-    Test Order model raises ValueError when field contains non-printable characters.
+    Test Order model raises IntegrityError when field contains non-printable characters.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Order field <<<.*>>> contains invalid characters. Only printable characters are allowed.',
     ):
         Order(field=StringMother.invalid_value(), direction=OrderDirectionMother.create().value.value)
@@ -162,10 +163,10 @@ def test_order_model_field_non_printable() -> None:
 @mark.unit_testing
 def test_order_model_direction_invalid_type() -> None:
     """
-    Test Order model raises TypeError when direction is not a valid type.
+    Test Order model raises IntegrityError when direction is not a valid type.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Order direction <<<.*>>> must be from the enumeration <<<Direction>>>. Got <<<.*>>> type.',
     ):
         Order(field=OrderFieldMother.create().value, direction=StringMother.invalid_type())

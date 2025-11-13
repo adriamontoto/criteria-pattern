@@ -9,7 +9,13 @@ from pytest import mark, raises as assert_raises
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import UrlToCriteriaConverter
-from criteria_pattern.errors import InvalidColumnError
+from criteria_pattern.errors import (
+    IntegrityError,
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    PaginationBoundsError,
+)
 
 
 @mark.unit_testing
@@ -629,7 +635,7 @@ def test_url_to_criteria_converter_with_missing_filter_field() -> None:
     url = 'https://api.example.com/users?filters[0][operator]=EQUAL&filters[0][value]=test'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has missing field.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -643,7 +649,7 @@ def test_url_to_criteria_converter_with_missing_filter_operator() -> None:
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][value]=test'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has missing operator.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -657,7 +663,7 @@ def test_url_to_criteria_converter_with_missing_filter_value() -> None:
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has missing value.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -671,7 +677,7 @@ def test_url_to_criteria_converter_with_invalid_operator() -> None:
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=INVALID_OP&filters[0][value]=test'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has unsupported operator <<<INVALID_OP>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -685,7 +691,7 @@ def test_url_to_criteria_converter_with_missing_order_field() -> None:
     url = 'https://api.example.com/users?orders[0][direction]=ASC'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[0\\]>>> has missing field.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -699,7 +705,7 @@ def test_url_to_criteria_converter_with_missing_order_direction() -> None:
     url = 'https://api.example.com/users?orders[0][field]=name'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[0\\]>>> has missing direction.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -713,7 +719,7 @@ def test_url_to_criteria_converter_with_invalid_direction() -> None:
     url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=INVALID_DIR'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[0\\]>>> has unsupported direction <<<INVALID_DIR>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -727,7 +733,7 @@ def test_url_to_criteria_converter_with_invalid_filter_index() -> None:
     url = 'https://api.example.com/users?filters[abc][field]=name&filters[abc][operator]=EQUAL&filters[abc][value]=test'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[abc\\]>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -741,7 +747,7 @@ def test_url_to_criteria_converter_with_invalid_order_index() -> None:
     url = 'https://api.example.com/users?orders[xyz][field]=name&orders[xyz][direction]=ASC'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[xyz\\]>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -755,7 +761,7 @@ def test_url_to_criteria_converter_with_between_insufficient_values() -> None:
     url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=BETWEEN&filters[0][value]=18'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has invalid value <<<18>>> for operator <<<BETWEEN>>>.',  # noqa: E501
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -769,7 +775,7 @@ def test_url_to_criteria_converter_with_between_too_many_values() -> None:
     url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=BETWEEN&filters[0][value]=18,25,30'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has invalid value <<<18,25,30>>> for operator <<<BETWEEN>>>.',  # noqa: E501
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -783,7 +789,7 @@ def test_url_to_criteria_converter_with_in_empty_values() -> None:
     url = 'https://api.example.com/users?filters[0][field]=status&filters[0][operator]=IN&filters[0][value]=,,'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[0\\]>>> has invalid value <<<,,>>> for operator <<<IN>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -847,7 +853,7 @@ def test_url_to_criteria_converter_with_field_limit_exceeded() -> None:
     url = f'https://api.example.com/users?filters[100][field]={field_name}&filters[100][operator]=EQUAL&filters[100][value]={field_value}'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter filter <<<filters\\[100\\]>>> exceeds maximum limit of <<<100>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -862,7 +868,7 @@ def test_url_to_criteria_converter_with_order_limit_exceeded() -> None:
     url = f'https://api.example.com/users?orders[100][field]={field_name}&orders[100][direction]=ASC'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match='UrlToCriteriaConverter order <<<orders\\[100\\]>>> exceeds maximum limit of <<<100>>>.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -1306,13 +1312,13 @@ def test_url_to_criteria_converter_with_leading_trailing_spaces_in_values() -> N
 @mark.unit_testing
 def test_url_to_criteria_converter_with_non_numeric_page_number() -> None:
     """
-    Test UrlToCriteriaConverter class to trigger lines 351-352 - ValueError exception in _parse_page_number.
+    Test UrlToCriteriaConverter class to trigger lines 351-352 - IntegrityError exception in _parse_page_number.
     """
     invalid_page_number = StringMother.alpha()
     url = f'https://api.example.com/users?page_number={invalid_page_number}'
 
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_number <<<{invalid_page_number}>>> cannot be provided without page_size.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -1321,13 +1327,13 @@ def test_url_to_criteria_converter_with_non_numeric_page_number() -> None:
 @mark.unit_testing
 def test_url_to_criteria_converter_with_non_numeric_page_size() -> None:
     """
-    Test UrlToCriteriaConverter class to trigger lines 372-373 - ValueError exception in _parse_page_size.
+    Test UrlToCriteriaConverter class to trigger lines 372-373 - IntegrityError exception in _parse_page_size.
     """
     invalid_page_size = StringMother.alpha()
     url = f'https://api.example.com/users?page_size={invalid_page_size}'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_size <<<{invalid_page_size}>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
@@ -1343,7 +1349,330 @@ def test_url_to_criteria_converter_with_both_non_numeric_pagination() -> None:
     url = f'https://api.example.com/users?page_size={invalid_page_size}&page_number={invalid_page_number}'
 
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=f'Criteria page_size <<<{invalid_page_size}>>> must be an integer.',
     ):
         UrlToCriteriaConverter.convert(url=url)
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_operator_injection_check_disabled() -> None:
+    """
+    Test UrlToCriteriaConverter class with operator injection when check_operator_injection is disabled.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=EQUAL&filters[0][value]=25'
+
+    UrlToCriteriaConverter.convert(
+        url=url,
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_operator_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with operator injection.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=EQUAL&filters[0][value]=25'
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_valid_operator() -> None:
+    """
+    Test UrlToCriteriaConverter class with valid operator.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER&filters[0][value]=25'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_operator_injection=True,
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+    assert len(criteria.filters) == 1
+    assert criteria.filters[0].field == 'age'
+    assert criteria.filters[0].operator == Operator.GREATER
+    assert criteria.filters[0].value == 25
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_multiple_filters_operator_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with multiple filters where one has invalid operator.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER&filters[0][value]=25&filters[1][field]=name&filters[1][operator]=EQUAL&filters[1][value]=John'
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_complex_url_operator_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with complex URL containing invalid operator.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER&filters[0][value]=18&filters[1][field]=name&filters[1][operator]=LIKE&filters[1][value]=John&orders[0][field]=created_at&orders[0][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<LIKE>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_direction_injection_check_disabled() -> None:
+    """
+    Test UrlToCriteriaConverter class with direction injection when check_direction_injection is disabled.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=DESC'
+
+    UrlToCriteriaConverter.convert(
+        url=url,
+        valid_directions=[Direction.ASC],
+    )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_direction_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with direction injection.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_valid_direction() -> None:
+    """
+    Test UrlToCriteriaConverter class with valid direction.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=ASC'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_direction_injection=True,
+        valid_directions=[Direction.ASC, Direction.DESC],
+    )
+
+    assert len(criteria.orders) == 1
+    assert criteria.orders[0].field == 'name'
+    assert criteria.orders[0].direction == Direction.ASC
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_multiple_orders_direction_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with multiple orders where one has invalid direction.
+    """
+    url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=ASC&orders[1][field]=age&orders[1][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_complex_url_direction_injection() -> None:
+    """
+    Test UrlToCriteriaConverter class with complex URL containing invalid direction.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=GREATER&filters[0][value]=18&orders[0][field]=name&orders[0][direction]=ASC&orders[1][field]=created_at&orders[1][direction]=DESC'
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_pagination_bounds_check_disabled() -> None:
+    """
+    Test UrlToCriteriaConverter with pagination bounds check disabled (should not raise).
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
+
+    criteria = UrlToCriteriaConverter.convert(url=url)
+
+    assert criteria.page_size == 50000
+    assert criteria.page_number == 2000000
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_page_size_bounds_exceeded() -> None:
+    """
+    Test UrlToCriteriaConverter raises PaginationBoundsError when page_size exceeds limit.
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=1'
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match='Pagination <<<page_size>>> <<<50000>>> exceeds maximum allowed value <<<10000>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_size=10000,
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_page_number_bounds_exceeded() -> None:
+    """
+    Test UrlToCriteriaConverter raises PaginationBoundsError when page_number exceeds limit.
+    """
+    url = 'https://api.example.com/users?page_size=100&page_number=2000000'
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match='Pagination <<<page_number>>> <<<2000000>>> exceeds maximum allowed value <<<1000000>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_number=1000000,
+        )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_valid_pagination_bounds() -> None:
+    """
+    Test UrlToCriteriaConverter with valid pagination parameters within bounds.
+    """
+    url = 'https://api.example.com/users?page_size=100&page_number=1000'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=1000000,
+    )
+
+    assert criteria.page_size == 100
+    assert criteria.page_number == 1000
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_custom_pagination_bounds() -> None:
+    """
+    Test UrlToCriteriaConverter with custom pagination bounds.
+    """
+    url = 'https://api.example.com/users?page_size=500&page_number=50000'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=1000,
+        max_page_number=100000,
+    )
+
+    assert criteria.page_size == 500
+    assert criteria.page_number == 50000
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_none_pagination_bounds_check() -> None:
+    """
+    Test UrlToCriteriaConverter with no pagination and bounds checking enabled.
+    """
+    url = 'https://api.example.com/users'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=1000000,
+    )
+
+    assert criteria.page_size is None
+    assert criteria.page_number is None
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_pagination_and_filters_bounds_check() -> None:
+    """
+    Test UrlToCriteriaConverter with pagination and filters together with bounds checking.
+    """
+    url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=John&page_size=100&page_number=5'
+
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=True,
+        max_page_size=1000,
+        max_page_number=100,
+    )
+
+    assert criteria.page_size == 100
+    assert criteria.page_number == 5
+    assert len(criteria.filters) == 1
+    assert criteria.filters[0].field == 'name'
+    assert criteria.filters[0].operator == Operator.EQUAL
+    assert criteria.filters[0].value == 'John'
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_with_pagination_bounds_both_exceeded() -> None:
+    """
+    Test UrlToCriteriaConverter raises PaginationBoundsError for page_size when both exceed limits.
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match='Pagination <<<page_size>>> <<<50000>>> exceeds maximum allowed value <<<10000>>>.',
+    ):
+        UrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_size=10000,
+            max_page_number=1000000,
+        )

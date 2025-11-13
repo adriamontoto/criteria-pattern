@@ -40,10 +40,10 @@ class FilterFieldMother(BaseMother[FilterField]):
             value (str | None, optional): Filter field value. Defaults to None.
 
         Raises:
-            TypeError: If `value` is not a string.
-            ValueError: If `value` is empty.
-            ValueError: If `value` is not trimmed.
-            ValueError: If `value` contains non-alphanumeric characters.
+            IntegrityError: If `value` is not a string.
+            IntegrityError: If `value` is empty.
+            IntegrityError: If `value` is not trimmed.
+            IntegrityError: If `value` contains non-alphanumeric characters.
 
         Returns:
             FilterField: A random filter field value.

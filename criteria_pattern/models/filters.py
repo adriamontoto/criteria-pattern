@@ -2,9 +2,18 @@
 Filters module.
 """
 
-from typing import Any
+from sys import version_info
+
+if version_info >= (3, 12):
+    from typing import override  # pragma: no cover
+else:
+    from typing_extensions import override  # pragma: no cover
+
+from typing import Any, NoReturn
 
 from value_object_pattern.models.collections import ListValueObject
+
+from criteria_pattern.errors import IntegrityError
 
 from .filter import Filter
 
@@ -44,3 +53,29 @@ class Filters(ListValueObject[Filter[Any]]):
         ```
         """
         super().__init__(value=value, title=title, parameter=parameter)
+
+    @override
+    def _raise_value_is_not_list(self, value: Any) -> NoReturn:
+        """
+        Raises a IntegrityError if the value object `value` is not a list.
+
+        Args:
+            value (Any): The provided value.
+
+        Raises:
+            IntegrityError: If the `value` is not a list.
+        """
+        raise IntegrityError(message=f'ListValueObject value <<<{value}>>> must be a list. Got <<<{type(value).__name__}>>> type.')  # noqa: E501  # fmt: skip  # pragma: no cover
+
+    @override
+    def _raise_value_is_not_of_type(self, value: Any) -> NoReturn:
+        """
+        Raises a IntegrityError if the value object `value` is not of type `T`.
+
+        Args:
+            value (Any): The provided value.
+
+        Raises:
+            IntegrityError: If the `value` is not of type `T`.
+        """
+        raise IntegrityError(message=f'ListValueObject value <<<{value}>>> must be of type <<<{self._type.__name__}>>> type. Got <<<{type(value).__name__}>>> type.')  # type: ignore[attr-defined]  # noqa: E501  # fmt: skip

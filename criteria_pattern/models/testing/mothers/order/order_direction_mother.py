@@ -41,7 +41,7 @@ class OrderDirectionMother(BaseMother[OrderDirection]):
             value (str | None, optional): Direction value. Defaults to None.
 
         Raises:
-            TypeError: If `value` is not a Direction.
+            IntegrityError: If `value` is not a Direction.
 
         Returns:
             OrderDirection: A random direction value.

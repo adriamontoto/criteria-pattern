@@ -10,7 +10,13 @@ from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToSqliteConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidTableError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    InvalidTableError,
+    PaginationBoundsError,
+)
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
 
@@ -1126,6 +1132,201 @@ def test_criteria_to_sqlite_converter_with_two_order_fields_injection() -> None:
 
 
 @mark.unit_testing
+def test_criteria_to_sqlite_converter_with_operator_injection_check_disabled() -> None:
+    """
+    Test CriteriaToSqliteConverter class with operator injection when check_operator_injection is disabled.
+    """
+    filter: Filter[Any] = FilterMother.create()
+
+    CriteriaToSqliteConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name'],
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_operator_injection() -> None:
+    """
+    Test CriteriaToSqliteConverter class with operator injection.
+    """
+    filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=CriteriaMother.with_filters(filters=[filter]),
+            table='user',
+            columns=['id', 'name'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_valid_operator() -> None:
+    """
+    Test CriteriaToSqliteConverter class with valid operator.
+    """
+    filter: Filter[Any] = FilterMother.create(field='id', operator=Operator.GREATER, value=1)
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name'],
+        check_operator_injection=True,
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+    assert query == 'SELECT "id", "name" FROM "user" WHERE "id" > :parameter_0;'
+    assert parameters == {'parameter_0': 1}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_multiple_filters_operator_injection() -> None:
+    """
+    Test CriteriaToSqliteConverter class with multiple filters where one has invalid operator.
+    """
+    filter1: Filter[Any] = FilterMother.create(operator=Operator.GREATER)
+    filter2: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=CriteriaMother.with_filters(filters=[filter1, filter2]),
+            table='user',
+            columns=['id', 'name'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_complex_criteria_operator_injection() -> None:
+    """
+    Test CriteriaToSqliteConverter class with complex criteria containing invalid operator.
+    """
+    criteria1 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.GREATER)])
+    criteria2 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.LESS)])
+    criteria3 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.LIKE)])
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<LIKE>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria1 & (criteria2 | criteria3),
+            table='user',
+            columns=['id', 'name', 'age'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_direction_injection_check_disabled() -> None:
+    """
+    Test CriteriaToSqliteConverter class with direction injection when check_direction_injection is disabled.
+    """
+    order: Order = OrderMother.create()
+
+    CriteriaToSqliteConverter.convert(
+        criteria=CriteriaMother.with_orders(orders=[order]),
+        table='user',
+        columns=['id', 'name'],
+        valid_directions=[Direction.ASC],
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_direction_injection() -> None:
+    """
+    Test CriteriaToSqliteConverter class with direction injection.
+    """
+    order: Order = OrderMother.create(direction=Direction.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=CriteriaMother.with_orders(orders=[order]),
+            table='user',
+            columns=['id', 'name'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_valid_direction() -> None:
+    """
+    Test CriteriaToSqliteConverter class with valid direction.
+    """
+    order: Order = OrderMother.create(field='id', direction=Direction.ASC)
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=CriteriaMother.with_orders(orders=[order]),
+        table='user',
+        columns=['id', 'name'],
+        check_direction_injection=True,
+        valid_directions=[Direction.ASC, Direction.DESC],
+    )
+
+    assert query == 'SELECT "id", "name" FROM "user" ORDER BY "id" ASC;'
+    assert parameters == {}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_multiple_orders_direction_injection() -> None:
+    """
+    Test CriteriaToSqliteConverter class with multiple orders where one has invalid direction.
+    """
+    order1: Order = OrderMother.create(direction=Direction.ASC)
+    order2: Order = OrderMother.create(direction=Direction.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=CriteriaMother.with_orders(orders=[order1, order2]),
+            table='user',
+            columns=['id', 'name'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_complex_criteria_direction_injection() -> None:
+    """
+    Test CriteriaToSqliteConverter class with complex criteria containing invalid direction.
+    """
+    criteria1 = CriteriaMother.create(orders=[OrderMother.create(direction=Direction.ASC)])
+    criteria2 = CriteriaMother.create(orders=[OrderMother.create(direction=Direction.DESC)])
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria1 & criteria2,
+            table='user',
+            columns=['id', 'name', 'age'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
 def test_criteria_to_sqlite_converter_with_pagination() -> None:
     """
     Test CriteriaToSqliteConverter class with pagination.
@@ -1137,10 +1338,10 @@ def test_criteria_to_sqlite_converter_with_pagination() -> None:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM "user" LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1170,10 +1371,10 @@ def test_criteria_to_sqlite_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM "user" WHERE "name" = :parameter_0 LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" WHERE "name" = :parameter_0 LIMIT :limit_1 OFFSET :offset_2;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {'parameter_0': 'John'}
+    assert parameters == {'parameter_0': 'John', 'limit_1': page_size, 'offset_2': expected_offset}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1190,10 +1391,10 @@ def test_criteria_to_sqlite_converter_with_orders_and_pagination() -> None:
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM "user" ORDER BY "name" ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" ORDER BY "name" ASC LIMIT :limit_0 OFFSET :offset_1;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1215,10 +1416,10 @@ def test_criteria_to_sqlite_converter_with_filters_orders_and_pagination() -> No
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT "id", "name", "age" FROM "user" WHERE "age" >= :parameter_0 ORDER BY "name" DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = 'SELECT "id", "name", "age" FROM "user" WHERE "age" >= :parameter_0 ORDER BY "name" DESC LIMIT :limit_1 OFFSET :offset_2;'  # noqa: S608, E501
 
     assert query == expected_query
-    assert parameters == {'parameter_0': 18}
+    assert parameters == {'parameter_0': 18, 'limit_1': page_size, 'offset_2': expected_offset}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1230,8 +1431,8 @@ def test_criteria_to_sqlite_converter_pagination_first_page() -> None:
     criteria = Criteria(page_size=10, page_number=1)
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM "user" LIMIT 10 OFFSET 0;'
-    assert parameters == {}
+    assert query == 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'
+    assert parameters == {'limit_0': 10, 'offset_1': 0}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1243,8 +1444,8 @@ def test_criteria_to_sqlite_converter_pagination_second_page() -> None:
     criteria = Criteria(page_size=10, page_number=2)
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM "user" LIMIT 10 OFFSET 10;'
-    assert parameters == {}
+    assert query == 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'
+    assert parameters == {'limit_0': 10, 'offset_1': 10}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1263,10 +1464,12 @@ def test_criteria_to_sqlite_converter_pagination_with_combined_criteria() -> Non
     query, parameters = CriteriaToSqliteConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = f'SELECT * FROM "user" WHERE ("active" = :parameter_0 AND "age" > :parameter_1) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = (
+        'SELECT * FROM "user" WHERE ("active" = :parameter_0 AND "age" > :parameter_1) LIMIT :limit_2 OFFSET :offset_3;'  # noqa: S608, E501
+    )
 
     assert query == expected_query
-    assert parameters == {'parameter_0': True, 'parameter_1': 18}
+    assert parameters == {'parameter_0': True, 'parameter_1': 18, 'limit_2': 20, 'offset_3': expected_offset}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1280,10 +1483,10 @@ def test_criteria_to_sqlite_converter_with_page_size_only() -> None:
 
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM "user" LIMIT {page_size};'  # noqa: S608
+    expected_query = 'SELECT * FROM "user" LIMIT :limit_0;'
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1299,10 +1502,10 @@ def test_criteria_to_sqlite_converter_with_filters_and_page_size_only() -> None:
 
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM "user" WHERE "{filter.field}" = :parameter_0 LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" WHERE "{filter.field}" = :parameter_0 LIMIT :limit_1;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {'parameter_0': filter.value}
+    assert parameters == {'parameter_0': filter.value, 'limit_1': page_size}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1318,10 +1521,10 @@ def test_criteria_to_sqlite_converter_with_orders_and_page_size_only() -> None:
 
     query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM "user" ORDER BY "{order.field}" ASC LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM "user" ORDER BY "{order.field}" ASC LIMIT :limit_0;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == {}
+    assert parameters == {'limit_0': page_size}
     assert_valid_sqlite_syntax(query=query)
 
 
@@ -1361,8 +1564,8 @@ def test_criteria_to_sqlite_converter_and_criteria_pagination_left_has_right_non
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToSqliteConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 AND "status" = :parameter_1) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 AND "status" = :parameter_1) LIMIT :limit_2 OFFSET :offset_3;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 10, 'offset_3': 10}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1385,8 +1588,8 @@ def test_criteria_to_sqlite_converter_and_criteria_pagination_left_none_right_ha
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToSqliteConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 AND "status" = :parameter_1) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 AND "status" = :parameter_1) LIMIT :limit_2 OFFSET :offset_3;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 15, 'offset_3': 30}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1413,8 +1616,8 @@ def test_criteria_to_sqlite_converter_and_criteria_pagination_both_have() -> Non
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToSqliteConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 AND "status" = :parameter_1) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 AND "status" = :parameter_1) LIMIT :limit_2 OFFSET :offset_3;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 10, 'offset_3': 10}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1457,8 +1660,8 @@ def test_criteria_to_sqlite_converter_or_criteria_pagination_left_has_right_none
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToSqliteConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 OR "status" = :parameter_1) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 OR "status" = :parameter_1) LIMIT :limit_2 OFFSET :offset_3;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 10, 'offset_3': 10}
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1481,9 +1684,111 @@ def test_criteria_to_sqlite_converter_or_criteria_pagination_left_none_right_has
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToSqliteConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 OR "status" = :parameter_1) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
-    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active'}
+    expected_query = 'SELECT * FROM "user" WHERE ("age" > :parameter_0 OR "status" = :parameter_1) LIMIT :limit_2 OFFSET :offset_3;'  # noqa: E501  # fmt: skip
+    expected_parameters = {'parameter_0': 18, 'parameter_1': 'active', 'limit_2': 15, 'offset_3': 30}
 
     assert query == expected_query
     assert parameters == expected_parameters
     assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_pagination_bounds_check_disabled() -> None:
+    """
+    Test CriteriaToSqliteConverter with pagination bounds check disabled (should not raise).
+    """
+    page_size = IntegerMother.positive(max=50000)
+    page_number = IntegerMother.positive(max=50000)
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToSqliteConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'
+
+    assert query == expected_query
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_page_size_bounds_exceeded() -> None:
+    """
+    Test CriteriaToSqliteConverter raises PaginationBoundsError when page_size exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_size>>> <<<{page_size}>>> exceeds maximum allowed value <<<0>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_size=0,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_page_number_bounds_exceeded() -> None:
+    """
+    Test CriteriaToSqliteConverter raises PaginationBoundsError when page_number exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_number>>> <<<{page_number}>>> exceeds maximum allowed value <<<0>>>.',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_number=0,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_valid_pagination_bounds() -> None:
+    """
+    Test CriteriaToSqliteConverter with valid pagination parameters within bounds.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=10000,
+    )
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM "user" LIMIT :limit_0 OFFSET :offset_1;'
+
+    assert query == expected_query
+    assert parameters == {'limit_0': page_size, 'offset_1': expected_offset}
+    assert_valid_sqlite_syntax(query=query)
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_with_none_pagination_bounds_check() -> None:
+    """
+    Test CriteriaToSqliteConverter with no pagination and bounds checking enabled.
+    """
+    criteria = CriteriaMother.without_pagination()
+
+    CriteriaToSqliteConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=IntegerMother.positive(),
+        max_page_number=IntegerMother.positive(),
+    )

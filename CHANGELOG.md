@@ -2,6 +2,78 @@
 
 <!-- version list -->
 
+## v3.7.0 (2025-09-22)
+
+### ✨ Features
+
+- Implement clean_pagination method to Criteria and its subclasses to clear pagination attributes
+  ([`ac03c6e`](https://github.com/adriamontoto/criteria-pattern/commit/ac03c6e9e4879616635b47e10363719ac6807f53))
+
+
+## v3.6.1 (2025-09-18)
+
+### 🐛 Bug Fixes
+
+- Update query parameter names from 'pageNumber' and 'pageSize' to 'page_number' and 'page_size'
+  ([`8e33c0d`](https://github.com/adriamontoto/criteria-pattern/commit/8e33c0d1bb58437c1f2727e96d8a73173d4ef7ee))
+
+
+## v3.6.0 (2025-09-16)
+
+### ✨ Features
+
+- Replace TypeError and ValueError to IntegrityError
+  ([`3591109`](https://github.com/adriamontoto/criteria-pattern/commit/3591109ebfc4ef07e6c38502d6211dc1bdd871ea))
+
+
+## v3.5.1 (2025-09-16)
+
+### 🐛 Bug Fixes
+
+- Update query parameter names from 'page_number' and 'page_size' to 'pageNumber' and 'pageSize'
+  ([`535d4ca`](https://github.com/adriamontoto/criteria-pattern/commit/535d4cafa3066806ea2b0eb3804e59222622f922))
+
+
+## v3.5.0 (2025-09-16)
+
+### ✨ Features
+
+- Implement IntegrityError
+  ([`cc90a9d`](https://github.com/adriamontoto/criteria-pattern/commit/cc90a9dea8b981bbd9790420d9ba1e0cd8e463bd))
+
+
+## v3.4.0 (2025-09-16)
+
+### ✨ Features
+
+- Implement pagination bounds validation to criteria converters and URL converter
+  ([`e223adf`](https://github.com/adriamontoto/criteria-pattern/commit/e223adf7c92d4e12863fef2e3dd399c7b10e0881))
+
+
+## v3.3.0 (2025-09-16)
+
+### ✨ Features
+
+- Move pagination parameters to query placeholders
+  ([`1c4a8a8`](https://github.com/adriamontoto/criteria-pattern/commit/1c4a8a8c0631432ddfd6e64d60ac4c0aa2fa4483))
+
+
+## v3.2.0 (2025-09-15)
+
+### ✨ Features
+
+- Implement directions validation to converters
+  ([`d015d33`](https://github.com/adriamontoto/criteria-pattern/commit/d015d333b5190f52a0d8f46cb20bfc155169fcbf))
+
+
+## v3.1.0 (2025-09-15)
+
+### ✨ Features
+
+- Implement operator validation to converters
+  ([`7afa9c1`](https://github.com/adriamontoto/criteria-pattern/commit/7afa9c1ed694508019eddf1680945662888f2ad8))
+
+
 ## v3.0.3 (2025-09-15)
 
 ### 🐛 Bug Fixes

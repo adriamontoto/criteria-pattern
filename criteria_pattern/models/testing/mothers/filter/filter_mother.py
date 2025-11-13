@@ -49,11 +49,11 @@ class FilterMother(BaseMother[Filter[T]]):
             value (T | None, optional): The value to filter. Defaults to None.
 
         Raises:
-            TypeError: If `field` is not a string.
-            ValueError: If `field` is empty.
-            ValueError: If `field` is not trimmed.
-            ValueError: If `field` contains non-alphanumeric characters.
-            TypeError: If `operator` is not an Operator.
+            IntegrityError: If `field` is not a string.
+            IntegrityError: If `field` is empty.
+            IntegrityError: If `field` is not trimmed.
+            IntegrityError: If `field` contains non-alphanumeric characters.
+            IntegrityError: If `operator` is not an Operator.
 
         Returns:
             Filter[T]: A random filter value with the specified parameters.

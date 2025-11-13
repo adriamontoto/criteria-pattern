@@ -10,7 +10,13 @@ from sqlglot import parse_one
 
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToMariadbConverter
-from criteria_pattern.errors import InvalidColumnError, InvalidTableError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    InvalidTableError,
+    PaginationBoundsError,
+)
 from criteria_pattern.models.testing.mothers import CriteriaMother, FilterMother, OrderMother
 
 
@@ -1149,6 +1155,201 @@ def test_criteria_to_mariadb_converter_with_two_order_fields_injection() -> None
 
 
 @mark.unit_testing
+def test_criteria_to_mariadb_converter_with_operator_injection_check_disabled() -> None:
+    """
+    Test CriteriaToMariadbConverter class with operator injection when check_operator_injection is disabled.
+    """
+    filter: Filter[Any] = FilterMother.create()
+
+    CriteriaToMariadbConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name'],
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_operator_injection() -> None:
+    """
+    Test CriteriaToMariadbConverter class with operator injection.
+    """
+    filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=CriteriaMother.with_filters(filters=[filter]),
+            table='user',
+            columns=['id', 'name'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_valid_operator() -> None:
+    """
+    Test CriteriaToMariadbConverter class with valid operator.
+    """
+    filter: Filter[Any] = FilterMother.create(field='id', operator=Operator.GREATER, value=1)
+
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=CriteriaMother.with_filters(filters=[filter]),
+        table='user',
+        columns=['id', 'name'],
+        check_operator_injection=True,
+        valid_operators=[Operator.GREATER, Operator.LESS],
+    )
+
+    assert query == 'SELECT id, name FROM user WHERE id > %s;'
+    assert parameters == [1]
+    assert_valid_mariadb_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_multiple_filters_operator_injection() -> None:
+    """
+    Test CriteriaToMariadbConverter class with multiple filters where one has invalid operator.
+    """
+    filter1: Filter[Any] = FilterMother.create(operator=Operator.GREATER)
+    filter2: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=CriteriaMother.with_filters(filters=[filter1, filter2]),
+            table='user',
+            columns=['id', 'name'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_complex_criteria_operator_injection() -> None:
+    """
+    Test CriteriaToMariadbConverter class with complex criteria containing invalid operator.
+    """
+    criteria1 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.GREATER)])
+    criteria2 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.LESS)])
+    criteria3 = CriteriaMother.create(filters=[FilterMother.create(operator=Operator.LIKE)])
+
+    with assert_raises(
+        expected_exception=InvalidOperatorError,
+        match='Invalid operator specified <<<LIKE>>>. Valid operators are <<<GREATER, LESS>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=criteria1 & (criteria2 | criteria3),
+            table='user',
+            columns=['id', 'name', 'age'],
+            check_operator_injection=True,
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_direction_injection_check_disabled() -> None:
+    """
+    Test CriteriaToMariadbConverter class with direction injection when check_direction_injection is disabled.
+    """
+    order: Order = OrderMother.create()
+
+    CriteriaToMariadbConverter.convert(
+        criteria=CriteriaMother.with_orders(orders=[order]),
+        table='user',
+        columns=['id', 'name'],
+        valid_directions=[Direction.ASC],
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_direction_injection() -> None:
+    """
+    Test CriteriaToMariadbConverter class with direction injection.
+    """
+    order: Order = OrderMother.create(direction=Direction.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=CriteriaMother.with_orders(orders=[order]),
+            table='user',
+            columns=['id', 'name'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_valid_direction() -> None:
+    """
+    Test CriteriaToMariadbConverter class with valid direction.
+    """
+    order: Order = OrderMother.create(field='id', direction=Direction.ASC)
+
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=CriteriaMother.with_orders(orders=[order]),
+        table='user',
+        columns=['id', 'name'],
+        check_direction_injection=True,
+        valid_directions=[Direction.ASC, Direction.DESC],
+    )
+
+    assert query == 'SELECT id, name FROM user ORDER BY id ASC;'
+    assert parameters == []
+    assert_valid_mariadb_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_multiple_orders_direction_injection() -> None:
+    """
+    Test CriteriaToMariadbConverter class with multiple orders where one has invalid direction.
+    """
+    order1: Order = OrderMother.create(direction=Direction.ASC)
+    order2: Order = OrderMother.create(direction=Direction.DESC)
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=CriteriaMother.with_orders(orders=[order1, order2]),
+            table='user',
+            columns=['id', 'name'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_complex_criteria_direction_injection() -> None:
+    """
+    Test CriteriaToMariadbConverter class with complex criteria containing invalid direction.
+    """
+    criteria1 = CriteriaMother.create(orders=[OrderMother.create(direction=Direction.ASC)])
+    criteria2 = CriteriaMother.create(orders=[OrderMother.create(direction=Direction.DESC)])
+
+    with assert_raises(
+        expected_exception=InvalidDirectionError,
+        match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=criteria1 & criteria2,
+            table='user',
+            columns=['id', 'name', 'age'],
+            check_direction_injection=True,
+            valid_directions=[Direction.ASC],
+        )
+
+
+@mark.unit_testing
 def test_criteria_to_mariadb_converter_with_pagination() -> None:
     """
     Test CriteriaToMariadbConverter class with pagination.
@@ -1160,10 +1361,10 @@ def test_criteria_to_mariadb_converter_with_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1193,10 +1394,10 @@ def test_criteria_to_mariadb_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user WHERE name = %s LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM user WHERE name = %s LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == ['John']
+    assert parameters == ['John', page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1213,10 +1414,10 @@ def test_criteria_to_mariadb_converter_with_orders_and_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = f'SELECT * FROM user ORDER BY name ASC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608
+    expected_query = 'SELECT * FROM user ORDER BY name ASC LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1238,12 +1439,10 @@ def test_criteria_to_mariadb_converter_with_filters_orders_and_pagination() -> N
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = (
-        f'SELECT id, name, age FROM user WHERE age >= %s ORDER BY name DESC LIMIT {page_size} OFFSET {expected_offset};'  # noqa: S608, E501
-    )
+    expected_query = 'SELECT id, name, age FROM user WHERE age >= %s ORDER BY name DESC LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == [18]
+    assert parameters == [18, page_size, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1255,8 +1454,8 @@ def test_criteria_to_mariadb_converter_pagination_first_page() -> None:
     criteria = Criteria(page_size=10, page_number=1)
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 0;'
-    assert parameters == []
+    assert query == 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    assert parameters == [10, 0]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1268,8 +1467,8 @@ def test_criteria_to_mariadb_converter_pagination_second_page() -> None:
     criteria = Criteria(page_size=10, page_number=2)
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT 10 OFFSET 10;'
-    assert parameters == []
+    assert query == 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    assert parameters == [10, 10]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1288,10 +1487,10 @@ def test_criteria_to_mariadb_converter_pagination_with_combined_criteria() -> No
     query, parameters = CriteriaToMariadbConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = f'SELECT * FROM user WHERE (active = %s AND age > %s) LIMIT 20 OFFSET {expected_offset};'  # noqa: S608, E501
+    expected_query = 'SELECT * FROM user WHERE (active = %s AND age > %s) LIMIT %s OFFSET %s;'
 
     assert query == expected_query
-    assert parameters == [True, 18]
+    assert parameters == [True, 18, 20, expected_offset]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1305,10 +1504,10 @@ def test_criteria_to_mariadb_converter_with_page_size_only() -> None:
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user LIMIT {page_size};'  # noqa: S608
+    expected_query = 'SELECT * FROM user LIMIT %s;'
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1324,10 +1523,10 @@ def test_criteria_to_mariadb_converter_with_filters_and_page_size_only() -> None
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user WHERE {filter.field} = %s LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM user WHERE {filter.field} = %s LIMIT %s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == [filter.value]
+    assert parameters == [filter.value, page_size]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1343,10 +1542,10 @@ def test_criteria_to_mariadb_converter_with_orders_and_page_size_only() -> None:
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT {page_size};'  # noqa: S608
+    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT %s;'  # noqa: S608
 
     assert query == expected_query
-    assert parameters == []
+    assert parameters == [page_size]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
 
@@ -1386,8 +1585,8 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_has_right_no
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1410,8 +1609,8 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_none_right_h
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 15 OFFSET 30;'  # noqa: E501  # fmt: skip
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active', 15, 30]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1438,8 +1637,8 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_both_have() -> No
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT 10 OFFSET 10;'  # noqa: E501  # fmt: skip
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1482,8 +1681,8 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_has_right_non
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT 10 OFFSET 10;'
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT %s OFFSET %s;'
+    expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
     assert parameters == expected_parameters
@@ -1506,9 +1705,111 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_none_right_ha
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT 15 OFFSET 30;'
-    expected_parameters = [18, 'active']
+    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT %s OFFSET %s;'
+    expected_parameters = [18, 'active', 15, 30]
 
     assert query == expected_query
     assert parameters == expected_parameters
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_pagination_bounds_check_disabled() -> None:
+    """
+    Test CriteriaToMariadbConverter with pagination bounds check disabled (should not raise).
+    """
+    page_size = IntegerMother.positive(max=50000)
+    page_number = IntegerMother.positive(max=50000)
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+
+    assert query == expected_query
+    assert parameters == [page_size, expected_offset]
+    assert_valid_mariadb_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_page_size_bounds_exceeded() -> None:
+    """
+    Test CriteriaToMariadbConverter raises PaginationBoundsError when page_size exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_size>>> <<<{page_size}>>> exceeds maximum allowed value <<<0>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_size=0,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_page_number_bounds_exceeded() -> None:
+    """
+    Test CriteriaToMariadbConverter raises PaginationBoundsError when page_number exceeds limit.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'Pagination <<<page_number>>> <<<{page_number}>>> exceeds maximum allowed value <<<0>>>.',
+    ):
+        CriteriaToMariadbConverter.convert(
+            criteria=criteria,
+            table='user',
+            check_pagination_bounds=True,
+            max_page_number=0,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_valid_pagination_bounds() -> None:
+    """
+    Test CriteriaToMariadbConverter with valid pagination parameters within bounds.
+    """
+    page_size = IntegerMother.positive()
+    page_number = IntegerMother.positive()
+    criteria = Criteria(page_size=page_size, page_number=page_number)
+
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=10000,
+        max_page_number=10000,
+    )
+
+    expected_offset = (page_number - 1) * page_size
+    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+
+    assert query == expected_query
+    assert parameters == [page_size, expected_offset]
+    assert_valid_mariadb_syntax(query=query, parameters=parameters)
+
+
+@mark.unit_testing
+def test_criteria_to_mariadb_converter_with_none_pagination_bounds_check() -> None:
+    """
+    Test CriteriaToMariadbConverter with no pagination and bounds checking enabled.
+    """
+    criteria = CriteriaMother.without_pagination()
+
+    CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=True,
+        max_page_size=IntegerMother.positive(),
+        max_page_number=IntegerMother.positive(),
+    )

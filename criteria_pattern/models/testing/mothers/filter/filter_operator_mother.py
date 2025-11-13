@@ -41,7 +41,7 @@ class FilterOperatorMother(BaseMother[FilterOperator]):
             value (str | None, optional): Filter operator value. Defaults to None.
 
         Raises:
-            TypeError: If `value` is not an Operator.
+            IntegrityError: If `value` is not an Operator.
 
         Returns:
             FilterOperator: A random filter operator value.

@@ -8,6 +8,7 @@ from object_mother_pattern import StringMother
 from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
+from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models.filter import Filter, FilterField, FilterOperator, FilterValue
 from criteria_pattern.models.testing.mothers import FilterMother
 from criteria_pattern.models.testing.mothers.filter import FilterFieldMother, FilterOperatorMother, FilterValueMother
@@ -119,10 +120,10 @@ def test_filter_model_to_primitives_method_happy_path() -> None:
 @mark.unit_testing
 def test_filter_model_field_invalid_type() -> None:
     """
-    Test Filter model raises TypeError when field is not a string.
+    Test Filter model raises IntegrityError when field is not a string.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Filter field <<<.*>>> must be a string. Got <<<.*>>> type.',
     ):
         Filter(
@@ -135,10 +136,10 @@ def test_filter_model_field_invalid_type() -> None:
 @mark.unit_testing
 def test_filter_model_field_empty_value() -> None:
     """
-    Test Filter model raises ValueError when field is empty.
+    Test Filter model raises IntegrityError when field is empty.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Filter field <<<>>> is an empty string. Only non-empty strings are allowed.',
     ):
         Filter(
@@ -151,10 +152,10 @@ def test_filter_model_field_empty_value() -> None:
 @mark.unit_testing
 def test_filter_model_field_not_trimmed() -> None:
     """
-    Test Filter model raises ValueError when field has leading/trailing whitespace.
+    Test Filter model raises IntegrityError when field has leading/trailing whitespace.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Filter field <<<.*>>> contains leading or trailing whitespaces. Only trimmed values are allowed.',
     ):
         Filter(
@@ -167,10 +168,10 @@ def test_filter_model_field_not_trimmed() -> None:
 @mark.unit_testing
 def test_filter_model_field_non_printable() -> None:
     """
-    Test Filter model raises ValueError when field contains non-printable characters.
+    Test Filter model raises IntegrityError when field contains non-printable characters.
     """
     with assert_raises(
-        expected_exception=ValueError,
+        expected_exception=IntegrityError,
         match=r'Filter field <<<.*>>> contains invalid characters. Only printable characters are allowed.',
     ):
         Filter(
@@ -183,10 +184,10 @@ def test_filter_model_field_non_printable() -> None:
 @mark.unit_testing
 def test_filter_model_operator_invalid_type() -> None:
     """
-    Test Filter model raises TypeError when operator is not a valid type.
+    Test Filter model raises IntegrityError when operator is not a valid type.
     """
     with assert_raises(
-        expected_exception=TypeError,
+        expected_exception=IntegrityError,
         match=r'Filter operator <<<.*>>> must be from the enumeration <<<Operator>>>. Got <<<.*>>> type.',
     ):
         Filter(

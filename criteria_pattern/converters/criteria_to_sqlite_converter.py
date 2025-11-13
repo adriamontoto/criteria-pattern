@@ -6,7 +6,13 @@ from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, Direction, Operator
-from criteria_pattern.errors import InvalidColumnError, InvalidTableError
+from criteria_pattern.errors import (
+    InvalidColumnError,
+    InvalidDirectionError,
+    InvalidOperatorError,
+    InvalidTableError,
+    PaginationBoundsError,
+)
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 
 
@@ -32,7 +38,7 @@ class CriteriaToSqliteConverter:
     """  # noqa: E501  # fmt: skip
 
     @classmethod
-    def convert(
+    def convert(  # noqa: C901
         cls,
         criteria: Criteria,
         table: str,
@@ -41,8 +47,15 @@ class CriteriaToSqliteConverter:
         check_table_injection: bool = False,
         check_column_injection: bool = False,
         check_criteria_injection: bool = False,
+        check_operator_injection: bool = False,
+        check_direction_injection: bool = False,
+        check_pagination_bounds: bool = False,
         valid_tables: Sequence[str] | None = None,
         valid_columns: Sequence[str] | None = None,
+        valid_operators: Sequence[Operator] | None = None,
+        valid_directions: Sequence[Direction] | None = None,
+        max_page_size: int = 10000,
+        max_page_number: int = 1000000,
     ) -> tuple[str, dict[str, Any]]:
         """
         Convert the Criteria object to a SQLite query.
@@ -58,12 +71,25 @@ class CriteriaToSqliteConverter:
             Default to False.
             check_column_injection (bool, optional): Raise an error if the column is not in the list of valid columns.
             Default to False.
+            check_operator_injection (bool, optional): Raise an error if the operator is not in the list of valid
+            operators. Default to False.
+            check_direction_injection (bool, optional): Raise an error if the direction is not in the list of valid
+            directions. Default to False.
+            check_pagination_bounds (bool, optional): Raise an error if pagination parameters exceed maximum bounds.
+            Default to False.
             valid_tables (Sequence[str], optional): List of valid tables to query. Default to empty list.
             valid_columns (Sequence[str], optional): List of valid columns to select. Default to empty list.
+            valid_operators (Sequence[Operator], optional): List of valid operators to use. Default to empty list.
+            valid_directions (Sequence[Direction], optional): List of valid directions to use. Default to empty list.
+            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Default to 10000.
+            max_page_number (int, optional): Maximum allowed page_number to prevent integer overflow. Default to 1000000.
 
         Raises:
             InvalidTableError: If the table is not in the list of valid tables (only if check_table_injection=True).
             InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
+            InvalidOperatorError: If the operator is not in the list of valid operators (only if check_operator_injection=True).
+            InvalidDirectionError: If the direction is not in the list of valid directions (only if check_direction_injection=True).
+            PaginationBoundsError: If pagination parameters exceed maximum bounds (only if check_pagination_bounds=True).
 
         Returns:
             tuple[str, dict[str, Any]]: The SQLite query string and the query parameters.
@@ -88,6 +114,8 @@ class CriteriaToSqliteConverter:
         columns_mapping = columns_mapping or {}
         valid_tables = valid_tables or []
         valid_columns = valid_columns or []
+        valid_operators = valid_operators or []
+        valid_directions = valid_directions or []
 
         if check_table_injection:
             cls._validate_table(table=table, valid_tables=valid_tables)
@@ -98,24 +126,46 @@ class CriteriaToSqliteConverter:
         if check_criteria_injection:
             cls._validate_criteria(criteria=criteria, valid_columns=valid_columns)
 
+        if check_operator_injection:
+            cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
+
+        if check_direction_injection:
+            cls._validate_directions(criteria=criteria, valid_directions=valid_directions)
+
+        if check_pagination_bounds:
+            cls._validate_pagination_bounds(
+                criteria=criteria,
+                max_page_size=max_page_size,
+                max_page_number=max_page_number,
+            )
+
         quoted_columns = ['*' if column == '*' else f'"{column}"' for column in columns]
         quoted_table = '.'.join(f'"{part}"' for part in table.split('.'))
         query = f'SELECT {", ".join(quoted_columns)} FROM {quoted_table}'  # noqa: S608  # nosec
         parameters: dict[str, Any] = {}
+        parameters_counter = 0
 
         if criteria.has_filters():
             where_clause, parameters = cls._process_filters(criteria=criteria, columns_mapping=columns_mapping)
             query += f' WHERE {where_clause}'
+            parameters_counter = len(parameters)
 
         if criteria.has_orders():
             order_clause = cls._process_orders(criteria=criteria, columns_mapping=columns_mapping)
             query += f' ORDER BY {order_clause}'
 
         if criteria.has_page_size():
-            query += f' LIMIT {criteria.page_size}'
+            limit_parameter = f'limit_{parameters_counter}'
+            parameters[limit_parameter] = criteria.page_size
+            query += f' LIMIT :{limit_parameter}'
+            parameters_counter += 1
 
         if criteria.has_pagination():
-            query += f' OFFSET {criteria.page_size * (criteria.page_number - 1)}'  # type: ignore[operator]
+            offset_parameter = f'offset_{parameters_counter}'
+            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[operator]
+            parameters[offset_parameter] = offset_value
+            query += f' OFFSET :{offset_parameter}'
+            parameters_counter += 1
 
         return f'{query};', parameters
 
@@ -180,6 +230,60 @@ class CriteriaToSqliteConverter:
         for order in criteria.orders:
             if order.field not in valid_columns:
                 raise InvalidColumnError(column=order.field, valid_columns=valid_columns)
+
+    @classmethod
+    def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
+        """
+        Validate the Criteria object operators to prevent SQL injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_operators (Sequence[Operator]): List of valid operators to use.
+
+        Raises:
+            InvalidOperatorError: If the operator is not in the list of valid operators.
+        """
+        for filter in criteria.filters:
+            if filter.operator not in valid_operators:
+                raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
+
+    @classmethod
+    def _validate_directions(cls, *, criteria: Criteria, valid_directions: Sequence[Direction]) -> None:
+        """
+        Validate the Criteria object directions to prevent SQL injection.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_directions (Sequence[Direction]): List of valid directions to use.
+
+        Raises:
+            InvalidDirectionError: If the direction is not in the list of valid directions.
+        """
+        for order in criteria.orders:
+            if order.direction not in valid_directions:
+                raise InvalidDirectionError(
+                    direction=Direction(value=order.direction),
+                    valid_directions=valid_directions,
+                )
+
+    @classmethod
+    def _validate_pagination_bounds(cls, *, criteria: Criteria, max_page_size: int, max_page_number: int) -> None:
+        """
+        Validate the Criteria object pagination parameters to prevent integer overflow.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            max_page_size (int): Maximum allowed page_size.
+            max_page_number (int): Maximum allowed page_number.
+
+        Raises:
+            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+        """
+        if criteria.page_size is not None and criteria.page_size > max_page_size:
+            raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
+
+        if criteria.page_number is not None and criteria.page_number > max_page_number:
+            raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)
 
     @classmethod
     def _process_filters(cls, *, criteria: Criteria, columns_mapping: Mapping[str, str]) -> tuple[str, dict[str, Any]]:
