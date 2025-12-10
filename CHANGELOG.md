@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.8.0 (2025-12-10)
+
+### ✨ Features
+
+- Support python 3.14
+  ([`88e18ae`](https://github.com/adriamontoto/criteria-pattern/commit/88e18aee4e3cdfd6bb0d9c149da4617a9ed89351))
+
+
 ## v3.7.0 (2025-09-22)
 
 ### ✨ Features
