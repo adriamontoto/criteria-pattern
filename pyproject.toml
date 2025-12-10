@@ -26,6 +26,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
 ]
 keywords = [
     'python',
@@ -39,7 +40,7 @@ keywords = [
     'selection',
 ]
 requires-python = '>=3.11'
-dependencies = ['value-object-pattern>=0.10.0']
+dependencies = ['value-object-pattern>=1.20.0']
 dynamic = ['version']
 
 [project.urls]
