@@ -35,6 +35,8 @@ Easy to install and integrate, this is a must have for any Python developer look
 - [📥 Installation](#installation)
 - [📚 Documentation](#documentation)
 - [💻 Utilization](#utilization)
+  - [🔄 Available Converters](#available-converters)
+  - [🎯 Real-Life Case: Multi-tenant User Search Service](#real-life-case)
 - [🤝 Contributing](#contributing)
 - [🔑 License](#license)
 
@@ -83,6 +85,64 @@ print(query)
 print(parameters)
 # >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
 # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
+```
+
+<a name="available-converters"></a>
+
+### 🔄 Available Converters
+
+The package includes converters for SQL generation and request parsing:
+
+- [`criteria_pattern.converters.CriteriaToPostgresqlConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_postgresql_converter.py): Converts a `Criteria` object into PostgreSQL SQL + parameters.
+- [`criteria_pattern.converters.CriteriaToMysqlConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_mysql_converter.py): Converts a `Criteria` object into MySQL SQL + parameters.
+- [`criteria_pattern.converters.CriteriaToMariadbConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_mariadb_converter.py): Converts a `Criteria` object into MariaDB SQL + parameters.
+- [`criteria_pattern.converters.CriteriaToSqliteConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_sqlite_converter.py): Converts a `Criteria` object into SQLite SQL + parameters.
+- [`criteria_pattern.converters.UrlToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/url_to_criteria_converter.py): Parses URL query parameters into a `Criteria` object.
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="real-life-case"></a>
+
+### 🎯 Real-Life Case: Multi-tenant User Search Service
+
+Imagine an admin dashboard where each request must:
+
+1. Always restrict results to the current tenant.
+2. Optionally filter active users.
+3. Search only users with company emails.
+4. Sort by newest users first.
+
+With Criteria Pattern, each concern is a small reusable criteria object. You combine them using `&` and `|`, then convert once to SQL:
+
+```python
+from criteria_pattern import Criteria, Direction, Filter, Operator, Order
+from criteria_pattern.converters import CriteriaToPostgresqlConverter
+
+
+class UserSearchService:
+    def __init__(self, tenant_id: str) -> None:
+        self.tenant_id = tenant_id
+
+    def build_query(self, *, only_active: bool, corporate_domain: str) -> tuple[str, dict[str, object]]:
+        tenant_scope = Criteria(filters=[Filter(field='tenant_id', operator=Operator.EQUAL, value=self.tenant_id)])
+        active_scope = Criteria(filters=[Filter(field='is_active', operator=Operator.EQUAL, value=True)])
+        email_scope = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value=corporate_domain)])
+        sort_scope = Criteria(orders=[Order(field='created_at', direction=Direction.DESC)])
+
+        criteria = tenant_scope & email_scope & sort_scope
+        if only_active:
+            criteria = criteria & active_scope
+
+        return CriteriaToPostgresqlConverter.convert(criteria=criteria, table='users')
+
+
+service = UserSearchService(tenant_id='tenant_123')
+query, parameters = service.build_query(only_active=True, corporate_domain='@acme.com')
+
+print(query)
+print(parameters)
 ```
 
 <p align="right">
