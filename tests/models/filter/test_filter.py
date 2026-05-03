@@ -9,7 +9,7 @@ from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
 from criteria_pattern.errors import IntegrityError
-from criteria_pattern.models.filter import Filter, FilterField, FilterOperator, FilterValue
+from criteria_pattern.models.filter import Filter, FilterField, FilterOperator, FilterValue, Operator
 from criteria_pattern.models.testing.mothers import FilterMother
 from criteria_pattern.models.testing.mothers.filter import FilterFieldMother, FilterOperatorMother, FilterValueMother
 
@@ -45,10 +45,9 @@ def test_filter_model_str_method_happy_path() -> None:
     """
     Test Filter model str method happy path.
     """
-    filter_value: Filter[Any] = FilterMother.create()
-    filter = Filter(field=filter_value.field, operator=filter_value.operator, value=filter_value.value)
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John')
 
-    assert str(filter) == f'Filter(field={filter_value.field}, operator={filter_value.operator}, value={filter_value.value})'  # noqa: E501  # fmt: skip
+    assert str(filter) == 'Filter(field=name, operator=EQUAL, value=John)'
 
 
 @mark.unit_testing
@@ -107,11 +106,11 @@ def test_filter_model_to_primitives_method_happy_path() -> None:
     """
     Test Filter model to primitives method happy path.
     """
-    filter: Filter[Any] = FilterMother.create()
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John')
     primitives = {
-        'field': filter.field,
-        'operator': filter.operator,
-        'value': filter.value,
+        'field': 'name',
+        'operator': Operator.EQUAL,
+        'value': 'John',
     }
 
     assert filter.to_primitives() == primitives

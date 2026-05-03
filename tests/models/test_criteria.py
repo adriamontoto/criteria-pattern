@@ -6,7 +6,7 @@ from object_mother_pattern import IntegerMother
 from object_mother_pattern.models import BaseMother
 from pytest import mark, raises as assert_raises
 
-from criteria_pattern import Criteria, Filter, Order, PageNumber, PageSize
+from criteria_pattern import Criteria, Direction, Filter, Operator, Order, PageNumber, PageSize
 from criteria_pattern.errors import IntegrityError
 from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteria
 from criteria_pattern.models.filters import Filters
@@ -65,15 +65,20 @@ def test_criteria_model_str_method_happy_path() -> None:
     """
     Test Criteria model str method happy path.
     """
-    criteria_value = CriteriaMother.create()
+    filter = Filter(field='name', operator=Operator.EQUAL, value='John')
+    order = Order(field='name', direction=Direction.ASC)
     criteria = Criteria(
-        filters=criteria_value.filters,
-        orders=criteria_value.orders,
-        page_size=criteria_value.page_size,
-        page_number=criteria_value.page_number,
+        filters=[filter],
+        orders=[order],
+        page_size=10,
+        page_number=1,
+    )
+    expected = (
+        f"Criteria(filters=[{{'field': 'name', 'operator': {Operator.EQUAL!r}, 'value': 'John'}}], "
+        f"orders=[{{'field': 'name', 'direction': {Direction.ASC!r}}}], page_number=1, page_size=10)"
     )
 
-    assert str(criteria) == f'Criteria(filters={criteria_value.filters!s}, orders={criteria_value.orders!s}, page_number={criteria_value.page_number!s}, page_size={criteria_value.page_size!s})'  # noqa: E501  # fmt: skip
+    assert str(criteria) == expected
 
 
 @mark.unit_testing
