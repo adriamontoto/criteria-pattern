@@ -50,7 +50,6 @@ Issues = 'https://github.com/adriamontoto/criteria-pattern/issues'
 
 
 [dependency-groups]
-audit = ['pip-audit>=2.9.0']
 coverage = ['coverage[toml]>=7.0.0', 'smokeshow>=0.5.0']
 develop = ['pre-commit>=3.1.0']
 format = ['ruff>=0.11.10']
@@ -64,7 +63,6 @@ test = [
     { include-group = 'coverage' },
 ]
 all = [
-    { include-group = 'audit' },
     { include-group = 'coverage' },
     { include-group = 'develop' },
     { include-group = 'format' },
