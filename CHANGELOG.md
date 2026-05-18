@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.11.0 (2026-05-18)
+
+### ✨ Features
+
+- Implement BodyToCriteriaConverter to parse criteria from request bodies
+  ([`e5955ad`](https://github.com/adriamontoto/criteria-pattern/commit/e5955ada45f88656bc2c3233a80deec251505159))
+
+
 ## v3.10.0 (2026-05-18)
 
 ### ✨ Features
