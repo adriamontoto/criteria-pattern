@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v3.10.0 (2026-05-18)
+
+### ✨ Features
+
+- Implement SimpleUrlToCriteriaConverter to parse URL query strings into Criteria objects
+  ([`088e5e5`](https://github.com/adriamontoto/criteria-pattern/commit/088e5e5117a913342c43152c012f8c10e45eaf22))
+
+
 ## v3.9.0 (2026-05-18)
 
 ### 📦 Build System
