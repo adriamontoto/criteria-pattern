@@ -1,3 +1,4 @@
+from .body_to_criteria_converter import BodyToCriteriaConverter
 from .criteria_to_mariadb_converter import CriteriaToMariadbConverter
 from .criteria_to_mysql_converter import CriteriaToMysqlConverter
 from .criteria_to_postgresql_converter import CriteriaToPostgresqlConverter
@@ -6,6 +7,7 @@ from .simple_url_to_criteria_converter import SimpleUrlToCriteriaConverter
 from .url_to_criteria_converter import UrlToCriteriaConverter
 
 __all__ = (
+    'BodyToCriteriaConverter',
     'CriteriaToMariadbConverter',
     'CriteriaToMysqlConverter',
     'CriteriaToPostgresqlConverter',
