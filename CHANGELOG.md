@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v3.9.0 (2026-05-18)
+
+### 📦 Build System
+
+- Use sqlglot[c] because sqlglot[rs] is deprecated
+  ([`3eb0c50`](https://github.com/adriamontoto/criteria-pattern/commit/3eb0c501e18e4d52190d62959720ce658b3abf3c))
+
+### ✨ Features
+
+- Introduce AGENTS.md
+  ([`de74d7b`](https://github.com/adriamontoto/criteria-pattern/commit/de74d7b955c80f6096423c5237df6ea5f1011681))
+
+
 ## v3.8.0 (2025-12-10)
 
 ### ✨ Features
