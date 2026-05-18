@@ -36,7 +36,7 @@ help: # It displays this help message
 	@printf "  %-40s %s\n" "CI=$(CI)"                       	  "Indicates if the script is running in a CI environment (true/false)"
 	@printf "  %-40s %s\n" "PYTHON_VERSION=$(PYTHON_VERSION)"     "Used python interpreter for creating the virtual environment"
 	@printf "  %-40s %s\n" "PYTHON_VIRTUAL_ENVIRONMENT=$(PYTHON_VIRTUAL_ENVIRONMENT)" "Name of the virtual environment folder"
-	@printf "  %-40s %s\n" "GROUP=$(GROUP)"                       "Group of dependencies to install (all, audit, coverage, format, lint, release, test, types)"
+	@printf "  %-40s %s\n" "GROUP=$(GROUP)"                       "Group of dependencies to install (all, coverage, format, lint, release, test, types)"
 	@printf "\n"
 
 

@@ -26,7 +26,7 @@ Run commands from the repository root.
 - Show available project commands: `make help`
 - Create the virtual environment, install all dependency groups, and install hooks: `make setup`
 - Install all dependency groups into an existing environment: `make install`
-- Install one dependency group: `make install GROUP=test`, `make install GROUP=lint`, `make install GROUP=format`, `make install GROUP=audit`, or `make install GROUP=release`
+- Install one dependency group: `make install GROUP=test`, `make install GROUP=lint`, `make install GROUP=format`, or `make install GROUP=release`
 
 The Makefile defaults to:
 
