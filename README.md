@@ -36,6 +36,7 @@ Easy to install and integrate, this is a must have for any Python developer look
 - [📚 Documentation](#documentation)
 - [💻 Utilization](#utilization)
   - [🔄 Available Converters](#available-converters)
+  - [🔎 Simple URL Query Examples](#simple-url-query-examples)
   - [🎯 Real-Life Case: Multi-tenant User Search Service](#real-life-case)
 - [🤝 Contributing](#contributing)
 - [🔑 License](#license)
@@ -97,7 +98,9 @@ The package includes converters for SQL generation and request parsing:
 - [`criteria_pattern.converters.CriteriaToMysqlConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_mysql_converter.py): Converts a `Criteria` object into MySQL SQL + parameters.
 - [`criteria_pattern.converters.CriteriaToMariadbConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_mariadb_converter.py): Converts a `Criteria` object into MariaDB SQL + parameters.
 - [`criteria_pattern.converters.CriteriaToSqliteConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/criteria_to_sqlite_converter.py): Converts a `Criteria` object into SQLite SQL + parameters.
+- [`criteria_pattern.converters.SimpleUrlToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/simple_url_to_criteria_converter.py): Parses simple public URL query parameters into a `Criteria` object.
 - [`criteria_pattern.converters.UrlToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/url_to_criteria_converter.py): Parses URL query parameters into a `Criteria` object.
+- [`criteria_pattern.converters.BodyToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/body_to_criteria_converter.py): Parses decoded request bodies into a `Criteria` object.
 
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
@@ -148,6 +151,88 @@ print(parameters)
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
 </p><br><br>
+
+<a name="simple-url-query-examples"></a>
+
+### 🔎 Simple URL Query Examples
+
+Use `SimpleUrlToCriteriaConverter` when you want a compact public query format where each parameter becomes one `AND` filter. Plain parameters use equality, and suffixes map to operators.
+
+```python
+from criteria_pattern.converters import SimpleUrlToCriteriaConverter
+
+
+criteria = SimpleUrlToCriteriaConverter.convert(
+    url='https://api.example.com/users?name=Doe&age_gte=18&page_size=20&page_number=1'
+)
+
+print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
+# >>> name EQUAL Doe
+
+print(criteria.filters[1].field, criteria.filters[1].operator, criteria.filters[1].value)
+# >>> age GREATER_OR_EQUAL 18
+
+print(criteria.page_size, criteria.page_number)
+# >>> 20 1
+```
+
+Common suffixes:
+
+| URL parameter | Parsed filter |
+| --- | --- |
+| `name=Doe` | `Filter(field='name', operator=Operator.EQUAL, value='Doe')` |
+| `name_eq=Doe` | `Filter(field='name', operator=Operator.EQUAL, value='Doe')` |
+| `status_ne=DELETED` | `Filter(field='status', operator=Operator.NOT_EQUAL, value='DELETED')` |
+| `price_gt=10` | `Filter(field='price', operator=Operator.GREATER, value=10)` |
+| `price_gte=10` | `Filter(field='price', operator=Operator.GREATER_OR_EQUAL, value=10)` |
+| `price_lt=100` | `Filter(field='price', operator=Operator.LESS, value=100)` |
+| `price_lte=100` | `Filter(field='price', operator=Operator.LESS_OR_EQUAL, value=100)` |
+| `email_contains=gmail.com` | `Filter(field='email', operator=Operator.CONTAINS, value='gmail.com')` |
+| `name_starts_with=Ad` | `Filter(field='name', operator=Operator.STARTS_WITH, value='Ad')` |
+| `email_ends_with=.com` | `Filter(field='email', operator=Operator.ENDS_WITH, value='.com')` |
+| `status_in=ACTIVE&status_in=PENDING` | `Filter(field='status', operator=Operator.IN, value=['ACTIVE', 'PENDING'])` |
+| `status_not_in=DELETED` | `Filter(field='status', operator=Operator.NOT_IN, value=['DELETED'])` |
+| `deleted_at_is_null=true` | `Filter(field='deleted_at', operator=Operator.IS_NULL, value=None)` |
+| `deleted_at_is_not_null=true` | `Filter(field='deleted_at', operator=Operator.IS_NOT_NULL, value=None)` |
+
+Comma-separated values are also supported for list operators:
+
+```python
+criteria = SimpleUrlToCriteriaConverter.convert(
+    url='https://api.example.com/users?status_in=ACTIVE,PENDING,BLOCKED'
+)
+
+print(criteria.filters[0].value)
+# >>> ['ACTIVE', 'PENDING', 'BLOCKED']
+```
+
+You can map public field names to internal field names:
+
+```python
+criteria = SimpleUrlToCriteriaConverter.convert(
+    url='https://api.example.com/users?full_name_contains=Doe',
+    fields_mapping={'full_name': 'name'},
+)
+
+print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
+# >>> name CONTAINS Doe
+```
+
+You can also extend or override URL suffixes:
+
+```python
+criteria = SimpleUrlToCriteriaConverter.convert(
+    url='https://api.example.com/users?created_at_after=2026-05-18',
+    suffix_operator_mapping={'after': Operator.GREATER},
+)
+
+print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
+# >>> created_at GREATER 2026-05-18
+```
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
 
 <a name="contributing"></a>
 
