@@ -43,6 +43,8 @@ make test
 make coverage
 ```
 
+To run the checks against all configured Python versions, use `make setup-all`, `make test-all`, and `make coverage-all`.
+
 7. **Commit Your Changes**: Commit your changes with a descriptive commit message.
    > More information about our commit message guidelines can be found in the [✍️ Commit Message Guidelines](#commit-message-guidelines) section.
 
@@ -123,13 +125,13 @@ We follow [Conventional Comments](https://conventionalcomments.org) to keep revi
 
 The project provides a [`Makefile`](https://github.com/adriamontoto/criteria-pattern/blob/master/Makefile) with some helpful commands, this commands must be run from the root of the project. For more details on each command, run `make help`.
 
-- **Environment Setup:** Run `make setup` to create a virtual environment, install all dependencies (development + production), and install pre-commit hooks.
+- **Environment Setup:** Run `make setup` to create a virtual environment, install all dependencies (development + production), and install pre-commit hooks. Run `make setup-all` to set up all configured Python versions.
 - **Install Dependencies:** Run `make install` to install all dependencies (development + production), use the `GROUP` variable to install only a specific group of dependencies (all, coverage, format, lint, release, test, types).
 - **Code Formatting:** Run `make format` to automatically format code using Ruff ([PEP 8](https://peps.python.org/pep-0008) and [PEP 257](https://peps.python.org/pep-0257) compliance), most style issues are auto-corrected.
 - **Linting:** Run `make lint` to check code quality using Ruff and mypy for static analysis and type checking.
-- **Testing:** Run `make test` to execute all tests.
-- **Coverage:** Run `make coverage` to generate a test coverage report.
-- **Build:** Run `make build` to build the project.
+- **Testing:** Run `make test` to execute all tests. Run `make test-all` to execute all tests for all configured Python versions.
+- **Coverage:** Run `make coverage` to generate a test coverage report. Run `make coverage-all` to generate a test coverage report for all configured Python versions.
+- **Build:** Run `make build-code` to build the project.
 - **Audit:** Run `make audit` to audit dependencies for known vulnerabilities.
 - **Secrets Scanning:** Run `make secrets` to scan for secrets in the hole codebase.
 - **Environment Cleanup:** Run `make clean` to remove the virtual environment, caches, and all generated files.

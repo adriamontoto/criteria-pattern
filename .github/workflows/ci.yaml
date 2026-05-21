@@ -62,7 +62,7 @@ jobs:
         run: make coverage CI=true VERBOSE=true
         env:
           COVERAGE_FILE: coverage/.coverage_${{ matrix.os }}_python_${{ matrix.python-version }}
-          CONTEXT: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          COVERAGE_CONTEXT: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
       - name: 🫙 Store tests coverage
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -121,13 +121,8 @@ jobs:
           pattern: coverage_*
           path: coverage
 
-      - name: 🏃 Combine coverage files
-        run: coverage combine coverage/.coverage_*
-
       - name: 📊 Generate coverage report
-        run: |
-          coverage report
-          coverage html --show-contexts --title "Coverage for ${{ github.sha }}"
+        run: make coverage-report CI=true VERBOSE=true COVERAGE_HTML_TITLE="Coverage for ${{ github.sha }}"
 
       - name: 🫙 Store coverage HTML report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -587,7 +582,7 @@ jobs:
         run: make install GROUP=release CI=true VERBOSE=true
 
       - name: 🏃🏻‍➡️ Build distribution
-        run: make build CI=true VERBOSE=true
+        run: make build-code CI=true VERBOSE=true
 
       - name: 🫙 Store distribution package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

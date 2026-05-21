@@ -1,5 +1,7 @@
 # linting files
 .coverage
+coverage/
+htmlcov/
 
 # cache files/folders
 **cache**
