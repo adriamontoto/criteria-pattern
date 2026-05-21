@@ -1,5 +1,5 @@
 """
-Filters module.
+Collection value object for filters.
 """
 
 from sys import version_info
@@ -20,7 +20,10 @@ from .filter import Filter
 
 class Filters(ListValueObject[Filter[Any]]):
     """
-    Filters class is a list of filters.
+    Store a validated list of `Filter` objects.
+
+    `Criteria` uses this wrapper internally to normalize missing filters to an empty collection and to keep collection
+    validation errors package-specific.
 
     Example:
     ```python
@@ -35,7 +38,7 @@ class Filters(ListValueObject[Filter[Any]]):
 
     def __init__(self, *, value: list[Filter[Any]], title: str | None = None, parameter: str | None = None) -> None:
         """
-        Initialize a list of filters.
+        Initialize a filter collection.
 
         Args:
             value (list[Filter]): The list of filters.

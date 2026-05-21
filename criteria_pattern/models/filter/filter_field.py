@@ -1,5 +1,5 @@
 """
-FilterField module.
+Validated field-name value object for filters.
 """
 
 from sys import version_info
@@ -22,7 +22,10 @@ from criteria_pattern.errors import IntegrityError
 
 class FilterField(NotEmptyStringValueObject, TrimmedStringValueObject, PrintableStringValueObject):
     """
-    FilterField class.
+    Store a filter field name as a non-empty, trimmed, printable string.
+
+    The field name is not tied to a specific database column. Converters can map it to an internal column name with a
+    field or column mapping before generating SQL.
 
     Example:
     ```python

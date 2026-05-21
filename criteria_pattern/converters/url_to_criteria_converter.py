@@ -1,5 +1,5 @@
 """
-Url to criteria converter.
+Converter from structured URL query parameters to Criteria objects.
 """
 
 from collections.abc import Mapping, Sequence
@@ -19,7 +19,11 @@ from criteria_pattern.errors import (
 
 class UrlToCriteriaConverter:
     """
-    Converts a URL query string into a Criteria object.
+    Convert structured URL query parameters into `Criteria` objects.
+
+    The converter expects bracketed parameter names such as `filters[0][field]`, `filters[0][operator]`,
+    `filters[0][value]`, `orders[0][field]`, and `orders[0][direction]`. Values are parsed into Python primitives where
+    possible before filters are created.
 
     Example:
     ```python
@@ -81,20 +85,23 @@ class UrlToCriteriaConverter:
         max_page_number: int = 1000000,
     ) -> Criteria:
         """
-        Converts an URL query string into a Criteria object.
+        Convert a URL containing structured query parameters into criteria.
+
+        `fields_mapping` translates public field names into internal field names before `Filter` and `Order` objects are
+        created. Validation flags check the parsed criteria against the provided allowlists.
 
         Args:
             url (str): The URL containing the query string.
-            fields_mapping (Mapping[str, str], optional): Mapping of field names to aliases. Default to empty dict.
-            check_field_injection (bool, optional): Whether to check for field injection.
-            check_operator_injection (bool, optional): Whether to check for operator injection.
-            check_direction_injection (bool, optional): Whether to check for direction injection.
-            check_pagination_bounds (bool, optional): Whether to check pagination parameters bounds.
-            valid_fields (Sequence[str], optional): A list of valid field names. Default to empty list.
-            valid_operators (Sequence[Operator], optional): A list of valid operators. Default to empty list.
-            valid_directions (Sequence[Direction], optional): A list of valid directions. Default to empty list.
-            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Default to 10000.
-            max_page_number (int, optional): Maximum allowed page_number to prevent integer overflow. Default to 1000000.
+            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal field names.
+            check_field_injection (bool, optional): Validate parsed fields against `valid_fields`.
+            check_operator_injection (bool, optional): Validate parsed operators against `valid_operators`.
+            check_direction_injection (bool, optional): Validate parsed directions against `valid_directions`.
+            check_pagination_bounds (bool, optional): Validate pagination values against configured maxima.
+            valid_fields (Sequence[str], optional): Allowed parsed field names.
+            valid_operators (Sequence[Operator], optional): Allowed parsed operators.
+            valid_directions (Sequence[Direction], optional): Allowed parsed directions.
+            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
+            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
 
         Raises:
             IntegrityError: If the filter index is not an integer.
@@ -167,7 +174,7 @@ class UrlToCriteriaConverter:
         fields_mapping: Mapping[str, str],
     ) -> list[Filter[Any]]:
         """
-        Parse the 'filters' query parameters.
+        Parse bracketed filter query parameters into `Filter` objects.
 
         Args:
             query_parameters (Mapping[str, Sequence[str]]): The query parameters from the URL.
@@ -235,7 +242,7 @@ class UrlToCriteriaConverter:
     @classmethod
     def _parse_filter_value(cls, *, raw_value: str | None, operator: Operator) -> Any:
         """
-        Parse the raw filter value based on the operator.
+        Parse a raw filter value according to operator value-shape requirements.
 
         Args:
             raw_value (str | None): The raw value from the query parameter.

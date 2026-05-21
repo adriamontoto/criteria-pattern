@@ -1,5 +1,5 @@
 """
-FilterValue module.
+Generic value object for filter comparison values.
 """
 
 from typing import TypeVar
@@ -11,7 +11,10 @@ T = TypeVar('T')
 
 class FilterValue(ValueObject[T]):
     """
-    FilterValue class.
+    Store the raw value associated with a filter condition.
+
+    The value is not coerced here. Request converters parse incoming primitives before constructing filters, and SQL
+    converters decide how to bind scalar, range, list, and null-like operator values.
 
     Example:
     ```python

@@ -1,5 +1,5 @@
 """
-Criteria to MariaDB converter module.
+MariaDB SQL converter for Criteria objects.
 """
 
 from .criteria_to_mysql_converter import CriteriaToMysqlConverter
@@ -7,10 +7,10 @@ from .criteria_to_mysql_converter import CriteriaToMysqlConverter
 
 class CriteriaToMariadbConverter(CriteriaToMysqlConverter):
     """
-    Criteria to MariaDB converter.
+    Convert `Criteria` objects into MariaDB `SELECT` statements.
 
-    MariaDB is highly compatible with MySQL, so this converter inherits from the MySQL converter. This separate class
-    allows for future MariaDB-specific optimizations or features.
+    MariaDB is highly compatible with MySQL, so this converter inherits MySQL rendering and positional parameter
+    behavior. This separate class keeps the public API explicit and leaves room for future MariaDB-specific behavior.
 
     Example:
     ```python

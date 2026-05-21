@@ -1,5 +1,5 @@
 """
-OrderField module.
+Validated field-name value object for ordering.
 """
 
 from sys import version_info
@@ -22,7 +22,9 @@ from criteria_pattern.errors import IntegrityError
 
 class OrderField(NotEmptyStringValueObject, TrimmedStringValueObject, PrintableStringValueObject):
     """
-    OrderField class.
+    Store an order field name as a non-empty, trimmed, printable string.
+
+    The field name is backend-neutral. Converters can map it to a concrete column before rendering an `ORDER BY` clause.
 
     Example:
     ```python

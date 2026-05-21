@@ -1,5 +1,5 @@
 """
-OrderDirection module.
+Validated direction value object for ordering.
 """
 
 from sys import version_info
@@ -20,7 +20,10 @@ from .direction import Direction
 
 class OrderDirection(EnumerationValueObject[Direction]):
     """
-    OrderDirection class.
+    Store an order direction constrained to the `Direction` enum.
+
+    This wrapper accepts enum-compatible primitive values and normalizes them through the underlying enumeration value
+    object.
 
     Example:
     ```python

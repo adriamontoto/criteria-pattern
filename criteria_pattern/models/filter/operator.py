@@ -1,5 +1,5 @@
 """
-Filter operator module.
+Filter operators supported by Criteria Pattern converters.
 """
 
 from enum import StrEnum, unique
@@ -8,7 +8,10 @@ from enum import StrEnum, unique
 @unique
 class Operator(StrEnum):
     """
-    Operator enum class.
+    Enumerate all comparison operators supported by filters.
+
+    SQL converters translate these values into the dialect-specific predicates and parameter bindings. Range operators
+    expect two values, list operators expect one or more values, and null operators ignore the filter value.
 
     Example:
     ```python

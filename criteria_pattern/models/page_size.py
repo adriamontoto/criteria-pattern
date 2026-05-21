@@ -1,5 +1,5 @@
 """
-PageSize module.
+Positive page-size value object.
 """
 
 from sys import version_info
@@ -18,7 +18,10 @@ from criteria_pattern.errors import IntegrityError
 
 class PageSize(PositiveIntegerValueObject):
     """
-    PageSize class.
+    Store the number of rows requested per page.
+
+    `Criteria` requires this value when a page number is supplied. Converters use it to render `LIMIT` clauses and may
+    optionally enforce maximum bounds.
 
     Example:
     ```python

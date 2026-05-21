@@ -1,5 +1,5 @@
 """
-Simple URL to criteria converter.
+Converter from flat URL query parameters to Criteria objects.
 """
 
 from collections.abc import Mapping, Sequence
@@ -12,7 +12,10 @@ from criteria_pattern.errors import IntegrityError, InvalidColumnError, InvalidO
 
 class SimpleUrlToCriteriaConverter:
     """
-    Converts a simple URL query string into a Criteria object.
+    Convert suffix-based URL query parameters into `Criteria` objects.
+
+    Each non-pagination query parameter becomes a filter. A parameter suffix selects the operator, for example
+    `age_ge=18` becomes `field='age'` with `Operator.GREATER_OR_EQUAL`; a parameter with no suffix uses equality.
 
     Example:
     ```python
@@ -71,19 +74,23 @@ class SimpleUrlToCriteriaConverter:
         max_page_number: int = 1000000,
     ) -> Criteria:
         """
-        Converts a simple URL query string into a Criteria object.
+        Convert a URL or bare query string into criteria.
+
+        `fields_mapping` translates public field names into internal field names. `suffix_operator_mapping` can add or
+        override suffixes such as `_gte` or `_contains`. Validation flags check the parsed criteria against the provided
+        allowlists.
 
         Args:
             url (str): The URL containing the query string.
-            fields_mapping (Mapping[str, str], optional): Mapping of field names to aliases. Defaults to empty dict.
-            suffix_operator_mapping (Mapping[str, Operator], optional): Mapping of URL suffixes to operators.
-            check_field_injection (bool, optional): Whether to check for field injection.
-            check_operator_injection (bool, optional): Whether to check for operator injection.
-            check_pagination_bounds (bool, optional): Whether to check pagination parameters bounds.
-            valid_fields (Sequence[str], optional): A list of valid field names. Defaults to empty list.
-            valid_operators (Sequence[Operator], optional): A list of valid operators. Defaults to empty list.
-            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Defaults to 10000.
-            max_page_number (int, optional): Maximum allowed page_number. Defaults to 1000000.
+            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal field names.
+            suffix_operator_mapping (Mapping[str, Operator], optional): Additional suffix-to-operator aliases.
+            check_field_injection (bool, optional): Validate parsed fields against `valid_fields`.
+            check_operator_injection (bool, optional): Validate parsed operators against `valid_operators`.
+            check_pagination_bounds (bool, optional): Validate pagination values against configured maxima.
+            valid_fields (Sequence[str], optional): Allowed parsed field names.
+            valid_operators (Sequence[Operator], optional): Allowed parsed operators.
+            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
+            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
 
         Raises:
             IntegrityError: If a list operator has invalid values.
@@ -128,7 +135,7 @@ class SimpleUrlToCriteriaConverter:
     @classmethod
     def _build_suffix_operator_mapping(cls, *, mapping: Mapping[str, Operator] | None) -> dict[str, Operator]:
         """
-        Build the suffix operator mapping.
+        Build the normalized suffix-to-operator mapping.
 
         Args:
             mapping (Mapping[str, Operator], optional): Custom suffix operator mapping.
@@ -188,7 +195,7 @@ class SimpleUrlToCriteriaConverter:
         suffix_operator_mapping: Mapping[str, Operator],
     ) -> list[Filter[Any]]:
         """
-        Parse simple query parameters into filters.
+        Parse simple query parameters into `Filter` objects.
 
         Args:
             query_parameters (Mapping[str, Sequence[str]]): The query parameters from the URL.

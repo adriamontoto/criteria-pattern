@@ -1,5 +1,5 @@
 """
-PageNumber module.
+Positive page-number value object.
 """
 
 from sys import version_info
@@ -18,7 +18,10 @@ from criteria_pattern.errors import IntegrityError
 
 class PageNumber(PositiveIntegerValueObject):
     """
-    PageNumber class.
+    Store the one-based page number requested for pagination.
+
+    A page number is meaningful only with a page size. `Criteria` enforces that dependency before converters calculate
+    offsets.
 
     Example:
     ```python

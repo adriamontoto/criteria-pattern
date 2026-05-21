@@ -1,5 +1,5 @@
 """
-Criteria to SQLite converter module.
+SQLite SQL converter for Criteria objects.
 """
 
 from collections.abc import Mapping, Sequence
@@ -18,7 +18,11 @@ from criteria_pattern.models.criteria import AndCriteria, NotCriteria, OrCriteri
 
 class CriteriaToSqliteConverter:
     """
-    Criteria to SQLite converter.
+    Convert `Criteria` objects into SQLite `SELECT` statements.
+
+    The converter preserves `AND`, `OR`, and `NOT` criteria composition, quotes selected columns and table identifiers,
+    and returns named parameters suitable for SQLite `:name` placeholders. Allowlist checks are opt-in through the
+    `check_*_injection` flags.
 
     Example:
     ```python
@@ -58,31 +62,30 @@ class CriteriaToSqliteConverter:
         max_page_number: int = 1000000,
     ) -> tuple[str, dict[str, Any]]:
         """
-        Convert the Criteria object to a SQLite query.
+        Convert criteria into a SQLite query and parameter mapping.
+
+        Field names from filters and orders are resolved through `columns_mapping` before SQL is rendered. Validation
+        flags only check values against the corresponding allowlists; callers should pass allowlists whenever accepting
+        table, column, operator, direction, or pagination input from untrusted sources.
 
         Args:
             criteria (Criteria): Criteria to convert.
             table (str): Name of the table to query.
-            columns (Sequence[str], optional): Columns of the table to select. Default to *.
-            columns_mapping (Mapping[str, str], optional): Mapping of column names to aliases. Default to empty dict.
-            check_criteria_injection (bool, optional): Raise an error if the criteria field is not in the list of valid
-            columns. Default to False.
-            check_table_injection (bool, optional): Raise an error if the table is not in the list of valid tables.
-            Default to False.
-            check_column_injection (bool, optional): Raise an error if the column is not in the list of valid columns.
-            Default to False.
-            check_operator_injection (bool, optional): Raise an error if the operator is not in the list of valid
-            operators. Default to False.
-            check_direction_injection (bool, optional): Raise an error if the direction is not in the list of valid
-            directions. Default to False.
-            check_pagination_bounds (bool, optional): Raise an error if pagination parameters exceed maximum bounds.
-            Default to False.
-            valid_tables (Sequence[str], optional): List of valid tables to query. Default to empty list.
-            valid_columns (Sequence[str], optional): List of valid columns to select. Default to empty list.
-            valid_operators (Sequence[Operator], optional): List of valid operators to use. Default to empty list.
-            valid_directions (Sequence[Direction], optional): List of valid directions to use. Default to empty list.
-            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Default to 10000.
-            max_page_number (int, optional): Maximum allowed page_number to prevent integer overflow. Default to 1000000.
+            columns (Sequence[str], optional): Columns to select. Defaults to `['*']`.
+            columns_mapping (Mapping[str, str], optional): External field names mapped to SQL column names.
+            check_criteria_injection (bool, optional): Validate filter and order fields against `valid_columns`.
+            check_table_injection (bool, optional): Validate `table` against `valid_tables`.
+            check_column_injection (bool, optional): Validate selected columns and mapped columns against
+                `valid_columns`.
+            check_operator_injection (bool, optional): Validate filter operators against `valid_operators`.
+            check_direction_injection (bool, optional): Validate order directions against `valid_directions`.
+            check_pagination_bounds (bool, optional): Validate page size and page number against configured maxima.
+            valid_tables (Sequence[str], optional): Allowed table names.
+            valid_columns (Sequence[str], optional): Allowed selectable and criteria column names.
+            valid_operators (Sequence[Operator], optional): Allowed filter operators.
+            valid_directions (Sequence[Direction], optional): Allowed order directions.
+            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
+            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
 
         Raises:
             InvalidTableError: If the table is not in the list of valid tables (only if check_table_injection=True).
@@ -92,7 +95,7 @@ class CriteriaToSqliteConverter:
             PaginationBoundsError: If pagination parameters exceed maximum bounds (only if check_pagination_bounds=True).
 
         Returns:
-            tuple[str, dict[str, Any]]: The SQLite query string and the query parameters.
+            tuple[str, dict[str, Any]]: SQLite query string and named query parameters.
 
         Example:
         ```python

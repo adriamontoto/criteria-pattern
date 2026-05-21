@@ -1,5 +1,5 @@
 """
-FilterOperator module.
+Validated operator value object for filters.
 """
 
 from sys import version_info
@@ -20,7 +20,10 @@ from .operator import Operator
 
 class FilterOperator(EnumerationValueObject[Operator]):
     """
-    FilterOperator class.
+    Store a filter operator constrained to the `Operator` enum.
+
+    This wrapper accepts enum-compatible primitive values and normalizes them through the underlying enumeration value
+    object.
 
     Example:
     ```python

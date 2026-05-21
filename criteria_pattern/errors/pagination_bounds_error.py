@@ -1,5 +1,5 @@
 """
-Pagination bounds error module.
+Pagination bounds error exception.
 """
 
 from .criteria_pattern_base_error import CriteriaPatternBaseError
@@ -7,10 +7,9 @@ from .criteria_pattern_base_error import CriteriaPatternBaseError
 
 class PaginationBoundsError(CriteriaPatternBaseError):
     """
-    Pagination bounds error class.
+    Raised when parsed pagination values exceed configured safe limits.
 
-    This exception is raised when pagination parameters exceed safe bounds
-    to prevent integer overflow and potential security issues.
+    Converters raise this only when pagination bounds validation is explicitly enabled.
     """
 
     _parameter: str
@@ -19,7 +18,7 @@ class PaginationBoundsError(CriteriaPatternBaseError):
 
     def __init__(self, *, parameter: str, value: int, max_value: int) -> None:
         """
-        Pagination bounds error constructor.
+        Initialize the pagination bounds error.
 
         Args:
             parameter (str): The parameter name that exceeded bounds (page_size or page_number).

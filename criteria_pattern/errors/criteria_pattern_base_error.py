@@ -1,18 +1,20 @@
 """
-Criteria pattern base error.
+Base exception for Criteria Pattern errors.
 """
 
 
 class CriteriaPatternBaseError(Exception):
     """
-    Criteria pattern base error.
+    Base class for package-specific exceptions.
+
+    The explicit `message` property keeps error messages available to callers without relying on `Exception.args`.
     """
 
     _message: str
 
     def __init__(self, *, message: str) -> None:
         """
-        Criteria pattern base error constructor.
+        Initialize the error with a stable message.
 
         Args:
             message (str): Exception message.
@@ -24,7 +26,7 @@ class CriteriaPatternBaseError(Exception):
     @property
     def message(self) -> str:
         """
-        Get the exception message.
+        Get the package-specific exception message.
 
         Returns:
             str: Exception message.

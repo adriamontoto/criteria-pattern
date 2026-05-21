@@ -1,5 +1,5 @@
 """
-This module contains the Order class.
+Order model for one field/direction sorting rule.
 """
 
 from value_object_pattern import BaseModel
@@ -10,7 +10,10 @@ from .order_field import OrderField
 
 class Order(BaseModel):
     """
-    Order class.
+    Represent a single ordering rule.
+
+    An order validates the field name and direction before converters render it into an `ORDER BY` clause or another
+    transport-specific representation.
 
     Example:
     ```python
@@ -27,11 +30,11 @@ class Order(BaseModel):
 
     def __init__(self, *, field: str, direction: str) -> None:
         """
-        Order constructor.
+        Initialize an ordering rule.
 
         Args:
-            field (str): Field name that will be ordered.
-            direction (Direction): Order direction that will be used to order the field.
+            field (str): Field name to order by. It must be a non-empty, trimmed, printable string.
+            direction (Direction): Direction name or `Direction` value used to sort the field.
 
         Raises:
             IntegrityError: If the provided `field` is not a string.
@@ -55,7 +58,7 @@ class Order(BaseModel):
     @property
     def field(self) -> str:
         """
-        Get field.
+        Get the validated order field name.
 
         Returns:
             str: Field name.
@@ -74,7 +77,7 @@ class Order(BaseModel):
     @property
     def direction(self) -> str:
         """
-        Get order direction.
+        Get the validated order direction value.
 
         Returns:
             str: Order direction.

@@ -1,5 +1,5 @@
 """
-Order direction module.
+Order directions supported by Criteria Pattern converters.
 """
 
 from enum import StrEnum, unique
@@ -8,7 +8,7 @@ from enum import StrEnum, unique
 @unique
 class Direction(StrEnum):
     """
-    Direction enum class.
+    Enumerate supported sort directions.
 
     Example:
     ```python

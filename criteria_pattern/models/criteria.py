@@ -1,5 +1,8 @@
 """
-This module contains the Criteria class.
+Criteria models for composing filters, orders, and pagination.
+
+`Criteria` is the central transport-neutral object in the package. It can be combined with boolean operators and then
+passed to converters that render SQL, parse request data, or build other query representations.
 """
 
 from __future__ import annotations
@@ -27,7 +30,10 @@ from .page_size import PageSize
 
 class Criteria(BaseModel):
     """
-    Criteria class.
+    Represent a complete query criteria definition.
+
+    A criteria instance groups filters, ordering rules, and optional pagination. Instances can be composed with `&`, `|`,
+    and `~`; converters preserve that boolean structure when rendering nested filter expressions.
 
     Example:
     ```python
@@ -53,11 +59,14 @@ class Criteria(BaseModel):
         page_number: int | None = None,
     ) -> None:
         """
-        Criteria constructor.
+        Initialize criteria from optional filters, orders, and pagination.
+
+        Empty filter and order inputs are normalized to empty collections. If `page_number` is provided, `page_size` must
+        also be provided so converters can calculate an offset safely.
 
         Args:
-            filters (list[Filter[Any]] | None, optional): List of filters. Defaults to [].
-            orders (list[Order] | None, optional): List of orders. Defaults to [].
+            filters (list[Filter[Any]] | None, optional): Filter conditions to apply. Defaults to an empty list.
+            orders (list[Order] | None, optional): Ordering rules to apply. Defaults to an empty list.
             page_size (int | None, optional): Page size for pagination, must be >= 1. Defaults to None.
             page_number (int | None, optional): Page number for pagination, must be >= 1. Defaults to None.
 
@@ -83,7 +92,10 @@ class Criteria(BaseModel):
 
     def __and__(self, criteria: Criteria) -> AndCriteria:
         """
-        Combine two criteria with AND operator. It merges the filters from both criteria into a single Criteria object.
+        Combine two criteria with boolean AND.
+
+        The returned `AndCriteria` keeps references to both operands so converters can render nested expressions with
+        explicit parentheses.
 
         Args:
             criteria (Criteria): Another criteria.
@@ -112,7 +124,9 @@ class Criteria(BaseModel):
 
     def and_(self, *, criteria: Criteria) -> AndCriteria:
         """
-        Combine two criteria with AND operator.
+        Combine two criteria with boolean AND.
+
+        This named method is equivalent to using the `&` operator.
 
         Args:
             criteria (Criteria): Another criteria.
@@ -141,7 +155,10 @@ class Criteria(BaseModel):
 
     def __or__(self, criteria: Criteria) -> OrCriteria:
         """
-        Combine two criteria with OR operator. It merges the filters from both criteria into a single Criteria object.
+        Combine two criteria with boolean OR.
+
+        The returned `OrCriteria` keeps references to both operands so converters can render nested expressions with
+        explicit parentheses.
 
         Args:
             criteria (Criteria): Another criteria.
@@ -170,7 +187,9 @@ class Criteria(BaseModel):
 
     def or_(self, *, criteria: Criteria) -> OrCriteria:
         """
-        Combine two criteria with OR operator.
+        Combine two criteria with boolean OR.
+
+        This named method is equivalent to using the `|` operator.
 
         Args:
             criteria (Criteria): Another criteria.
@@ -199,7 +218,10 @@ class Criteria(BaseModel):
 
     def __invert__(self) -> NotCriteria:
         """
-        Negate the criteria.
+        Negate this criteria with boolean NOT.
+
+        The returned `NotCriteria` wraps this criteria so converters can render the negated expression without flattening
+        the underlying filters.
 
         Returns:
             NotCriteria: Negated criteria.
@@ -222,7 +244,9 @@ class Criteria(BaseModel):
 
     def not_(self) -> NotCriteria:
         """
-        Negate the criteria.
+        Negate this criteria with boolean NOT.
+
+        This named method is equivalent to using the `~` operator.
 
         Returns:
             NotCriteria: Negated criteria.
@@ -246,7 +270,7 @@ class Criteria(BaseModel):
     @property
     def filters(self) -> list[Filter[Any]]:
         """
-        Get criteria filters.
+        Get criteria filters in declaration order.
 
         Returns:
            list[Filter[Any]]: List of filters.
@@ -265,7 +289,7 @@ class Criteria(BaseModel):
     @property
     def orders(self) -> list[Order]:
         """
-        Get criteria orders.
+        Get criteria orders in declaration order.
 
         Returns:
             list[Order]: List of orders.
@@ -324,7 +348,7 @@ class Criteria(BaseModel):
 
     def has_filters(self) -> bool:
         """
-        Check if criteria has filters.
+        Check whether criteria has at least one filter.
 
         Returns:
             bool: True if criteria has filters, False otherwise.
@@ -342,7 +366,7 @@ class Criteria(BaseModel):
 
     def has_orders(self) -> bool:
         """
-        Check if criteria has orders.
+        Check whether criteria has at least one order.
 
         Returns:
             bool: True if criteria has orders, False otherwise.
@@ -360,7 +384,7 @@ class Criteria(BaseModel):
 
     def has_page_size(self) -> bool:
         """
-        Check if criteria has page size.
+        Check whether criteria has a page size.
 
         Returns:
             bool: True if criteria has page size, False otherwise.
@@ -378,7 +402,7 @@ class Criteria(BaseModel):
 
     def has_pagination(self) -> bool:
         """
-        Check if criteria has pagination.
+        Check whether criteria has both page size and page number.
 
         Returns:
             bool: True if criteria has pagination, False otherwise.
@@ -419,7 +443,10 @@ class Criteria(BaseModel):
 
 class AndCriteria(Criteria):
     """
-    AndCriteria class to handle AND logic.
+    Criteria composition node for boolean AND.
+
+    Filters and orders are exposed as the combined values from both operands. Pagination is resolved by preferring the
+    left operand when it is set, then falling back to the right operand.
 
     ***This class is not intended to be used directly. Use the `&` operator on Criteria objects instead.***
     """
@@ -462,7 +489,7 @@ class AndCriteria(Criteria):
     @override
     def filters(self) -> list[Filter[Any]]:
         """
-        Get filters.
+        Get filters from the left side followed by filters from the right side.
 
         Returns:
             list[Filter[Any]]: List of filters.
@@ -473,7 +500,7 @@ class AndCriteria(Criteria):
     @override
     def orders(self) -> list[Order]:
         """
-        Get orders, only left criteria orders are returned.
+        Get orders from the left side followed by orders from the right side.
 
         Returns:
             list[Order]: List of orders.
@@ -484,7 +511,7 @@ class AndCriteria(Criteria):
     @override
     def page_size(self) -> int | None:
         """
-        Get page size from left criteria (pagination is taken from left side).
+        Get the page size, preferring the left criteria when present.
 
         Returns:
             int | None: Page size for pagination, or None if not set.
@@ -498,7 +525,7 @@ class AndCriteria(Criteria):
     @override
     def page_number(self) -> int | None:
         """
-        Get page number from left criteria (pagination is taken from left side).
+        Get the page number, preferring the left criteria when present.
 
         Returns:
             int | None: Page number for pagination, or None if not set.
@@ -544,7 +571,10 @@ class AndCriteria(Criteria):
 
 class OrCriteria(Criteria):
     """
-    OrCriteria class to handle OR logic.
+    Criteria composition node for boolean OR.
+
+    Filters and orders are exposed as the combined values from both operands. Pagination is resolved by preferring the
+    left operand when it is set, then falling back to the right operand.
 
     ***This class is not intended to be used directly. Use the `|` operator on Criteria objects instead.***
     """
@@ -587,7 +617,7 @@ class OrCriteria(Criteria):
     @override
     def filters(self) -> list[Filter[Any]]:
         """
-        Get filters.
+        Get filters from the left side followed by filters from the right side.
 
         Returns:
             list[Filter[Any]]: List of filters.
@@ -598,7 +628,7 @@ class OrCriteria(Criteria):
     @override
     def orders(self) -> list[Order]:
         """
-        Get orders, only left criteria orders are returned.
+        Get orders from the left side followed by orders from the right side.
 
         Returns:
             list[Order]: List of orders.
@@ -609,7 +639,7 @@ class OrCriteria(Criteria):
     @override
     def page_size(self) -> int | None:
         """
-        Get page size from left criteria (pagination is taken from left side).
+        Get the page size, preferring the left criteria when present.
 
         Returns:
             int | None: Page size for pagination, or None if not set.
@@ -623,7 +653,7 @@ class OrCriteria(Criteria):
     @override
     def page_number(self) -> int | None:
         """
-        Get page number from left criteria (pagination is taken from left side).
+        Get the page number, preferring the left criteria when present.
 
         Returns:
             int | None: Page number for pagination, or None if not set.
@@ -669,7 +699,10 @@ class OrCriteria(Criteria):
 
 class NotCriteria(Criteria):
     """
-    NotCriteria class to handle NOT logic.
+    Criteria composition node for boolean NOT.
+
+    The wrapped criteria supplies filters, orders, and pagination. Converters use the wrapper to render negated filter
+    expressions.
 
     ***This class is not intended to be used directly. Use the `~` operator on Criteria objects instead.***
     """
@@ -708,7 +741,7 @@ class NotCriteria(Criteria):
     @property
     def criteria(self) -> Criteria:
         """
-        Get criteria.
+        Get the wrapped criteria.
 
         Returns:
             Criteria: Criteria to negate.
@@ -719,7 +752,7 @@ class NotCriteria(Criteria):
     @override
     def filters(self) -> list[Filter[Any]]:
         """
-        Get filters.
+        Get filters from the wrapped criteria.
 
         Returns:
             list[Filter[Any]]: List of filters.
@@ -730,7 +763,7 @@ class NotCriteria(Criteria):
     @override
     def orders(self) -> list[Order]:
         """
-        Get orders.
+        Get orders from the wrapped criteria.
 
         Returns:
             list[Order]: List of orders.

@@ -34,10 +34,18 @@ Easy to install and integrate, this is a must have for any Python developer look
 
 - [📥 Installation](#installation)
 - [📚 Documentation](#documentation)
+- [✨ Features](#features)
 - [💻 Utilization](#utilization)
+  - [🧱 Core Concepts](#core-concepts)
+  - [🧮 Supported Operators](#supported-operators)
   - [🔄 Available Converters](#available-converters)
-  - [🔎 Simple URL Query Examples](#simple-url-query-examples)
+  - [🔐 Security For User-Facing APIs](#security-for-user-facing-apis)
+  - [🛡️ SQL Conversion And Safety](#sql-conversion-and-safety)
+  - [📦 Request Body Examples](#request-body-examples)
+  - [🧭 Structured URL Query Examples](#structured-url-query-examples)
   - [🎯 Real-Life Case: Multi-tenant User Search Service](#real-life-case)
+  - [🔎 Simple URL Query Examples](#simple-url-query-examples)
+  - [🧪 Testing Helpers](#testing-helpers)
 - [🤝 Contributing](#contributing)
 - [🔑 License](#license)
 
@@ -63,7 +71,35 @@ pip install criteria-pattern
 
 ## 📚 Documentation
 
-This [project's documentation](https://deepwiki.com/adriamontoto/criteria-pattern) is powered by DeepWiki, which provides a comprehensive overview of the **Criteria Pattern** and its usage.
+The root README is the entry point. Deeper guides live in this repository and are linked here:
+
+- [`🧱 Usage Guide`](docs/usage/README.md): Core models, composition rules, operators and pagination.
+- [`🔄 Converter Guide`](docs/converters/README.md): SQL converters, request converters, placeholder styles and mapping.
+- [`🔐 Security Guide`](docs/security/README.md): User-facing criteria safety and injection prevention.
+- [`🧪 Testing Guide`](docs/testing/README.md): Object mother helpers and testing recommendations.
+
+This [project's DeepWiki documentation](https://deepwiki.com/adriamontoto/criteria-pattern) is also available for generated repository navigation.
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p><br><br>
+
+<a name="features"></a>
+
+## ✨ Features
+
+**Criteria Pattern** gives you a typed, reusable way to describe queries before deciding how they should be executed.
+
+- 🧱 **Composable criteria objects** with filters, orders, page size and page number.
+- 🔗 **Boolean composition** with `&`, `|` and `~` for `AND`, `OR` and `NOT` logic.
+- 🔎 **20 filter operators** covering equality, comparison, pattern matching, ranges, null checks and list membership.
+- ↕️ **Ordering primitives** with duplicate order-field protection.
+- 📄 **Pagination primitives** that enforce positive integer values and consistent page-number usage.
+- 🗄️ **SQL converters** for PostgreSQL, MySQL, MariaDB and SQLite.
+- 🧾 **Request converters** for decoded request bodies, structured URL queries and compact suffix-based URL queries.
+- 🛡️ **Security-oriented allowlist validation** for tables, columns, fields, operators, directions and pagination bounds.
+- 🧰 **Field and operator mapping** so public API names can be translated to internal model or database names.
+- 🧪 **Object mother testing helpers** for downstream projects that want realistic criteria fixtures.
 
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
@@ -84,9 +120,83 @@ email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_
 query, parameters = CriteriaToPostgresqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
 print(query)
 print(parameters)
-# >>> SELECT * FROM user WHERE (age >= %(parameter_0)s AND (email LIKE '%%' || %(parameter_1)s OR email LIKE '%%' || %(parameter_2)s));
+# >>> SELECT * FROM "user" WHERE ("age" >= %(parameter_0)s AND ("email" LIKE '%%' || %(parameter_1)s OR "email" LIKE '%%' || %(parameter_2)s));
 # >>> {'parameter_0': 18, 'parameter_1': '@gmail.com', 'parameter_2': '@yahoo.com'}
 ```
+
+<a name="core-concepts"></a>
+
+### 🧱 Core Concepts
+
+The main model is `Criteria`. A criteria can contain filters, orders and pagination:
+
+```python
+from criteria_pattern import Criteria, Direction, Filter, Operator, Order
+
+
+criteria = Criteria(
+    filters=[
+        Filter(field='status', operator=Operator.EQUAL, value='ACTIVE'),
+        Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18),
+    ],
+    orders=[
+        Order(field='created_at', direction=Direction.DESC),
+    ],
+    page_size=20,
+    page_number=1,
+)
+```
+
+Criteria can be composed without losing the boolean structure:
+
+```python
+from criteria_pattern import Criteria, Filter, Operator
+
+
+is_active = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='ACTIVE')])
+is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
+has_company_email = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@acme.com')])
+
+criteria = is_active & (is_adult | has_company_email)
+not_archived = ~Criteria(filters=[Filter(field='archived_at', operator=Operator.IS_NOT_NULL, value=None)])
+```
+
+Pagination is optional. `page_size` can be used alone for `LIMIT`, while `page_number` must be used with `page_size` so converters can calculate the offset.
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="supported-operators"></a>
+
+### 🧮 Supported Operators
+
+| Operator | Meaning | Expected value |
+| --- | --- | --- |
+| `EQUAL` | Field equals value | scalar |
+| `NOT_EQUAL` | Field does not equal value | scalar |
+| `GREATER` | Field is greater than value | scalar |
+| `GREATER_OR_EQUAL` | Field is greater than or equal to value | scalar |
+| `LESS` | Field is less than value | scalar |
+| `LESS_OR_EQUAL` | Field is less than or equal to value | scalar |
+| `LIKE` | SQL-like pattern match | scalar pattern |
+| `NOT_LIKE` | SQL-like pattern negation | scalar pattern |
+| `CONTAINS` | Field contains value | scalar |
+| `NOT_CONTAINS` | Field does not contain value | scalar |
+| `STARTS_WITH` | Field starts with value | scalar |
+| `NOT_STARTS_WITH` | Field does not start with value | scalar |
+| `ENDS_WITH` | Field ends with value | scalar |
+| `NOT_ENDS_WITH` | Field does not end with value | scalar |
+| `BETWEEN` | Field is between two values | two values |
+| `NOT_BETWEEN` | Field is not between two values | two values |
+| `IS_NULL` | Field is null | ignored / `None` |
+| `IS_NOT_NULL` | Field is not null | ignored / `None` |
+| `IN` | Field is one of many values | one or more values |
+| `NOT_IN` | Field is not one of many values | one or more values |
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
 
 <a name="available-converters"></a>
 
@@ -101,6 +211,227 @@ The package includes converters for SQL generation and request parsing:
 - [`criteria_pattern.converters.SimpleUrlToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/simple_url_to_criteria_converter.py): Parses simple public URL query parameters into a `Criteria` object.
 - [`criteria_pattern.converters.UrlToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/url_to_criteria_converter.py): Parses URL query parameters into a `Criteria` object.
 - [`criteria_pattern.converters.BodyToCriteriaConverter`](https://github.com/adriamontoto/criteria-pattern/blob/master/criteria_pattern/converters/body_to_criteria_converter.py): Parses decoded request bodies into a `Criteria` object.
+
+SQL converter output uses the placeholder style expected by each database family:
+
+| Converter | Placeholder style | Parameters |
+| --- | --- | --- |
+| `CriteriaToPostgresqlConverter` | `%(parameter_0)s` | `dict[str, object]` |
+| `CriteriaToMysqlConverter` | `%s` | `list[object]` |
+| `CriteriaToMariadbConverter` | `%s` | `list[object]` |
+| `CriteriaToSqliteConverter` | `:parameter_0` | `dict[str, object]` |
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="security-for-user-facing-apis"></a>
+
+### 🔐 Security For User-Facing APIs
+
+When criteria comes from a URL, JSON body, form, dashboard or any other user-facing surface, treat every field, operator, direction and pagination value as untrusted.
+
+Criteria Pattern parameterizes **filter values** for SQL converters, but SQL identifiers cannot be safely parameterized by database drivers. Table names, selected columns, filter fields and order fields must come from trusted code or explicit allowlists.
+
+Use this rule of thumb:
+
+| Input kind | Risk | Recommended protection |
+| --- | --- | --- |
+| Filter values like `'Doe'`, `18` or `['ACTIVE']` | SQL value injection | Handled by converter parameters |
+| Table names | SQL identifier injection | `check_table_injection=True` + `valid_tables` |
+| Selected columns | SQL identifier injection | `check_column_injection=True` + `valid_columns` |
+| Filter and order fields | SQL identifier injection | `check_field_injection=True` when parsing, then `check_criteria_injection=True` when converting |
+| Operators | Query behavior abuse | `check_operator_injection=True` + only expose needed operators |
+| Directions | Query behavior abuse | `check_direction_injection=True` + `valid_directions` |
+| Page size and page number | Expensive queries / overflow | `check_pagination_bounds=True` + small maximums |
+
+The safest user-facing flow is:
+
+1. Keep allowlists in application code, not in request data.
+2. Parse request input with `BodyToCriteriaConverter`, `UrlToCriteriaConverter` or `SimpleUrlToCriteriaConverter`.
+3. Map public field names to internal field or column names with `fields_mapping`.
+4. Enable field, operator, direction and pagination validation in the request converter.
+5. Enable table, column, criteria, operator, direction and pagination validation again in the SQL converter.
+
+```python
+from criteria_pattern import Direction, Operator
+from criteria_pattern.converters import BodyToCriteriaConverter, CriteriaToPostgresqlConverter
+
+
+body = {
+    'filters': [{'field': 'q', 'operator': 'contains', 'value': 'Doe'}],
+    'orders': [{'field': 'created', 'direction': 'DESC'}],
+    'page_size': 20,
+    'page_number': 1,
+}
+
+fields_mapping = {'q': 'name', 'created': 'created_at'}
+valid_fields = ['name', 'created_at']
+valid_operators = [Operator.CONTAINS]
+valid_directions = [Direction.DESC]
+
+criteria = BodyToCriteriaConverter.convert(
+    body=body,
+    fields_mapping=fields_mapping,
+    check_field_injection=True,
+    check_operator_injection=True,
+    check_direction_injection=True,
+    check_pagination_bounds=True,
+    valid_fields=valid_fields,
+    valid_operators=valid_operators,
+    valid_directions=valid_directions,
+    max_page_size=100,
+    max_page_number=1000,
+)
+
+query, parameters = CriteriaToPostgresqlConverter.convert(
+    criteria=criteria,
+    table='users',
+    columns=['id', 'name', 'created_at'],
+    check_table_injection=True,
+    check_column_injection=True,
+    check_criteria_injection=True,
+    check_operator_injection=True,
+    check_direction_injection=True,
+    check_pagination_bounds=True,
+    valid_tables=['users'],
+    valid_columns=['id', 'name', 'created_at'],
+    valid_operators=valid_operators,
+    valid_directions=valid_directions,
+    max_page_size=100,
+    max_page_number=1000,
+)
+```
+
+This keeps the public API flexible while ensuring SQL identifiers and query behavior are constrained by code you control.
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="sql-conversion-and-safety"></a>
+
+### 🛡️ SQL Conversion And Safety
+
+Filter values are parameterized, which protects the values passed to predicates. Identifier validation is separate and must be enabled explicitly when identifiers can be influenced by users.
+
+```python
+from criteria_pattern import Criteria, Direction, Filter, Operator, Order
+from criteria_pattern.converters import CriteriaToPostgresqlConverter
+
+
+criteria = Criteria(
+    filters=[Filter(field='public_name', operator=Operator.CONTAINS, value='Doe')],
+    orders=[Order(field='created_at', direction=Direction.DESC)],
+    page_size=20,
+    page_number=2,
+)
+
+query, parameters = CriteriaToPostgresqlConverter.convert(
+    criteria=criteria,
+    table='users',
+    columns=['id', 'name', 'email'],
+    columns_mapping={'public_name': 'name'},
+    check_table_injection=True,
+    check_column_injection=True,
+    check_criteria_injection=True,
+    check_operator_injection=True,
+    check_direction_injection=True,
+    check_pagination_bounds=True,
+    valid_tables=['users'],
+    valid_columns=['id', 'name', 'email', 'created_at', 'public_name'],
+    valid_operators=[Operator.CONTAINS],
+    valid_directions=[Direction.DESC],
+    max_page_size=100,
+    max_page_number=1000,
+)
+
+print(query)
+print(parameters)
+# >>> SELECT "id", "name", "email" FROM "users" WHERE "name" LIKE '%%' || %(parameter_0)s || '%%' ORDER BY "created_at" DESC LIMIT %(limit_1)s OFFSET %(offset_2)s;
+# >>> {'parameter_0': 'Doe', 'limit_1': 20, 'offset_2': 20}
+```
+
+Use `columns_mapping` when your public API fields should not expose your database column names directly. When `check_criteria_injection` is enabled, include the accepted public criteria field names in `valid_columns` too.
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="request-body-examples"></a>
+
+### 📦 Request Body Examples
+
+Use `BodyToCriteriaConverter` when your API receives a decoded dictionary, for example from JSON.
+
+```python
+from criteria_pattern import Direction, Operator
+from criteria_pattern.converters import BodyToCriteriaConverter
+
+
+body = {
+    'filters': [
+        {'field': 'full_name', 'operator': 'contains', 'value': 'Doe'},
+        {'field': 'status', 'operator': 'IN', 'value': ['ACTIVE', 'PENDING']},
+        {'field': 'price', 'operator': 'BETWEEN', 'value': [10, 100]},
+    ],
+    'orders': [
+        {'field': 'created_at', 'direction': 'desc'},
+    ],
+    'page_size': 20,
+    'page_number': 1,
+}
+
+criteria = BodyToCriteriaConverter.convert(
+    body=body,
+    fields_mapping={'full_name': 'name'},
+    operator_mapping={'after': Operator.GREATER},
+    check_field_injection=True,
+    check_operator_injection=True,
+    check_direction_injection=True,
+    valid_fields=['name', 'status', 'price', 'created_at'],
+    valid_operators=[Operator.CONTAINS, Operator.IN, Operator.BETWEEN],
+    valid_directions=[Direction.DESC],
+)
+
+print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
+# >>> name CONTAINS Doe
+```
+
+Accepted body keys are `filters`, `orders`, `page_size` and `page_number`. Unknown keys, missing required filter/order keys and invalid value shapes raise `IntegrityError`.
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="structured-url-query-examples"></a>
+
+### 🧭 Structured URL Query Examples
+
+Use `UrlToCriteriaConverter` when you want an explicit URL format that can express filters, orders and pagination.
+
+```python
+from criteria_pattern.converters import UrlToCriteriaConverter
+
+
+url = (
+    'https://api.example.com/users?'
+    'filters[0][field]=name&filters[0][operator]=CONTAINS&filters[0][value]=Doe&'
+    'filters[1][field]=age&filters[1][operator]=GREATER_OR_EQUAL&filters[1][value]=18&'
+    'orders[0][field]=created_at&orders[0][direction]=DESC&'
+    'page_size=20&page_number=1'
+)
+
+criteria = UrlToCriteriaConverter.convert(url=url)
+
+print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
+# >>> name CONTAINS Doe
+
+print(criteria.orders[0].field, criteria.orders[0].direction)
+# >>> created_at DESC
+```
+
+Structured URL values are converted to useful primitive types where possible: booleans, `null` / `none`, integers and floats.
 
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
@@ -190,6 +521,8 @@ Common suffixes:
 | `email_contains=gmail.com` | `Filter(field='email', operator=Operator.CONTAINS, value='gmail.com')` |
 | `name_starts_with=Ad` | `Filter(field='name', operator=Operator.STARTS_WITH, value='Ad')` |
 | `email_ends_with=.com` | `Filter(field='email', operator=Operator.ENDS_WITH, value='.com')` |
+| `price_between=10,100` | `Filter(field='price', operator=Operator.BETWEEN, value=[10, 100])` |
+| `age_not_between=18&age_not_between=30` | `Filter(field='age', operator=Operator.NOT_BETWEEN, value=[18, 30])` |
 | `status_in=ACTIVE&status_in=PENDING` | `Filter(field='status', operator=Operator.IN, value=['ACTIVE', 'PENDING'])` |
 | `status_not_in=DELETED` | `Filter(field='status', operator=Operator.NOT_IN, value=['DELETED'])` |
 | `deleted_at_is_null=true` | `Filter(field='deleted_at', operator=Operator.IS_NULL, value=None)` |
@@ -229,6 +562,35 @@ criteria = SimpleUrlToCriteriaConverter.convert(
 print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
 # >>> created_at GREATER 2026-05-18
 ```
+
+<p align="right">
+    <a href="#readme-top">🔼 Back to top</a>
+</p>
+
+<a name="testing-helpers"></a>
+
+### 🧪 Testing Helpers
+
+The package includes object mother helpers for tests in downstream projects. They are useful when you need valid random criteria objects and want to override only the fields that matter for a specific test.
+
+```python
+from criteria_pattern import Filter, Operator
+from criteria_pattern.models.testing.mothers import CriteriaMother
+from criteria_pattern.models.testing.mothers.filter import FilterMother
+
+
+criteria = CriteriaMother.with_filters(
+    filters=[
+        Filter(field='status', operator=Operator.EQUAL, value='ACTIVE'),
+        FilterMother.create(field='age', operator=Operator.GREATER_OR_EQUAL, value=18),
+    ]
+)
+
+print(criteria.has_filters())
+# >>> True
+```
+
+Available helpers include `CriteriaMother`, `FilterMother`, `FiltersMother`, `OrderMother`, `OrdersMother`, `PageSizeMother`, `PageNumberMother`, plus field/operator/direction mothers under the filter and order testing packages.
 
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>

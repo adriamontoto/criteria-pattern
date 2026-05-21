@@ -1,5 +1,5 @@
 """
-Body to criteria converter.
+Converter from decoded request bodies to Criteria objects.
 """
 
 from collections.abc import Mapping, Sequence
@@ -17,7 +17,10 @@ from criteria_pattern.errors import (
 
 class BodyToCriteriaConverter:
     """
-    Converts a body dictionary into a Criteria object.
+    Convert mapping-based request bodies into `Criteria` objects.
+
+    The expected body shape is a mapping with optional `filters`, `orders`, `page_size`, and `page_number` keys. Filters
+    and orders are parsed from lists of dictionaries, with optional field and operator alias mapping before validation.
 
     Example:
     ```python
@@ -102,21 +105,25 @@ class BodyToCriteriaConverter:
         max_page_number: int = 1000000,
     ) -> Criteria:
         """
-        Converts a body dictionary into a Criteria object.
+        Convert a decoded body mapping into criteria.
+
+        `fields_mapping` translates public field names into internal field names before `Filter` and `Order` objects are
+        created. `operator_mapping` can add or override accepted operator aliases. Validation flags check the parsed
+        criteria against the provided allowlists.
 
         Args:
             body (Mapping[str, Any]): The decoded body dictionary.
-            fields_mapping (Mapping[str, str], optional): Mapping of field names to aliases. Defaults to empty dict.
-            operator_mapping (Mapping[str, Operator], optional): Mapping of operator aliases to operators.
-            check_field_injection (bool, optional): Whether to check for field injection.
-            check_operator_injection (bool, optional): Whether to check for operator injection.
-            check_direction_injection (bool, optional): Whether to check for direction injection.
-            check_pagination_bounds (bool, optional): Whether to check pagination parameters bounds.
-            valid_fields (Sequence[str], optional): A list of valid field names. Defaults to empty list.
-            valid_operators (Sequence[Operator], optional): A list of valid operators. Defaults to empty list.
-            valid_directions (Sequence[Direction], optional): A list of valid directions. Defaults to empty list.
-            max_page_size (int, optional): Maximum allowed page_size to prevent integer overflow. Defaults to 10000.
-            max_page_number (int, optional): Maximum allowed page_number. Defaults to 1000000.
+            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal field names.
+            operator_mapping (Mapping[str, Operator], optional): Additional accepted operator aliases.
+            check_field_injection (bool, optional): Validate parsed fields against `valid_fields`.
+            check_operator_injection (bool, optional): Validate parsed operators against `valid_operators`.
+            check_direction_injection (bool, optional): Validate parsed directions against `valid_directions`.
+            check_pagination_bounds (bool, optional): Validate pagination values against configured maxima.
+            valid_fields (Sequence[str], optional): Allowed parsed field names.
+            valid_operators (Sequence[Operator], optional): Allowed parsed operators.
+            valid_directions (Sequence[Direction], optional): Allowed parsed directions.
+            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
+            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
 
         Raises:
             IntegrityError: If the body shape is invalid.
@@ -204,7 +211,7 @@ class BodyToCriteriaConverter:
     @classmethod
     def _build_operator_mapping(cls, *, mapping: Mapping[str, Operator] | None) -> dict[str, Operator]:
         """
-        Build the operator mapping.
+        Build the normalized operator alias mapping.
 
         Args:
             mapping (Mapping[str, Operator], optional): Custom operator mapping.
@@ -227,7 +234,7 @@ class BodyToCriteriaConverter:
     @staticmethod
     def _normalize_operator_key(*, operator: str) -> str:
         """
-        Normalize an operator key.
+        Normalize an operator alias for case-insensitive lookup.
 
         Args:
             operator (str): The operator key to normalize.
@@ -246,7 +253,7 @@ class BodyToCriteriaConverter:
         operator_mapping: Mapping[str, Operator],
     ) -> list[Filter[Any]]:
         """
-        Parse body filters.
+        Parse body filters into `Filter` objects.
 
         Args:
             value (Any): The raw filters body value.
@@ -356,7 +363,7 @@ class BodyToCriteriaConverter:
     @classmethod
     def _parse_filter_value(cls, *, value: Any, operator: Operator, index: int) -> Any:
         """
-        Parse a filter value.
+        Parse a filter value according to operator value-shape requirements.
 
         Args:
             value (Any): The raw filter value.
@@ -430,7 +437,7 @@ class BodyToCriteriaConverter:
     @classmethod
     def _parse_orders(cls, *, value: Any, fields_mapping: Mapping[str, str]) -> list[Order]:
         """
-        Parse body orders.
+        Parse body orders into `Order` objects.
 
         Args:
             value (Any): The raw orders body value.

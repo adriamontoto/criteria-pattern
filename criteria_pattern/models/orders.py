@@ -1,5 +1,5 @@
 """
-Orders module.
+Collection value object for ordering rules.
 """
 
 from sys import version_info
@@ -21,7 +21,9 @@ from .order import Order
 
 class Orders(ListValueObject[Order]):
     """
-    Orders class.
+    Store a validated list of `Order` objects.
+
+    Each order field may appear only once so generated `ORDER BY` clauses stay deterministic and unambiguous.
 
     Example:
     ```python
@@ -36,7 +38,7 @@ class Orders(ListValueObject[Order]):
 
     def __init__(self, *, value: list[Order], title: str | None = None, parameter: str | None = None) -> None:
         """
-        Initialize a list of orders.
+        Initialize an order collection.
 
         Args:
             value (list[Order]): The list of orders.
@@ -58,7 +60,7 @@ class Orders(ListValueObject[Order]):
     @validation(order=0)
     def _ensure_no_duplicate_fields(self, value: list[Order]) -> None:
         """
-        Ensures that the provided list of orders has unique fields.
+        Ensure that the provided list of orders has unique fields.
 
         Args:
             value (list[Order]): The provided list of orders.
@@ -72,7 +74,7 @@ class Orders(ListValueObject[Order]):
 
     def _raise_value_has_duplicate_fields(self, value: list[Order]) -> None:
         """
-        Raises a IntegrityError if the provided list of orders has duplicate fields.
+        Raise an IntegrityError if the provided list of orders has duplicate fields.
 
         Args:
             value (list[Order]): The provided list of orders.
