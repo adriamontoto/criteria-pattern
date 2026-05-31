@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, Direction, Operator
+from criteria_pattern.converters import sql_validation
 from criteria_pattern.errors import (
     InvalidColumnError,
     InvalidDirectionError,
@@ -127,7 +128,11 @@ class CriteriaToPostgresqlConverter:
             cls._validate_columns(columns=columns, columns_mapping=columns_mapping, valid_columns=valid_columns)
 
         if check_criteria_injection:
-            cls._validate_criteria(criteria=criteria, valid_columns=valid_columns)
+            sql_validation.validate_criteria(
+                criteria=criteria,
+                columns_mapping=columns_mapping,
+                valid_columns=valid_columns,
+            )
 
         if check_operator_injection:
             cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
@@ -213,26 +218,6 @@ class CriteriaToPostgresqlConverter:
         for column in columns_mapping.values():
             if column not in valid_columns:
                 raise InvalidColumnError(column=column, valid_columns=valid_columns)
-
-    @classmethod
-    def _validate_criteria(cls, *, criteria: Criteria, valid_columns: Sequence[str]) -> None:
-        """
-        Validate the Criteria object to prevent SQL injection.
-
-        Args:
-            criteria (Criteria): Criteria to validate.
-            valid_columns (Sequence[str]): List of valid columns to select.
-
-        Raises:
-            InvalidColumnError: If the column is not in the list of valid columns.
-        """
-        for filter in criteria.filters:
-            if filter.field not in valid_columns:
-                raise InvalidColumnError(column=filter.field, valid_columns=valid_columns)
-
-        for order in criteria.orders:
-            if order.field not in valid_columns:
-                raise InvalidColumnError(column=order.field, valid_columns=valid_columns)
 
     @classmethod
     def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
@@ -396,7 +381,7 @@ class CriteriaToPostgresqlConverter:
 
         filter_conditions = []
         for filter in criteria.filters:
-            filter_field = columns_mapping.get(filter.field, filter.field)
+            filter_field = sql_validation.resolve_sql_column(field=filter.field, columns_mapping=columns_mapping)
             parameter_name = f'parameter_{parameters_counter}'
             parameters[parameter_name] = filter.value
             placeholder = f'%({parameter_name})s'
@@ -536,7 +521,7 @@ class CriteriaToPostgresqlConverter:
         orders = ''
 
         for order in criteria.orders:
-            order_field = columns_mapping.get(order.field, order.field)
+            order_field = sql_validation.resolve_sql_column(field=order.field, columns_mapping=columns_mapping)
 
             direction = Direction(value=order.direction)
             match direction:

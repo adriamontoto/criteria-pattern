@@ -240,7 +240,7 @@ Use this rule of thumb:
 | Filter values like `'Doe'`, `18` or `['ACTIVE']` | SQL value injection | Handled by converter parameters |
 | Table names | SQL identifier injection | `valid_tables` allowlist (validation on by default) |
 | Selected columns | SQL identifier injection | `valid_columns` allowlist (validation on by default) |
-| Filter and order fields | SQL identifier injection | `valid_fields` when parsing; `valid_columns` when converting (validation on by default) |
+| Filter and order fields | SQL identifier injection | `valid_fields` when parsing; `valid_columns` with mapped SQL column names when converting |
 | Operators | Query behavior abuse | `valid_operators` allowlist with only the operators you expose |
 | Directions | Query behavior abuse | `valid_directions` allowlist |
 | Page size and page number | Expensive queries / overflow | strict `max_page_size` / `max_page_number` (validation on by default) |

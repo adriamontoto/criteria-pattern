@@ -30,8 +30,8 @@ names or order field names. Those values must be controlled by application code 
 | Filter value | `value='Doe'` | SQL value injection | Converter parameter binding |
 | Table name | `table='users'` | SQL identifier injection | `valid_tables` allowlist (enabled by default) |
 | Selected column | `columns=['name']` | SQL identifier injection | `valid_columns` allowlist (enabled by default) |
-| Filter field | `field='name'` | SQL identifier injection | request field validation + SQL criteria validation (enabled by default) |
-| Order field | `field='created_at'` | SQL identifier injection | request field validation + SQL criteria validation (enabled by default) |
+| Filter field | `field='name'` | SQL identifier injection | request field validation + SQL criteria validation on mapped SQL columns |
+| Order field | `field='created_at'` | SQL identifier injection | request field validation + SQL criteria validation on mapped SQL columns |
 | Operator | `operator='CONTAINS'` | Query behavior abuse | `valid_operators` allowlist (enabled by default) |
 | Direction | `direction='DESC'` | Query behavior abuse | `valid_directions` allowlist (enabled by default) |
 | Page size / number | `page_size=1000000` | Expensive query or overflow | strict `max_page_size` / `max_page_number` (enabled by default) |
@@ -141,11 +141,12 @@ query, parameters = CriteriaToPostgresqlConverter.convert(
 )
 ```
 
-SQL converters validate criteria fields before applying `columns_mapping`. The safest pattern is to map public field
-names in the request converter, then pass internal criteria fields to the SQL converter.
+SQL converters validate criteria fields **after** applying `columns_mapping`, using the SQL column name that will appear
+in the generated query. The safest pattern is to map public field names in the request converter, then pass internal
+criteria fields to the SQL converter.
 
-If you use SQL `columns_mapping` directly with public criteria fields, include both the public criteria field and the
-mapped SQL column in `valid_columns`.
+`valid_columns` must contain every mapped SQL column name that filters or orders may reference. The public criteria field
+name alone is not enough when `columns_mapping` redirects it to a different database column.
 
 ## Operator Allowlisting
 
