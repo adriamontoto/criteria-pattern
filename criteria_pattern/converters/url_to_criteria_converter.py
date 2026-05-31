@@ -36,6 +36,13 @@ class UrlToCriteriaConverter:
     ```
     """  # noqa: E501  # fmt: skip
 
+    DEFAULT_MAX_FILTERS = 100
+    DEFAULT_MAX_ORDERS = 100
+    DEFAULT_MAX_IN_VALUES = 100
+    DEFAULT_MAX_PAGE_SIZE = 1000
+    DEFAULT_MAX_PAGE_NUMBER = 10000
+    DEFAULT_MAX_OPERATOR_ALLOWLIST = len(Operator)
+
     _OPERATOR_MAPPING: ClassVar[dict[str, Operator]] = {
         'EQUAL': Operator.EQUAL,
         'NOT_EQUAL': Operator.NOT_EQUAL,
@@ -64,7 +71,6 @@ class UrlToCriteriaConverter:
         'DESC': Direction.DESC,
     }
 
-    _MAX_FIELDS: ClassVar[int] = 100
     _FILTERS_REGEX: ClassVar[Pattern[str]] = re_compile(pattern=r'^filters\[(\w+)]\[(\w+)]$')
     _ORDERS_REGEX: ClassVar[Pattern[str]] = re_compile(pattern=r'^orders\[(\w+)]\[(\w+)]$')
 
@@ -81,8 +87,12 @@ class UrlToCriteriaConverter:
         valid_fields: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
         valid_directions: Sequence[Direction] | None = None,
-        max_page_size: int = 10000,
-        max_page_number: int = 1000000,
+        max_page_size: int = DEFAULT_MAX_PAGE_SIZE,
+        max_page_number: int = DEFAULT_MAX_PAGE_NUMBER,
+        max_filters: int = DEFAULT_MAX_FILTERS,
+        max_orders: int = DEFAULT_MAX_ORDERS,
+        max_in_values: int = DEFAULT_MAX_IN_VALUES,
+        max_operator_allowlist: int = DEFAULT_MAX_OPERATOR_ALLOWLIST,
     ) -> Criteria:
         """
         Convert a URL containing structured query parameters into criteria.
@@ -133,8 +143,17 @@ class UrlToCriteriaConverter:
 
         query_params = parse_qs(qs=urlparse(url=url).query, keep_blank_values=True)
 
-        filters = cls._parse_filters(query_parameters=query_params, fields_mapping=fields_mapping)
-        orders = cls._parse_orders(query_parameters=query_params, fields_mapping=fields_mapping)
+        filters = cls._parse_filters(
+            query_parameters=query_params,
+            fields_mapping=fields_mapping,
+            max_filters=max_filters,
+            max_in_values=max_in_values,
+        )
+        orders = cls._parse_orders(
+            query_parameters=query_params,
+            fields_mapping=fields_mapping,
+            max_orders=max_orders,
+        )
         page_size = cls._parse_page_size(query_parameters=query_params)
         page_number = cls._parse_page_number(query_parameters=query_params)
 
@@ -154,6 +173,11 @@ class UrlToCriteriaConverter:
             criteria=criteria,
             valid_directions=valid_directions,
         )
+        if check_operator_injection and valid_operators is not None:
+            cls._ensure_operator_allowlist_size(
+                operators=valid_operators,
+                limit=max_operator_allowlist,
+            )
 
         if check_field_injection:
             cls._validate_criteria(
@@ -339,6 +363,8 @@ class UrlToCriteriaConverter:
         *,
         query_parameters: Mapping[str, Sequence[str]],
         fields_mapping: Mapping[str, str],
+        max_filters: int,
+        max_in_values: int,
     ) -> list[Filter[Any]]:
         """
         Parse bracketed filter query parameters into `Filter` objects.
@@ -372,8 +398,8 @@ class UrlToCriteriaConverter:
             except ValueError as exception:
                 raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
-            if index >= cls._MAX_FIELDS:
-                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
+            if index >= max_filters:
+                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{max_filters}>>>.')  # noqa: E501  # fmt: skip
 
             bucket.setdefault(index, {})[key] = values[0]
 
@@ -396,9 +422,15 @@ class UrlToCriteriaConverter:
                 raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has unsupported operator <<<{operator_raw}>>>.')  # noqa: E501  # fmt: skip
 
             try:
-                parsed_value = cls._parse_filter_value(raw_value=value_raw, operator=operator)
+                parsed_value = cls._parse_filter_value(
+                    raw_value=value_raw,
+                    operator=operator,
+                    max_in_values=max_in_values,
+                )
 
             except IntegrityError as exception:
+                if 'exceeds maximum limit' in str(exception):
+                    raise
                 raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{idx}]>>> has invalid value <<<{value_raw}>>> for operator <<<{operator.value}>>>.') from exception  # noqa: E501  # fmt: skip
 
             actual_field = fields_mapping.get(field_name, field_name)
@@ -407,7 +439,7 @@ class UrlToCriteriaConverter:
         return filters
 
     @classmethod
-    def _parse_filter_value(cls, *, raw_value: str | None, operator: Operator) -> Any:
+    def _parse_filter_value(cls, *, raw_value: str | None, operator: Operator, max_in_values: int) -> Any:
         """
         Parse a raw filter value according to operator value-shape requirements.
 
@@ -441,7 +473,13 @@ class UrlToCriteriaConverter:
             if not parts:
                 raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<{raw_value}>>> expects at least one comma-separated value.')  # noqa: E501  # fmt: skip
 
-            return [cls._convert_primitive(value=part) for part in parts]
+            parsed_values = [cls._convert_primitive(value=part) for part in parts]
+            cls._ensure_sequence_size(
+                values=parsed_values,
+                limit=max_in_values,
+                resource=f'IN values for filter <<<{raw_value}>>>',
+            )
+            return parsed_values
 
         return cls._convert_primitive(value=raw_value)
 
@@ -486,6 +524,7 @@ class UrlToCriteriaConverter:
         *,
         query_parameters: Mapping[str, Sequence[str]],
         fields_mapping: Mapping[str, str],
+        max_orders: int,
     ) -> list[Order]:
         """
         Parse the 'orders' query parameters.
@@ -518,8 +557,8 @@ class UrlToCriteriaConverter:
             except ValueError as exception:
                 raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
-            if index >= cls._MAX_FIELDS:
-                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{cls._MAX_FIELDS}>>>.')  # noqa: E501  # fmt: skip
+            if index >= max_orders:
+                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{max_orders}>>>.')  # noqa: E501  # fmt: skip
 
             bucket.setdefault(index, {})[key] = values[0]
 
@@ -583,3 +622,61 @@ class UrlToCriteriaConverter:
 
         except ValueError:
             return values[0]  # type: ignore[return-value]
+
+    @classmethod
+    def _ensure_index_below_limit(cls, *, index: int, limit: int, resource: str) -> None:
+        """
+        Ensure a zero-based collection index stays below a configured maximum.
+
+        Args:
+            index (int): Current index.
+            limit (int): Maximum allowed count for the collection.
+            resource (str): Human-readable resource name such as filters or orders.
+
+        Raises:
+            IntegrityError: If the index reaches or exceeds the limit.
+        """
+        if index >= limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} {resource} exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _ensure_sequence_size(cls, *, values: Sequence[Any], limit: int, resource: str) -> None:
+        """
+        Ensure a sequence does not exceed a configured maximum length.
+
+        Args:
+            values (Sequence[Any]): Values to validate.
+            limit (int): Maximum allowed length.
+            resource (str): Human-readable resource name such as IN values.
+
+        Raises:
+            IntegrityError: If the sequence exceeds the limit.
+        """
+        if len(values) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} {resource} exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _ensure_operator_allowlist_size(
+        cls,
+        *,
+        operators: Sequence[Operator],
+        limit: int,
+    ) -> None:
+        """
+        Ensure an explicit operator allowlist does not exceed a configured maximum.
+
+        Args:
+            operators (Sequence[Operator]): Operator allowlist provided by the caller.
+            limit (int): Maximum allowed operators in the allowlist.
+
+        Raises:
+            IntegrityError: If the allowlist exceeds the limit.
+        """
+        if len(operators) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} valid_operators exceeds maximum limit of <<<{limit}>>>.',
+            )

@@ -10,6 +10,14 @@ All converters enable validation by default:
 - SQL converters: `check_table_injection`, `check_column_injection`, `check_criteria_injection`, `check_operator_injection`, `check_direction_injection`, and `check_pagination_bounds` default to `True`.
 - Request converters: `check_field_injection`, `check_operator_injection`, `check_direction_injection`, and `check_pagination_bounds` default to `True`.
 
+Structural limits also apply by default:
+
+- Request converters cap filters and orders at `100` (`max_filters` / `max_orders`).
+- SQL converters cap boolean composition depth at `32` (`max_criteria_depth`) and `IN` list size at `100` (`max_in_values`).
+- Explicit `valid_operators` allowlists are capped at `20` entries (`max_operator_allowlist`, the full `Operator` enum size).
+- Pagination validation defaults to `max_page_size=1000` and `max_page_number=10000` unless you pass tighter limits.
+- `LIKE`, `CONTAINS`, `STARTS_WITH`, and related operators escape `%` and `_` in bound values and use `ESCAPE '\\'` in generated SQL.
+
 SQL converters also quote identifiers in generated SQL:
 
 - PostgreSQL and SQLite use escaped double quotes (`"column""name"` for `column"name`).

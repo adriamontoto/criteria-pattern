@@ -2,11 +2,12 @@
 SQLite SQL converter for Criteria objects.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, Direction, Operator
 from criteria_pattern.errors import (
+    IntegrityError,
     InvalidColumnError,
     InvalidDirectionError,
     InvalidOperatorError,
@@ -41,6 +42,25 @@ class CriteriaToSqliteConverter:
     ```
     """  # noqa: E501  # fmt: skip
 
+    DEFAULT_MAX_CRITERIA_COMPOSITION_DEPTH = 32
+    DEFAULT_MAX_IN_VALUES = 100
+    DEFAULT_MAX_PAGE_SIZE = 1000
+    DEFAULT_MAX_PAGE_NUMBER = 10000
+    DEFAULT_MAX_OPERATOR_ALLOWLIST = len(Operator)
+    LIKE_VALUE_OPERATORS = frozenset(
+        {
+            Operator.LIKE,
+            Operator.NOT_LIKE,
+            Operator.CONTAINS,
+            Operator.NOT_CONTAINS,
+            Operator.STARTS_WITH,
+            Operator.NOT_STARTS_WITH,
+            Operator.ENDS_WITH,
+            Operator.NOT_ENDS_WITH,
+        }
+    )
+    SQL_LIKE_ESCAPE_CLAUSE = " ESCAPE '\\'"
+
     @classmethod
     def convert(  # noqa: C901
         cls,
@@ -58,8 +78,11 @@ class CriteriaToSqliteConverter:
         valid_columns: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
         valid_directions: Sequence[Direction] | None = None,
-        max_page_size: int = 10000,
-        max_page_number: int = 1000000,
+        max_page_size: int = DEFAULT_MAX_PAGE_SIZE,
+        max_page_number: int = DEFAULT_MAX_PAGE_NUMBER,
+        max_criteria_depth: int = DEFAULT_MAX_CRITERIA_COMPOSITION_DEPTH,
+        max_in_values: int = DEFAULT_MAX_IN_VALUES,
+        max_operator_allowlist: int = DEFAULT_MAX_OPERATOR_ALLOWLIST,
     ) -> tuple[str, dict[str, Any]]:
         """
         Convert criteria into a SQLite query and parameter mapping.
@@ -115,6 +138,16 @@ class CriteriaToSqliteConverter:
         """  # noqa: E501  # fmt: skip
         columns = columns or ['*']
         columns_mapping = columns_mapping or {}
+        cls._validate_criteria_bounds(
+            criteria=criteria,
+            max_criteria_depth=max_criteria_depth,
+            max_in_values=max_in_values,
+        )
+        if check_operator_injection and valid_operators is not None:
+            cls._ensure_operator_allowlist_size(
+                operators=valid_operators,
+                limit=max_operator_allowlist,
+            )
         effective_valid_tables = cls._default_valid_tables(table=table, valid_tables=valid_tables)
         effective_valid_columns = cls._default_valid_columns(
             columns=columns,
@@ -301,12 +334,17 @@ class CriteriaToSqliteConverter:
         for filter in criteria.filters:
             filter_field = cls._resolve_sql_column(field=filter.field, columns_mapping=columns_mapping)
             quoted_filter_field = cls._quote_double_quoted_identifier(identifier=filter_field)
+            operator = Operator(value=filter.operator)
             parameter_name = f'parameter_{parameters_counter}'
-            parameters[parameter_name] = filter.value
+            parameter_value = (
+                cls._escape_like_pattern_value(value=filter.value)
+                if operator in cls.LIKE_VALUE_OPERATORS
+                else filter.value
+            )
+            parameters[parameter_name] = parameter_value
             placeholder = f':{parameter_name}'
             parameters_counter += 1
 
-            operator = Operator(value=filter.operator)
             match operator:
                 case Operator.EQUAL:
                     filter_conditions.append(f'{quoted_filter_field} = {placeholder}')
@@ -327,28 +365,42 @@ class CriteriaToSqliteConverter:
                     filter_conditions.append(f'{quoted_filter_field} <= {placeholder}')
 
                 case Operator.LIKE:
-                    filter_conditions.append(f'{quoted_filter_field} LIKE {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} LIKE {placeholder}{cls.SQL_LIKE_ESCAPE_CLAUSE}')
 
                 case Operator.NOT_LIKE:
-                    filter_conditions.append(f'{quoted_filter_field} NOT LIKE {placeholder}')
+                    filter_conditions.append(
+                        f'{quoted_filter_field} NOT LIKE {placeholder}{cls.SQL_LIKE_ESCAPE_CLAUSE}'
+                    )
 
                 case Operator.CONTAINS:
-                    filter_conditions.append(f"{quoted_filter_field} LIKE '%' || {placeholder} || '%'")
+                    filter_conditions.append(
+                        f"{quoted_filter_field} LIKE '%' || {placeholder} || '%'{cls.SQL_LIKE_ESCAPE_CLAUSE}"
+                    )
 
                 case Operator.NOT_CONTAINS:
-                    filter_conditions.append(f"{quoted_filter_field} NOT LIKE '%' || {placeholder} || '%'")
+                    filter_conditions.append(
+                        f"{quoted_filter_field} NOT LIKE '%' || {placeholder} || '%'{cls.SQL_LIKE_ESCAPE_CLAUSE}"
+                    )
 
                 case Operator.STARTS_WITH:
-                    filter_conditions.append(f"{quoted_filter_field} LIKE {placeholder} || '%'")
+                    filter_conditions.append(
+                        f"{quoted_filter_field} LIKE {placeholder} || '%'{cls.SQL_LIKE_ESCAPE_CLAUSE}"
+                    )
 
                 case Operator.NOT_STARTS_WITH:
-                    filter_conditions.append(f"{quoted_filter_field} NOT LIKE {placeholder} || '%'")
+                    filter_conditions.append(
+                        f"{quoted_filter_field} NOT LIKE {placeholder} || '%'{cls.SQL_LIKE_ESCAPE_CLAUSE}"
+                    )
 
                 case Operator.ENDS_WITH:
-                    filter_conditions.append(f"{quoted_filter_field} LIKE '%' || {placeholder}")
+                    filter_conditions.append(
+                        f"{quoted_filter_field} LIKE '%' || {placeholder}{cls.SQL_LIKE_ESCAPE_CLAUSE}"
+                    )
 
                 case Operator.NOT_ENDS_WITH:
-                    filter_conditions.append(f"{quoted_filter_field} NOT LIKE '%' || {placeholder}")
+                    filter_conditions.append(
+                        f"{quoted_filter_field} NOT LIKE '%' || {placeholder}{cls.SQL_LIKE_ESCAPE_CLAUSE}"
+                    )
 
                 case Operator.BETWEEN:
                     parameters.pop(parameter_name)
@@ -723,3 +775,148 @@ class CriteriaToSqliteConverter:
             str: Quoted qualified name.
         """
         return '.'.join(cls._quote_double_quoted_identifier(identifier=part) for part in name.split('.'))
+
+    @classmethod
+    def _escape_like_pattern_value(cls, *, value: Any) -> Any:
+        """
+        Escape SQL LIKE wildcard characters in a bound parameter value.
+
+        Args:
+            value (Any): Filter value to escape.
+
+        Returns:
+            Any: Escaped string values, or the original value for non-strings.
+        """
+        if not isinstance(value, str):
+            return value
+        return value.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+
+    @classmethod
+    def _ensure_operator_allowlist_size(
+        cls,
+        *,
+        operators: Sequence[Operator],
+        limit: int,
+    ) -> None:
+        """
+        Ensure an explicit operator allowlist does not exceed a configured maximum.
+
+        Args:
+            operators (Sequence[Operator]): Operator allowlist provided by the caller.
+            limit (int): Maximum allowed operators in the allowlist.
+
+        Raises:
+            IntegrityError: If the allowlist exceeds the limit.
+        """
+        if len(operators) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} valid_operators exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _criteria_composition_depth(cls, *, criteria: Criteria) -> int:
+        """
+        Measure the nesting depth of boolean criteria composition.
+
+        Args:
+            criteria (Criteria): Criteria tree to measure.
+
+        Returns:
+            int: Composition depth where plain criteria leaves are zero.
+        """
+        if isinstance(criteria, AndCriteria | OrCriteria):
+            return 1 + max(
+                cls._criteria_composition_depth(criteria=criteria.left),
+                cls._criteria_composition_depth(criteria=criteria.right),
+            )
+        if isinstance(criteria, NotCriteria):
+            return 1 + cls._criteria_composition_depth(criteria=criteria.criteria)
+        return 0
+
+    @classmethod
+    def _ensure_criteria_composition_depth(cls, *, criteria: Criteria, limit: int) -> None:
+        """
+        Ensure boolean criteria composition does not exceed a configured depth.
+
+        Args:
+            criteria (Criteria): Criteria tree to validate.
+            limit (int): Maximum allowed composition depth.
+
+        Raises:
+            IntegrityError: If composition depth exceeds the limit.
+        """
+        depth = cls._criteria_composition_depth(criteria=criteria)
+        if depth > limit:
+            raise IntegrityError(
+                message=(
+                    f'{cls.__name__} criteria composition depth <<<{depth}>>> exceeds maximum limit of <<<{limit}>>>.'
+                ),
+            )
+
+    @classmethod
+    def _iter_criteria_filters(cls, *, criteria: Criteria) -> Iterator[Any]:
+        """
+        Yield every filter in a criteria tree, including composed criteria.
+
+        Args:
+            criteria (Criteria): Criteria tree to traverse.
+
+        Yields:
+            Filter: Each filter contained in the tree.
+        """
+        if isinstance(criteria, AndCriteria | OrCriteria):
+            yield from cls._iter_criteria_filters(criteria=criteria.left)
+            yield from cls._iter_criteria_filters(criteria=criteria.right)
+            return
+        if isinstance(criteria, NotCriteria):
+            yield from cls._iter_criteria_filters(criteria=criteria.criteria)
+            return
+        yield from criteria.filters
+
+    @classmethod
+    def _ensure_criteria_in_list_sizes(cls, *, criteria: Criteria, limit: int) -> None:
+        """
+        Ensure IN and NOT IN filter values do not exceed a configured maximum.
+
+        Args:
+            criteria (Criteria): Criteria tree to validate.
+            limit (int): Maximum allowed values per IN list.
+
+        Raises:
+            IntegrityError: If any IN list exceeds the limit.
+        """
+        for filter in cls._iter_criteria_filters(criteria=criteria):
+            operator = Operator(value=filter.operator)
+            if operator not in (Operator.IN, Operator.NOT_IN):
+                continue
+            if not isinstance(filter.value, (list, tuple)):
+                continue
+            if len(filter.value) > limit:
+                raise IntegrityError(
+                    message=(
+                        f'{cls.__name__} IN values for field <<<{filter.field}>>> '
+                        f'exceeds maximum limit of <<<{limit}>>>.'
+                    ),
+                )
+
+    @classmethod
+    def _validate_criteria_bounds(
+        cls,
+        *,
+        criteria: Criteria,
+        max_criteria_depth: int,
+        max_in_values: int,
+    ) -> None:
+        """
+        Validate structural bounds for SQL conversion input.
+
+        Args:
+            criteria (Criteria): Criteria tree to validate.
+            max_criteria_depth (int): Maximum allowed composition depth.
+            max_in_values (int): Maximum allowed values per IN list.
+
+        Raises:
+            IntegrityError: If any configured bound is exceeded.
+        """
+        cls._ensure_criteria_composition_depth(criteria=criteria, limit=max_criteria_depth)
+        cls._ensure_criteria_in_list_sizes(criteria=criteria, limit=max_in_values)

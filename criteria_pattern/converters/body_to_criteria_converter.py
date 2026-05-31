@@ -40,6 +40,13 @@ class BodyToCriteriaConverter:
     ```
     """  # noqa: E501  # fmt: skip
 
+    DEFAULT_MAX_FILTERS = 100
+    DEFAULT_MAX_ORDERS = 100
+    DEFAULT_MAX_IN_VALUES = 100
+    DEFAULT_MAX_PAGE_SIZE = 1000
+    DEFAULT_MAX_PAGE_NUMBER = 10000
+    DEFAULT_MAX_OPERATOR_ALLOWLIST = len(Operator)
+
     _ALLOWED_BODY_KEYS: ClassVar[set[str]] = {'filters', 'orders', 'page_size', 'page_number'}
     _FILTER_KEYS: ClassVar[set[str]] = {'field', 'operator', 'value'}
     _ORDER_KEYS: ClassVar[set[str]] = {'field', 'direction'}
@@ -101,8 +108,12 @@ class BodyToCriteriaConverter:
         valid_fields: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
         valid_directions: Sequence[Direction] | None = None,
-        max_page_size: int = 10000,
-        max_page_number: int = 1000000,
+        max_page_size: int = DEFAULT_MAX_PAGE_SIZE,
+        max_page_number: int = DEFAULT_MAX_PAGE_NUMBER,
+        max_filters: int = DEFAULT_MAX_FILTERS,
+        max_orders: int = DEFAULT_MAX_ORDERS,
+        max_in_values: int = DEFAULT_MAX_IN_VALUES,
+        max_operator_allowlist: int = DEFAULT_MAX_OPERATOR_ALLOWLIST,
     ) -> Criteria:
         """
         Convert a decoded body mapping into criteria.
@@ -144,9 +155,16 @@ class BodyToCriteriaConverter:
                 value=body_mapping.get('filters'),
                 fields_mapping=fields_mapping,
                 operator_mapping=operator_mapping,
+                max_filters=max_filters,
+                max_in_values=max_in_values,
             )
             or None,
-            orders=cls._parse_orders(value=body_mapping.get('orders'), fields_mapping=fields_mapping) or None,
+            orders=cls._parse_orders(
+                value=body_mapping.get('orders'),
+                fields_mapping=fields_mapping,
+                max_orders=max_orders,
+            )
+            or None,
             page_size=body_mapping.get('page_size'),
             page_number=body_mapping.get('page_number'),
         )
@@ -160,6 +178,11 @@ class BodyToCriteriaConverter:
             criteria=criteria,
             valid_directions=valid_directions,
         )
+        if check_operator_injection and valid_operators is not None:
+            cls._ensure_operator_allowlist_size(
+                operators=valid_operators,
+                limit=max_operator_allowlist,
+            )
 
         if check_field_injection:
             cls._validate_criteria(
@@ -418,6 +441,8 @@ class BodyToCriteriaConverter:
         value: Any,
         fields_mapping: Mapping[str, str],
         operator_mapping: Mapping[str, Operator],
+        max_filters: int,
+        max_in_values: int,
     ) -> list[Filter[Any]]:
         """
         Parse body filters into `Filter` objects.
@@ -443,6 +468,11 @@ class BodyToCriteriaConverter:
 
         filters: list[Filter[Any]] = []
         for index, item in enumerate(value):
+            cls._ensure_index_below_limit(
+                index=index,
+                limit=max_filters,
+                resource='filters',
+            )
             filter_body = cls._validate_filter_body(value=item, index=index)
             operator = cls._parse_operator(
                 value=filter_body['operator'], index=index, operator_mapping=operator_mapping
@@ -458,6 +488,7 @@ class BodyToCriteriaConverter:
                             value=filter_body.get('value', cls._MISSING),
                             operator=operator,
                             index=index,
+                            max_in_values=max_in_values,
                         ),
                     }
                 )
@@ -528,7 +559,7 @@ class BodyToCriteriaConverter:
         return operator
 
     @classmethod
-    def _parse_filter_value(cls, *, value: Any, operator: Operator, index: int) -> Any:
+    def _parse_filter_value(cls, *, value: Any, operator: Operator, index: int, max_in_values: int) -> Any:
         """
         Parse a filter value according to operator value-shape requirements.
 
@@ -553,7 +584,7 @@ class BodyToCriteriaConverter:
             return cls._parse_between_value(value=value, index=index)
 
         if operator in (Operator.IN, Operator.NOT_IN):
-            return cls._parse_list_value(value=value, index=index)
+            return cls._parse_list_value(value=value, index=index, max_in_values=max_in_values)
 
         return value
 
@@ -579,8 +610,8 @@ class BodyToCriteriaConverter:
 
         return list(value)
 
-    @staticmethod
-    def _parse_list_value(*, value: Any, index: int) -> list[Any]:
+    @classmethod
+    def _parse_list_value(cls, *, value: Any, index: int, max_in_values: int) -> list[Any]:
         """
         Parse an IN filter value.
 
@@ -599,10 +630,16 @@ class BodyToCriteriaConverter:
                 message=f'BodyToCriteriaConverter filter <<<filters[{index}]>>> expects at least one value for IN operators.'  # noqa: E501
             )
 
-        return list(value)
+        parsed_values = list(value)
+        cls._ensure_sequence_size(
+            values=parsed_values,
+            limit=max_in_values,
+            resource=f'IN values for filter <<<filters[{index}]>>>',
+        )
+        return parsed_values
 
     @classmethod
-    def _parse_orders(cls, *, value: Any, fields_mapping: Mapping[str, str]) -> list[Order]:
+    def _parse_orders(cls, *, value: Any, fields_mapping: Mapping[str, str], max_orders: int) -> list[Order]:
         """
         Parse body orders into `Order` objects.
 
@@ -626,6 +663,11 @@ class BodyToCriteriaConverter:
 
         orders: list[Order] = []
         for index, item in enumerate(value):
+            cls._ensure_index_below_limit(
+                index=index,
+                limit=max_orders,
+                resource='orders',
+            )
             order_body = cls._validate_order_body(value=item, index=index)
             raw_field = order_body['field']
             field = fields_mapping.get(raw_field, raw_field) if isinstance(raw_field, str) else raw_field
@@ -747,4 +789,62 @@ class BodyToCriteriaConverter:
         if unknown_keys:
             raise IntegrityError(
                 message=f'BodyToCriteriaConverter {path} has unsupported keys <<<{", ".join(sorted(unknown_keys))}>>>.'
+            )
+
+    @classmethod
+    def _ensure_index_below_limit(cls, *, index: int, limit: int, resource: str) -> None:
+        """
+        Ensure a zero-based collection index stays below a configured maximum.
+
+        Args:
+            index (int): Current index.
+            limit (int): Maximum allowed count for the collection.
+            resource (str): Human-readable resource name such as filters or orders.
+
+        Raises:
+            IntegrityError: If the index reaches or exceeds the limit.
+        """
+        if index >= limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} {resource} exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _ensure_sequence_size(cls, *, values: Sequence[Any], limit: int, resource: str) -> None:
+        """
+        Ensure a sequence does not exceed a configured maximum length.
+
+        Args:
+            values (Sequence[Any]): Values to validate.
+            limit (int): Maximum allowed length.
+            resource (str): Human-readable resource name such as IN values.
+
+        Raises:
+            IntegrityError: If the sequence exceeds the limit.
+        """
+        if len(values) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} {resource} exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _ensure_operator_allowlist_size(
+        cls,
+        *,
+        operators: Sequence[Operator],
+        limit: int,
+    ) -> None:
+        """
+        Ensure an explicit operator allowlist does not exceed a configured maximum.
+
+        Args:
+            operators (Sequence[Operator]): Operator allowlist provided by the caller.
+            limit (int): Maximum allowed operators in the allowlist.
+
+        Raises:
+            IntegrityError: If the allowlist exceeds the limit.
+        """
+        if len(operators) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} valid_operators exceeds maximum limit of <<<{limit}>>>.',
             )

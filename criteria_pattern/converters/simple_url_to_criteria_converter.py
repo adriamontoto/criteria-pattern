@@ -28,6 +28,12 @@ class SimpleUrlToCriteriaConverter:
     ```
     """  # noqa: E501  # fmt: skip
 
+    DEFAULT_MAX_FILTERS = 100
+    DEFAULT_MAX_IN_VALUES = 100
+    DEFAULT_MAX_PAGE_SIZE = 1000
+    DEFAULT_MAX_PAGE_NUMBER = 10000
+    DEFAULT_MAX_OPERATOR_ALLOWLIST = len(Operator)
+
     _SUFFIX_OPERATOR_MAPPING: ClassVar[dict[str, Operator]] = {
         '': Operator.EQUAL,
         'eq': Operator.EQUAL,
@@ -70,8 +76,11 @@ class SimpleUrlToCriteriaConverter:
         check_pagination_bounds: bool = True,
         valid_fields: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
-        max_page_size: int = 10000,
-        max_page_number: int = 1000000,
+        max_page_size: int = DEFAULT_MAX_PAGE_SIZE,
+        max_page_number: int = DEFAULT_MAX_PAGE_NUMBER,
+        max_filters: int = DEFAULT_MAX_FILTERS,
+        max_in_values: int = DEFAULT_MAX_IN_VALUES,
+        max_operator_allowlist: int = DEFAULT_MAX_OPERATOR_ALLOWLIST,
     ) -> Criteria:
         """
         Convert a URL or bare query string into criteria.
@@ -109,6 +118,8 @@ class SimpleUrlToCriteriaConverter:
             query_parameters=query_parameters,
             fields_mapping=fields_mapping,
             suffix_operator_mapping=suffix_operator_mapping,
+            max_filters=max_filters,
+            max_in_values=max_in_values,
         )
         page_size = cls._parse_page_size(query_parameters=query_parameters)
         page_number = cls._parse_page_number(query_parameters=query_parameters)
@@ -120,6 +131,11 @@ class SimpleUrlToCriteriaConverter:
             criteria=criteria,
             valid_operators=valid_operators,
         )
+        if check_operator_injection and valid_operators is not None:
+            cls._ensure_operator_allowlist_size(
+                operators=valid_operators,
+                limit=max_operator_allowlist,
+            )
         if check_field_injection:
             cls._validate_criteria(
                 criteria=criteria,
@@ -317,6 +333,8 @@ class SimpleUrlToCriteriaConverter:
         query_parameters: Mapping[str, Sequence[str]],
         fields_mapping: Mapping[str, str],
         suffix_operator_mapping: Mapping[str, Operator],
+        max_filters: int,
+        max_in_values: int,
     ) -> list[Filter[Any]]:
         """
         Parse simple query parameters into `Filter` objects.
@@ -338,6 +356,12 @@ class SimpleUrlToCriteriaConverter:
             if name in cls._PAGINATION_PARAMETERS:
                 continue
 
+            cls._ensure_index_below_limit(
+                index=len(filters),
+                limit=max_filters,
+                resource='filters',
+            )
+
             field_name, operator = cls._parse_filter_name(
                 name=name,
                 suffix_operator_mapping=suffix_operator_mapping,
@@ -345,7 +369,11 @@ class SimpleUrlToCriteriaConverter:
             actual_field = fields_mapping.get(field_name, field_name)
 
             try:
-                parsed_value = cls._parse_filter_value(raw_values=values, operator=operator)
+                parsed_value = cls._parse_filter_value(
+                    raw_values=values,
+                    operator=operator,
+                    max_in_values=max_in_values,
+                )
 
             except IntegrityError as exception:
                 raw_value = ','.join(values)
@@ -383,7 +411,7 @@ class SimpleUrlToCriteriaConverter:
         return name, suffix_operator_mapping['']
 
     @classmethod
-    def _parse_filter_value(cls, *, raw_values: Sequence[str], operator: Operator) -> Any:
+    def _parse_filter_value(cls, *, raw_values: Sequence[str], operator: Operator, max_in_values: int) -> Any:
         """
         Parse the raw filter values based on the operator.
 
@@ -404,7 +432,7 @@ class SimpleUrlToCriteriaConverter:
             return cls._parse_between_values(raw_values=raw_values)
 
         if operator in (Operator.IN, Operator.NOT_IN):
-            return cls._parse_list_values(raw_values=raw_values)
+            return cls._parse_list_values(raw_values=raw_values, max_in_values=max_in_values)
 
         return cls._convert_primitive(value=raw_values[0])
 
@@ -431,7 +459,7 @@ class SimpleUrlToCriteriaConverter:
         return [cls._convert_primitive(value=part) for part in parts]
 
     @classmethod
-    def _parse_list_values(cls, *, raw_values: Sequence[str]) -> list[Any]:
+    def _parse_list_values(cls, *, raw_values: Sequence[str], max_in_values: int) -> list[Any]:
         """
         Parse IN and NOT_IN operator values.
 
@@ -450,7 +478,13 @@ class SimpleUrlToCriteriaConverter:
                 message=f'SimpleUrlToCriteriaConverter filter <<<{",".join(raw_values)}>>> expects at least one value.'
             )
 
-        return [cls._convert_primitive(value=part) for part in parts]
+        parsed_values = [cls._convert_primitive(value=part) for part in parts]
+        cls._ensure_sequence_size(
+            values=parsed_values,
+            limit=max_in_values,
+            resource=f'IN values for filter <<<{",".join(raw_values)}>>>',
+        )
+        return parsed_values
 
     @staticmethod
     def _split_values(*, raw_values: Sequence[str], keep_empty: bool) -> list[str]:
@@ -549,3 +583,61 @@ class SimpleUrlToCriteriaConverter:
 
         except ValueError:
             return values[0]  # type: ignore[return-value]
+
+    @classmethod
+    def _ensure_index_below_limit(cls, *, index: int, limit: int, resource: str) -> None:
+        """
+        Ensure a zero-based collection index stays below a configured maximum.
+
+        Args:
+            index (int): Current index.
+            limit (int): Maximum allowed count for the collection.
+            resource (str): Human-readable resource name such as filters or orders.
+
+        Raises:
+            IntegrityError: If the index reaches or exceeds the limit.
+        """
+        if index >= limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} {resource} exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _ensure_sequence_size(cls, *, values: Sequence[Any], limit: int, resource: str) -> None:
+        """
+        Ensure a sequence does not exceed a configured maximum length.
+
+        Args:
+            values (Sequence[Any]): Values to validate.
+            limit (int): Maximum allowed length.
+            resource (str): Human-readable resource name such as IN values.
+
+        Raises:
+            IntegrityError: If the sequence exceeds the limit.
+        """
+        if len(values) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} {resource} exceeds maximum limit of <<<{limit}>>>.',
+            )
+
+    @classmethod
+    def _ensure_operator_allowlist_size(
+        cls,
+        *,
+        operators: Sequence[Operator],
+        limit: int,
+    ) -> None:
+        """
+        Ensure an explicit operator allowlist does not exceed a configured maximum.
+
+        Args:
+            operators (Sequence[Operator]): Operator allowlist provided by the caller.
+            limit (int): Maximum allowed operators in the allowlist.
+
+        Raises:
+            IntegrityError: If the allowlist exceeds the limit.
+        """
+        if len(operators) > limit:
+            raise IntegrityError(
+                message=f'{cls.__name__} valid_operators exceeds maximum limit of <<<{limit}>>>.',
+            )
