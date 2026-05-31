@@ -66,7 +66,7 @@ def test_criteria_to_mariadb_converter_with_empty_criteria_and_all_columns() -> 
     """
     query, parameters = CriteriaToMariadbConverter.convert(criteria=CriteriaMother.empty(), table='user')
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM `user`;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -82,7 +82,7 @@ def test_criteria_to_mariadb_converter_with_empty_criteria() -> None:
         columns=['id', 'name'],
     )
 
-    assert query == 'SELECT id, name FROM user;'
+    assert query == 'SELECT `id`, `name` FROM `user`;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -99,7 +99,7 @@ def test_criteria_to_mariadb_converter_with_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` = %s;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -116,7 +116,7 @@ def test_criteria_to_mariadb_converter_with_not_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name != %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` != %s;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -133,7 +133,7 @@ def test_criteria_to_mariadb_converter_with_greater_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age > %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` > %s;'
     assert parameters == [18]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -150,7 +150,7 @@ def test_criteria_to_mariadb_converter_with_greater_or_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age >= %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` >= %s;'
     assert parameters == [18]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -167,7 +167,7 @@ def test_criteria_to_mariadb_converter_with_less_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age < %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` < %s;'
     assert parameters == [18]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -184,7 +184,7 @@ def test_criteria_to_mariadb_converter_with_less_or_equal_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age <= %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` <= %s;'
     assert parameters == [18]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -201,7 +201,7 @@ def test_criteria_to_mariadb_converter_with_like_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name LIKE %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` LIKE %s;'
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -218,7 +218,7 @@ def test_criteria_to_mariadb_converter_with_not_like_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name NOT LIKE %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` NOT LIKE %s;'
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -235,7 +235,7 @@ def test_criteria_to_mariadb_converter_with_contains_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT('%', %s, '%');"
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE `name` LIKE CONCAT('%', %s, '%');"
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -252,7 +252,7 @@ def test_criteria_to_mariadb_converter_with_not_contains_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT('%', %s, '%');"
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE `name` NOT LIKE CONCAT('%', %s, '%');"
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -269,7 +269,7 @@ def test_criteria_to_mariadb_converter_with_starts_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT(%s, '%');"
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE `name` LIKE CONCAT(%s, '%');"
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -286,7 +286,7 @@ def test_criteria_to_mariadb_converter_with_not_starts_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT(%s, '%');"
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE `name` NOT LIKE CONCAT(%s, '%');"
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -303,7 +303,7 @@ def test_criteria_to_mariadb_converter_with_ends_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name LIKE CONCAT('%', %s);"
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE `name` LIKE CONCAT('%', %s);"
     assert parameters == ['Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -320,7 +320,7 @@ def test_criteria_to_mariadb_converter_with_not_ends_with_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE name NOT LIKE CONCAT('%', %s);"
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE `name` NOT LIKE CONCAT('%', %s);"
     assert parameters == ['Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -337,7 +337,7 @@ def test_criteria_to_mariadb_converter_with_between_filter_list() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN %s AND %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` BETWEEN %s AND %s;'
     assert parameters == [18, 30]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -354,7 +354,7 @@ def test_criteria_to_mariadb_converter_with_between_filter_tuple() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age BETWEEN %s AND %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` BETWEEN %s AND %s;'
     assert parameters == [18, 30]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -371,7 +371,7 @@ def test_criteria_to_mariadb_converter_with_not_between_filter_list() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN %s AND %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` NOT BETWEEN %s AND %s;'
     assert parameters == [18, 30]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -388,7 +388,7 @@ def test_criteria_to_mariadb_converter_with_not_between_filter_tuple() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE age NOT BETWEEN %s AND %s;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` NOT BETWEEN %s AND %s;'
     assert parameters == [18, 30]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -405,7 +405,7 @@ def test_criteria_to_mariadb_converter_with_is_null_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE email IS NULL;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `email` IS NULL;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -422,7 +422,7 @@ def test_criteria_to_mariadb_converter_with_is_not_null_filter() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE email IS NOT NULL;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `email` IS NOT NULL;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -439,7 +439,7 @@ def test_criteria_to_mariadb_converter_with_in_filter() -> None:
         columns=['id', 'name', 'status'],
     )
 
-    assert query == 'SELECT id, name, status FROM user WHERE status IN (%s, %s, %s);'  # noqa: E501  # fmt: skip
+    assert query == 'SELECT `id`, `name`, `status` FROM `user` WHERE `status` IN (%s, %s, %s);'  # noqa: E501  # fmt: skip
     assert parameters == ['active', 'pending', 'inactive']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -456,7 +456,7 @@ def test_criteria_to_mariadb_converter_with_not_in_filter() -> None:
         columns=['id', 'name', 'status'],
     )
 
-    assert query == 'SELECT id, name, status FROM user WHERE status NOT IN (%s, %s);'
+    assert query == 'SELECT `id`, `name`, `status` FROM `user` WHERE `status` NOT IN (%s, %s);'
     assert parameters == ['deleted', 'banned']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -481,10 +481,10 @@ def test_criteria_to_mariadb_converter_with_and_criteria() -> None:
         columns=['*'],
     )
 
-    assert query1 == 'SELECT * FROM user WHERE (name = %s AND email IS NOT NULL);'
+    assert query1 == 'SELECT * FROM `user` WHERE (`name` = %s AND `email` IS NOT NULL);'
     assert parameters1 == ['John Doe']
     assert_valid_mariadb_syntax(query=query1, parameters=parameters1)
-    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL AND name = %s);'
+    assert query2 == 'SELECT * FROM `user` WHERE (`email` IS NOT NULL AND `name` = %s);'
     assert parameters2 == ['John Doe']
     assert_valid_mariadb_syntax(query=query2, parameters=parameters2)
 
@@ -505,10 +505,10 @@ def test_criteria_to_mariadb_converter_with_or_criteria() -> None:
         criteria=criteria2 | criteria1, table='user', columns=['*']
     )
 
-    assert query1 == 'SELECT * FROM user WHERE (name = %s OR email IS NOT NULL);'
+    assert query1 == 'SELECT * FROM `user` WHERE (`name` = %s OR `email` IS NOT NULL);'
     assert parameters1 == ['John Doe']
     assert_valid_mariadb_syntax(query=query1, parameters=parameters1)
-    assert query2 == 'SELECT * FROM user WHERE (email IS NOT NULL OR name = %s);'
+    assert query2 == 'SELECT * FROM `user` WHERE (`email` IS NOT NULL OR `name` = %s);'
     assert parameters2 == ['John Doe']
     assert_valid_mariadb_syntax(query=query2, parameters=parameters2)
 
@@ -522,7 +522,7 @@ def test_criteria_to_mariadb_converter_with_not_criteria() -> None:
     criteria = CriteriaMother.with_filters(filters=[filter])
     query, parameters = CriteriaToMariadbConverter.convert(criteria=~criteria, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user WHERE NOT (name = %s);'
+    assert query == 'SELECT * FROM `user` WHERE NOT (`name` = %s);'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -542,7 +542,7 @@ def test_criteria_to_mariadb_converter_with_and_criteria_empty_left() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -562,7 +562,7 @@ def test_criteria_to_mariadb_converter_with_and_criteria_empty_right() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -581,7 +581,7 @@ def test_criteria_to_mariadb_converter_with_and_criteria_both_empty() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM `user`;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -601,7 +601,7 @@ def test_criteria_to_mariadb_converter_with_or_criteria_empty_left() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -621,7 +621,7 @@ def test_criteria_to_mariadb_converter_with_or_criteria_empty_right() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -640,7 +640,7 @@ def test_criteria_to_mariadb_converter_with_or_criteria_both_empty() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM `user`;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -658,7 +658,7 @@ def test_criteria_to_mariadb_converter_with_not_empty_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM `user`;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -681,7 +681,7 @@ def test_criteria_to_mariadb_converter_with_complex_empty_combination() -> None:
         table='test_table',
     )
 
-    assert query == 'SELECT * FROM test_table WHERE organization_identifier = %s ORDER BY created_date DESC, identifier ASC;'  # noqa: E501 # fmt: skip
+    assert query == 'SELECT * FROM `test_table` WHERE `organization_identifier` = %s ORDER BY `created_date` DESC, `identifier` ASC;'  # noqa: E501 # fmt: skip
     assert parameters == ['test']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -706,7 +706,7 @@ def test_criteria_to_mariadb_converter_with_nested_empty_and_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -731,7 +731,7 @@ def test_criteria_to_mariadb_converter_with_nested_empty_or_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -755,7 +755,7 @@ def test_criteria_to_mariadb_converter_with_nested_empty_not_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == 'SELECT * FROM user WHERE name = %s;'
+    assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
     assert parameters == ['John']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -777,7 +777,7 @@ def test_criteria_to_mariadb_converter_with_mixed_criteria() -> None:
         columns=['*'],
     )
 
-    assert query == "SELECT * FROM user WHERE (name = %s AND (email IS NOT NULL OR NOT (age < %s)));"  # noqa: E501 # fmt: skip
+    assert query == "SELECT * FROM `user` WHERE (`name` = %s AND (`email` IS NOT NULL OR NOT (`age` < %s)));"  # noqa: E501 # fmt: skip
     assert parameters == ['John Doe', 18]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -794,7 +794,7 @@ def test_criteria_to_mariadb_converter_with_asc_order() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user ORDER BY name ASC;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` ORDER BY `name` ASC;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -811,7 +811,7 @@ def test_criteria_to_mariadb_converter_with_desc_order() -> None:
         columns=['id', 'name', 'email'],
     )
 
-    assert query == 'SELECT id, name, email FROM user ORDER BY name DESC;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` ORDER BY `name` DESC;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -826,7 +826,7 @@ def test_criteria_to_mariadb_converter_with_multiple_orders_on_the_same_criteria
     criteria = CriteriaMother.with_orders(orders=[order1, order2])
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user ORDER BY name ASC, email DESC;'
+    assert query == 'SELECT * FROM `user` ORDER BY `name` ASC, `email` DESC;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -843,7 +843,7 @@ def test_criteria_to_mariadb_converter_with_multiple_orders_on_different_criteri
     criteria2 = CriteriaMother.with_orders(orders=[order3])
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria1 & criteria2, table='user', columns=['*'])
 
-    assert query == 'SELECT * FROM user ORDER BY name ASC, age ASC, email DESC;'
+    assert query == 'SELECT * FROM `user` ORDER BY `name` ASC, `age` ASC, `email` DESC;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -867,7 +867,7 @@ def test_criteria_to_mariadb_converter_with_filtered_and_ordered_criteria() -> N
         columns=['id', 'name', 'email'],
     )
 
-    assert query == "SELECT id, name, email FROM user WHERE (name = %s AND (email IS NOT NULL OR NOT (age < %s))) ORDER BY email DESC, name ASC;"  # noqa: E501 # fmt: skip
+    assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE (`name` = %s AND (`email` IS NOT NULL OR NOT (`age` < %s))) ORDER BY `email` DESC, `name` ASC;"  # noqa: E501 # fmt: skip
     assert parameters == ['John Doe', 18]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -886,7 +886,7 @@ def test_criteria_to_mariadb_converter_with_columns_mapping() -> None:
         columns_mapping={'full_name': 'name'},
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = %s ORDER BY name ASC;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` = %s ORDER BY `name` ASC;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -905,7 +905,7 @@ def test_criteria_to_mariadb_converter_with_columns_mapping_with_spaces() -> Non
         columns_mapping={'full name': 'name'},
     )
 
-    assert query == 'SELECT id, name, email FROM user WHERE name = %s ORDER BY name ASC;'
+    assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` = %s ORDER BY `name` ASC;'
     assert parameters == ['John Doe']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1106,7 +1106,7 @@ def test_criteria_to_mariadb_converter_with_filter_value_injection() -> None:
         valid_columns=['id', 'name'],
     )
 
-    assert query == 'SELECT id, name FROM user WHERE id = %s;'
+    assert query == 'SELECT `id`, `name` FROM `user` WHERE `id` = %s;'
     assert parameters == ['1; DROP TABLE user;']
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1204,7 +1204,7 @@ def test_criteria_to_mariadb_converter_with_valid_operator() -> None:
         valid_operators=[Operator.GREATER, Operator.LESS],
     )
 
-    assert query == 'SELECT id, name FROM user WHERE id > %s;'
+    assert query == 'SELECT `id`, `name` FROM `user` WHERE `id` > %s;'
     assert parameters == [1]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1302,7 +1302,7 @@ def test_criteria_to_mariadb_converter_with_valid_direction() -> None:
         valid_directions=[Direction.ASC, Direction.DESC],
     )
 
-    assert query == 'SELECT id, name FROM user ORDER BY id ASC;'
+    assert query == 'SELECT `id`, `name` FROM `user` ORDER BY `id` ASC;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1361,7 +1361,7 @@ def test_criteria_to_mariadb_converter_with_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == [page_size, expected_offset]
@@ -1376,7 +1376,7 @@ def test_criteria_to_mariadb_converter_without_pagination() -> None:
     criteria = Criteria()
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user;'
+    assert query == 'SELECT * FROM `user`;'
     assert parameters == []
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1394,7 +1394,7 @@ def test_criteria_to_mariadb_converter_with_filters_and_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = 'SELECT * FROM user WHERE name = %s LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` WHERE `name` = %s LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == ['John', page_size, expected_offset]
@@ -1414,7 +1414,7 @@ def test_criteria_to_mariadb_converter_with_orders_and_pagination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = 'SELECT * FROM user ORDER BY name ASC LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` ORDER BY `name` ASC LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == [page_size, expected_offset]
@@ -1439,7 +1439,7 @@ def test_criteria_to_mariadb_converter_with_filters_orders_and_pagination() -> N
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = 'SELECT id, name, age FROM user WHERE age >= %s ORDER BY name DESC LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT `id`, `name`, `age` FROM `user` WHERE `age` >= %s ORDER BY `name` DESC LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == [18, page_size, expected_offset]
@@ -1454,7 +1454,7 @@ def test_criteria_to_mariadb_converter_pagination_first_page() -> None:
     criteria = Criteria(page_size=10, page_number=1)
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    assert query == 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
     assert parameters == [10, 0]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1467,7 +1467,7 @@ def test_criteria_to_mariadb_converter_pagination_second_page() -> None:
     criteria = Criteria(page_size=10, page_number=2)
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    assert query == 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    assert query == 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
     assert parameters == [10, 10]
     assert_valid_mariadb_syntax(query=query, parameters=parameters)
 
@@ -1487,7 +1487,7 @@ def test_criteria_to_mariadb_converter_pagination_with_combined_criteria() -> No
     query, parameters = CriteriaToMariadbConverter.convert(criteria=combined_criteria, table='user')
 
     expected_offset = (3 - 1) * 20
-    expected_query = 'SELECT * FROM user WHERE (active = %s AND age > %s) LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` WHERE (`active` = %s AND `age` > %s) LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == [True, 18, 20, expected_offset]
@@ -1504,7 +1504,7 @@ def test_criteria_to_mariadb_converter_with_page_size_only() -> None:
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = 'SELECT * FROM user LIMIT %s;'
+    expected_query = 'SELECT * FROM `user` LIMIT %s;'
 
     assert query == expected_query
     assert parameters == [page_size]
@@ -1523,7 +1523,7 @@ def test_criteria_to_mariadb_converter_with_filters_and_page_size_only() -> None
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user WHERE {filter.field} = %s LIMIT %s;'  # noqa: S608
+    expected_query = f'SELECT * FROM `user` WHERE `{filter.field}` = %s LIMIT %s;'  # noqa: S608
 
     assert query == expected_query
     assert parameters == [filter.value, page_size]
@@ -1542,7 +1542,7 @@ def test_criteria_to_mariadb_converter_with_orders_and_page_size_only() -> None:
 
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = f'SELECT * FROM user ORDER BY {order.field} ASC LIMIT %s;'  # noqa: S608
+    expected_query = f'SELECT * FROM `user` ORDER BY `{order.field}` ASC LIMIT %s;'  # noqa: S608
 
     assert query == expected_query
     assert parameters == [page_size]
@@ -1561,7 +1561,7 @@ def test_criteria_to_mariadb_converter_with_multiple_filters_in_same_criteria() 
     criteria = Criteria(filters=[filter1, filter2])
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
-    expected_query = "SELECT * FROM user WHERE age >= %s AND email LIKE CONCAT('%', %s);"
+    expected_query = "SELECT * FROM `user` WHERE `age` >= %s AND `email` LIKE CONCAT('%', %s);"
     expected_parameters = [18, '@gmail.com']
 
     assert query == expected_query
@@ -1585,7 +1585,7 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_has_right_no
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
     expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
@@ -1609,7 +1609,7 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_none_right_h
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
     expected_parameters = [18, 'active', 15, 30]
 
     assert query == expected_query
@@ -1637,7 +1637,7 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_both_have() -> No
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
+    expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
     expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
@@ -1657,7 +1657,7 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_both_none() -> No
     and_criteria = left_criteria & right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s AND status = %s);'
+    expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s);'
     expected_parameters = [18, 'active']
 
     assert query == expected_query
@@ -1681,7 +1681,7 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_has_right_non
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` WHERE (`age` > %s OR `status` = %s) LIMIT %s OFFSET %s;'
     expected_parameters = [18, 'active', 10, 10]
 
     assert query == expected_query
@@ -1705,7 +1705,7 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_none_right_ha
     or_criteria = left_criteria | right_criteria
     query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
 
-    expected_query = 'SELECT * FROM user WHERE (age > %s OR status = %s) LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` WHERE (`age` > %s OR `status` = %s) LIMIT %s OFFSET %s;'
     expected_parameters = [18, 'active', 15, 30]
 
     assert query == expected_query
@@ -1725,7 +1725,7 @@ def test_criteria_to_mariadb_converter_with_pagination_bounds_check_disabled() -
     query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == [page_size, expected_offset]
@@ -1792,7 +1792,7 @@ def test_criteria_to_mariadb_converter_with_valid_pagination_bounds() -> None:
     )
 
     expected_offset = (page_number - 1) * page_size
-    expected_query = 'SELECT * FROM user LIMIT %s OFFSET %s;'
+    expected_query = 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
 
     assert query == expected_query
     assert parameters == [page_size, expected_offset]

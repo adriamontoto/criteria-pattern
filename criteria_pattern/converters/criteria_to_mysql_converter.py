@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, assert_never
 
 from criteria_pattern import Criteria, Direction, Operator
+from criteria_pattern.converters import sql_identifier
 from criteria_pattern.errors import (
     InvalidColumnError,
     InvalidDirectionError,
@@ -141,7 +142,11 @@ class CriteriaToMysqlConverter:
                 max_page_number=max_page_number,
             )
 
-        query = f'SELECT {", ".join(columns)} FROM {table}'  # noqa: S608  # nosec
+        quoted_columns = [
+            '*' if column == '*' else sql_identifier.quote_backtick_identifier(identifier=column) for column in columns
+        ]
+        quoted_table = sql_identifier.quote_backtick_qualified_name(name=table)
+        query = f'SELECT {", ".join(quoted_columns)} FROM {quoted_table}'  # noqa: S608  # nosec
         parameters: list[Any] = []
         parameters_counter = 0
 
@@ -397,64 +402,65 @@ class CriteriaToMysqlConverter:
         filter_conditions = []
         for filter in criteria.filters:
             filter_field = columns_mapping.get(filter.field, filter.field)
+            quoted_filter_field = sql_identifier.quote_backtick_identifier(identifier=filter_field)
             placeholder = '%s'
 
             operator = Operator(value=filter.operator)
             match operator:
                 case Operator.EQUAL:
-                    filter_conditions.append(f'{filter_field} = {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} = {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.NOT_EQUAL:
-                    filter_conditions.append(f'{filter_field} != {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} != {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.GREATER:
-                    filter_conditions.append(f'{filter_field} > {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} > {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.GREATER_OR_EQUAL:
-                    filter_conditions.append(f'{filter_field} >= {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} >= {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.LESS:
-                    filter_conditions.append(f'{filter_field} < {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} < {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.LESS_OR_EQUAL:
-                    filter_conditions.append(f'{filter_field} <= {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} <= {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.LIKE:
-                    filter_conditions.append(f'{filter_field} LIKE {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} LIKE {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.NOT_LIKE:
-                    filter_conditions.append(f'{filter_field} NOT LIKE {placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} NOT LIKE {placeholder}')
                     parameters.append(filter.value)
 
                 case Operator.CONTAINS:
-                    filter_conditions.append(f"{filter_field} LIKE CONCAT('%', {placeholder}, '%')")
+                    filter_conditions.append(f"{quoted_filter_field} LIKE CONCAT('%', {placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.NOT_CONTAINS:
-                    filter_conditions.append(f"{filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')")
+                    filter_conditions.append(f"{quoted_filter_field} NOT LIKE CONCAT('%', {placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.STARTS_WITH:
-                    filter_conditions.append(f"{filter_field} LIKE CONCAT({placeholder}, '%')")
+                    filter_conditions.append(f"{quoted_filter_field} LIKE CONCAT({placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.NOT_STARTS_WITH:
-                    filter_conditions.append(f"{filter_field} NOT LIKE CONCAT({placeholder}, '%')")
+                    filter_conditions.append(f"{quoted_filter_field} NOT LIKE CONCAT({placeholder}, '%')")
                     parameters.append(filter.value)
 
                 case Operator.ENDS_WITH:
-                    filter_conditions.append(f"{filter_field} LIKE CONCAT('%', {placeholder})")
+                    filter_conditions.append(f"{quoted_filter_field} LIKE CONCAT('%', {placeholder})")
                     parameters.append(filter.value)
 
                 case Operator.NOT_ENDS_WITH:
-                    filter_conditions.append(f"{filter_field} NOT LIKE CONCAT('%', {placeholder})")
+                    filter_conditions.append(f"{quoted_filter_field} NOT LIKE CONCAT('%', {placeholder})")
                     parameters.append(filter.value)
 
                 case Operator.BETWEEN:
@@ -462,20 +468,20 @@ class CriteriaToMysqlConverter:
                     end_placeholder = '%s'
                     parameters.append(filter.value[0])
                     parameters.append(filter.value[1])
-                    filter_conditions.append(f'{filter_field} BETWEEN {start_placeholder} AND {end_placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} BETWEEN {start_placeholder} AND {end_placeholder}')
 
                 case Operator.NOT_BETWEEN:
                     start_placeholder = '%s'
                     end_placeholder = '%s'
                     parameters.append(filter.value[0])
                     parameters.append(filter.value[1])
-                    filter_conditions.append(f'{filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}')
+                    filter_conditions.append(f'{quoted_filter_field} NOT BETWEEN {start_placeholder} AND {end_placeholder}')
 
                 case Operator.IS_NULL:
-                    filter_conditions.append(f'{filter_field} IS NULL')
+                    filter_conditions.append(f'{quoted_filter_field} IS NULL')
 
                 case Operator.IS_NOT_NULL:
-                    filter_conditions.append(f'{filter_field} IS NOT NULL')
+                    filter_conditions.append(f'{quoted_filter_field} IS NOT NULL')
 
                 case Operator.IN:
                     values = filter.value
@@ -483,7 +489,7 @@ class CriteriaToMysqlConverter:
                     for value in values:
                         parameters.append(value)
                         placeholders.append('%s')
-                    filter_conditions.append(f'{filter_field} IN ({", ".join(placeholders)})')
+                    filter_conditions.append(f'{quoted_filter_field} IN ({", ".join(placeholders)})')
 
                 case Operator.NOT_IN:
                     values = filter.value
@@ -491,7 +497,7 @@ class CriteriaToMysqlConverter:
                     for value in values:
                         parameters.append(value)
                         placeholders_not_in.append('%s')
-                    filter_conditions.append(f'{filter_field} NOT IN ({", ".join(placeholders_not_in)})')
+                    filter_conditions.append(f'{quoted_filter_field} NOT IN ({", ".join(placeholders_not_in)})')
 
                 case _:  # pragma: no cover
                     assert_never(operator)
@@ -516,14 +522,15 @@ class CriteriaToMysqlConverter:
 
         for order in criteria.orders:
             order_field = columns_mapping.get(order.field, order.field)
+            quoted_order_field = sql_identifier.quote_backtick_identifier(identifier=order_field)
 
             direction = Direction(value=order.direction)
             match direction:
                 case Direction.ASC:
-                    orders += f'{order_field} ASC, '
+                    orders += f'{quoted_order_field} ASC, '
 
                 case Direction.DESC:
-                    orders += f'{order_field} DESC, '
+                    orders += f'{quoted_order_field} DESC, '
 
                 case _:  # pragma: no cover
                     assert_never(direction)
