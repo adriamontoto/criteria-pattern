@@ -918,6 +918,7 @@ def test_criteria_to_mariadb_converter_with_table_injection_check_disabled() -> 
     filter: Filter[Any] = FilterMother.create(field='id; DROP TABLE user;', operator=Operator.EQUAL)
 
     CriteriaToMariadbConverter.convert(
+        check_table_injection=False,
         criteria=CriteriaMother.create(filters=[filter]),
         table='user; DROP TABLE user;',
         valid_tables=['user'],
@@ -964,6 +965,7 @@ def test_criteria_to_mariadb_converter_with_column_injection_check_disabled() ->
     filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
 
     CriteriaToMariadbConverter.convert(
+        check_column_injection=False,
         criteria=CriteriaMother.create(filters=[filter]),
         table='user',
         columns=['id; DROP TABLE user;', 'name'],
@@ -991,15 +993,16 @@ def test_criteria_to_mariadb_converter_with_column_injection() -> None:
 @mark.unit_testing
 def test_criteria_to_mariadb_converter_with_column_injection_with_star_invalid() -> None:
     """
-    Test CriteriaToMariadbConverter class with columns injection where columns attribute is a star and is invalid.
+    Test CriteriaToMariadbConverter class with columns injection for a non-allowlisted column.
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match=r'Invalid column specified <<<\*>>>. Valid columns are <<<id, name>>>.',
+        match=r'Invalid column specified <<<evil>>>. Valid columns are <<<id, name>>>.',
     ):
         CriteriaToMariadbConverter.convert(
-            criteria=CriteriaMother.create(),
+            criteria=CriteriaMother.empty(),
             table='user',
+            columns=['evil'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
         )
@@ -1013,7 +1016,7 @@ def test_criteria_to_mariadb_converter_with_column_injection_with_star_valid() -
     filter: Filter[Any] = FilterMother.create(field='*', operator=Operator.EQUAL)
 
     CriteriaToMariadbConverter.convert(
-        criteria=CriteriaMother.create(filters=[filter]),
+        criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         check_column_injection=True,
         valid_columns=['*', 'id', 'name'],
@@ -1027,12 +1030,12 @@ def test_criteria_to_mariadb_converter_with_column_injection_with_star_and_colum
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match=r'Invalid column specified <<<\*>>>. Valid columns are <<<id, name>>>.',
+        match=r'Invalid column specified <<<evil>>>. Valid columns are <<<id, name>>>.',
     ):
         CriteriaToMariadbConverter.convert(
-            criteria=CriteriaMother.create(),
+            criteria=CriteriaMother.empty(),
             table='user',
-            columns=['*', 'id', 'name'],
+            columns=['*', 'id', 'name', 'evil'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
         )
@@ -1065,6 +1068,7 @@ def test_criteria_to_mariadb_converter_with_filter_field_injection_check_disable
     filter: Filter[Any] = FilterMother.create(field='id; DROP TABLE user;', operator=Operator.EQUAL)
 
     CriteriaToMariadbConverter.convert(
+        check_criteria_injection=False,
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name'],
@@ -1162,6 +1166,7 @@ def test_criteria_to_mariadb_converter_with_operator_injection_check_disabled() 
     filter: Filter[Any] = FilterMother.create()
 
     CriteriaToMariadbConverter.convert(
+        check_operator_injection=False,
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name'],
@@ -1260,6 +1265,7 @@ def test_criteria_to_mariadb_converter_with_direction_injection_check_disabled()
     order: Order = OrderMother.create()
 
     CriteriaToMariadbConverter.convert(
+        check_direction_injection=False,
         criteria=CriteriaMother.with_orders(orders=[order]),
         table='user',
         columns=['id', 'name'],
@@ -1722,7 +1728,11 @@ def test_criteria_to_mariadb_converter_with_pagination_bounds_check_disabled() -
     page_number = IntegerMother.positive(max=50000)
     criteria = Criteria(page_size=page_size, page_number=page_number)
 
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=False,
+    )
 
     expected_offset = (page_number - 1) * page_size
     expected_query = 'SELECT * FROM `user` LIMIT %s OFFSET %s;'

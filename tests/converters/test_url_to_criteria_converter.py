@@ -558,7 +558,7 @@ def test_url_to_criteria_converter_with_field_injection_check_disabled() -> None
     Test UrlToCriteriaConverter class with field injection when check_field_injection is disabled.
     """
     url = 'https://api.example.com/users?filters[0][field]=id; DROP TABLE user;&filters[0][operator]=EQUAL&filters[0][value]=1'  # noqa: E501  # fmt: skip
-    criteria = UrlToCriteriaConverter.convert(url=url)
+    criteria = UrlToCriteriaConverter.convert(url=url, check_field_injection=False)
 
     expected_filter = Filter(field='id; DROP TABLE user;', operator=Operator.EQUAL, value=1)
     expected = Criteria(filters=[expected_filter], orders=None, page_size=None, page_number=None)
@@ -1363,6 +1363,7 @@ def test_url_to_criteria_converter_with_operator_injection_check_disabled() -> N
     url = 'https://api.example.com/users?filters[0][field]=age&filters[0][operator]=EQUAL&filters[0][value]=25'
 
     UrlToCriteriaConverter.convert(
+        check_operator_injection=False,
         url=url,
         valid_operators=[Operator.GREATER, Operator.LESS],
     )
@@ -1449,6 +1450,7 @@ def test_url_to_criteria_converter_with_direction_injection_check_disabled() -> 
     url = 'https://api.example.com/users?orders[0][field]=name&orders[0][direction]=DESC'
 
     UrlToCriteriaConverter.convert(
+        check_direction_injection=False,
         url=url,
         valid_directions=[Direction.ASC],
     )
@@ -1533,7 +1535,7 @@ def test_url_to_criteria_converter_with_pagination_bounds_check_disabled() -> No
     """
     url = 'https://api.example.com/users?page_size=50000&page_number=2000000'
 
-    criteria = UrlToCriteriaConverter.convert(url=url)
+    criteria = UrlToCriteriaConverter.convert(url=url, check_pagination_bounds=False)
 
     assert criteria.page_size == 50000
     assert criteria.page_number == 2000000

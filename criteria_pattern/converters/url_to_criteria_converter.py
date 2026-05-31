@@ -129,10 +129,7 @@ class UrlToCriteriaConverter:
         # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='Doe')), Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER_OR_EQUAL: 'GREATER OR EQUAL'>), value=FilterValue(value=18))], orders=[Order(direction=OrderDirection(value=<Direction.DESC: 'DESC'>), field=OrderField(value='age'))], page_number=None, page_size=None)
         ```
         """  # noqa: E501  # fmt: skip
-        valid_fields = valid_fields or []
         fields_mapping = fields_mapping or {}
-        valid_operators = valid_operators or []
-        valid_directions = valid_directions or []
 
         query_params = parse_qs(qs=urlparse(url=url).query, keep_blank_values=True)
 
@@ -148,14 +145,28 @@ class UrlToCriteriaConverter:
             page_number=page_number,
         )
 
+        effective_valid_fields = cls._default_valid_fields(criteria=criteria, valid_fields=valid_fields)
+        effective_valid_operators = cls._default_valid_operators(
+            criteria=criteria,
+            valid_operators=valid_operators,
+        )
+        effective_valid_directions = cls._default_valid_directions(
+            criteria=criteria,
+            valid_directions=valid_directions,
+        )
+
         if check_field_injection:
-            cls._validate_fields(criteria=criteria, valid_fields=valid_fields)
+            cls._validate_criteria(
+                criteria=criteria,
+                columns_mapping={},
+                valid_columns=effective_valid_fields,
+            )
 
         if check_operator_injection:
-            cls._validate_operators(criteria=criteria, valid_operators=valid_operators)
+            cls._validate_operators(criteria=criteria, valid_operators=effective_valid_operators)
 
         if check_direction_injection:
-            cls._validate_directions(criteria=criteria, valid_directions=valid_directions)
+            cls._validate_directions(criteria=criteria, valid_directions=effective_valid_directions)
 
         if check_pagination_bounds:
             cls._validate_pagination_bounds(
@@ -165,6 +176,162 @@ class UrlToCriteriaConverter:
             )
 
         return criteria
+
+    @classmethod
+    def _resolve_sql_column(cls, *, field: str, columns_mapping: Mapping[str, str]) -> str:
+        """
+        Resolve a criteria field to the SQL column used in generated queries.
+
+        Args:
+            field (str): Criteria field name.
+            columns_mapping (Mapping[str, str]): Criteria field to SQL column mapping.
+
+        Returns:
+            str: SQL column name.
+        """
+        return columns_mapping.get(field, field)
+
+    @classmethod
+    def _validate_criteria(
+        cls, *, criteria: Criteria, columns_mapping: Mapping[str, str], valid_columns: Sequence[str]
+    ) -> None:
+        """
+        Validate criteria filter and order fields against an allowlist.
+
+        Filter and order fields are validated after applying `columns_mapping`, so `valid_columns` must contain the SQL
+        column names that will appear in the generated query.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            columns_mapping (Mapping[str, str]): Mapping of criteria fields to SQL columns.
+            valid_columns (Sequence[str]): Allowed SQL column names.
+
+        Raises:
+            InvalidColumnError: If a resolved field maps to a column that is not allowed.
+        """
+        for filter in criteria.filters:
+            column = cls._resolve_sql_column(field=filter.field, columns_mapping=columns_mapping)
+            if column not in valid_columns:
+                raise InvalidColumnError(column=column, valid_columns=valid_columns)
+        for order in criteria.orders:
+            column = cls._resolve_sql_column(field=order.field, columns_mapping=columns_mapping)
+            if column not in valid_columns:
+                raise InvalidColumnError(column=column, valid_columns=valid_columns)
+
+    @classmethod
+    def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
+        """
+        Validate criteria filter operators against an allowlist.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_operators (Sequence[Operator]): Allowed operators.
+
+        Raises:
+            InvalidOperatorError: If an operator is not allowed.
+        """
+        for filter in criteria.filters:
+            if filter.operator not in valid_operators:
+                raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
+
+    @classmethod
+    def _validate_directions(cls, *, criteria: Criteria, valid_directions: Sequence[Direction]) -> None:
+        """
+        Validate criteria order directions against an allowlist.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            valid_directions (Sequence[Direction]): Allowed directions.
+
+        Raises:
+            InvalidDirectionError: If a direction is not allowed.
+        """
+        for order in criteria.orders:
+            if order.direction not in valid_directions:
+                raise InvalidDirectionError(
+                    direction=Direction(value=order.direction), valid_directions=valid_directions
+                )
+
+    @classmethod
+    def _validate_pagination_bounds(cls, *, criteria: Criteria, max_page_size: int, max_page_number: int) -> None:
+        """
+        Validate pagination parameters against configured maxima.
+
+        Args:
+            criteria (Criteria): Criteria to validate.
+            max_page_size (int): Maximum allowed page_size.
+            max_page_number (int): Maximum allowed page_number.
+
+        Raises:
+            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+        """
+        if criteria.page_size is not None and criteria.page_size > max_page_size:
+            raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
+        if criteria.page_number is not None and criteria.page_number > max_page_number:
+            raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)
+
+    @classmethod
+    def _default_valid_fields(cls, *, criteria: Criteria, valid_fields: Sequence[str] | None) -> list[str]:
+        """
+        Build the effective request field allowlist.
+
+        When `valid_fields` is omitted, allowlisted fields are derived from the parsed criteria. That default is
+        intended for trusted, application-built requests. For user-controlled request data, pass an explicit
+        `valid_fields` allowlist.
+
+        Args:
+            criteria (Criteria): Parsed criteria.
+            valid_fields (Sequence[str] | None): Caller-provided allowlist.
+
+        Returns:
+            list[str]: Effective field allowlist.
+        """
+        if valid_fields is not None:
+            return list(valid_fields)
+        fields = {filter.field for filter in criteria.filters}
+        fields.update(order.field for order in criteria.orders)
+        return sorted(fields)
+
+    @classmethod
+    def _default_valid_operators(
+        cls, *, criteria: Criteria, valid_operators: Sequence[Operator] | None
+    ) -> list[Operator]:
+        """
+        Build the effective operator allowlist.
+
+        Args:
+            criteria (Criteria): Criteria being converted.
+            valid_operators (Sequence[Operator] | None): Caller-provided allowlist.
+
+        Returns:
+            list[Operator]: Effective operator allowlist.
+        """
+        if valid_operators is not None:
+            return list(valid_operators)
+        return sorted(
+            {Operator(value=filter.operator) for filter in criteria.filters}, key=lambda operator: operator.value
+        )
+
+    @classmethod
+    def _default_valid_directions(
+        cls, *, criteria: Criteria, valid_directions: Sequence[Direction] | None
+    ) -> list[Direction]:
+        """
+        Build the effective direction allowlist.
+
+        Args:
+            criteria (Criteria): Criteria being converted.
+            valid_directions (Sequence[Direction] | None): Caller-provided allowlist.
+
+        Returns:
+            list[Direction]: Effective direction allowlist.
+        """
+        if valid_directions is not None:
+            return list(valid_directions)
+        directions = {Direction(value=order.direction) for order in criteria.orders}
+        if directions:
+            return sorted(directions, key=lambda direction: direction.value)
+        return [Direction.ASC, Direction.DESC]
 
     @classmethod
     def _parse_filters(  # noqa: C901
@@ -416,78 +583,3 @@ class UrlToCriteriaConverter:
 
         except ValueError:
             return values[0]  # type: ignore[return-value]
-
-    @classmethod
-    def _validate_fields(cls, *, criteria: Criteria, valid_fields: Sequence[str]) -> None:
-        """
-        Validate that all field names in the criteria are allowed.
-
-        Args:
-            criteria (Criteria): The criteria to validate.
-            valid_fields (Sequence[str]): The sequence of valid field names.
-
-        Raises:
-            InvalidColumnError: If an invalid field name is found in filters.
-            InvalidColumnError: If an invalid field name is found in orders.
-        """
-        for field in criteria.filters:
-            if field.field not in valid_fields:
-                raise InvalidColumnError(column=field.field, valid_columns=valid_fields)
-
-        for order in criteria.orders:
-            if order.field not in valid_fields:
-                raise InvalidColumnError(column=order.field, valid_columns=valid_fields)
-
-    @classmethod
-    def _validate_operators(cls, *, criteria: Criteria, valid_operators: Sequence[Operator]) -> None:
-        """
-        Validate the Criteria object operators to prevent injection.
-
-        Args:
-            criteria (Criteria): Criteria to validate.
-            valid_operators (Sequence[Operator]): List of valid operators to use.
-
-        Raises:
-            InvalidOperatorError: If the operator is not in the list of valid operators.
-        """
-        for filter in criteria.filters:
-            if filter.operator not in valid_operators:
-                raise InvalidOperatorError(operator=Operator(value=filter.operator), valid_operators=valid_operators)
-
-    @classmethod
-    def _validate_directions(cls, *, criteria: Criteria, valid_directions: Sequence[Direction]) -> None:
-        """
-        Validate the Criteria object directions to prevent injection.
-
-        Args:
-            criteria (Criteria): Criteria to validate.
-            valid_directions (Sequence[Direction]): List of valid directions to use.
-
-        Raises:
-            InvalidDirectionError: If the direction is not in the list of valid directions.
-        """
-        for order in criteria.orders:
-            if order.direction not in valid_directions:
-                raise InvalidDirectionError(
-                    direction=Direction(value=order.direction),
-                    valid_directions=valid_directions,
-                )
-
-    @classmethod
-    def _validate_pagination_bounds(cls, *, criteria: Criteria, max_page_size: int, max_page_number: int) -> None:
-        """
-        Validate the Criteria object pagination parameters to prevent integer overflow.
-
-        Args:
-            criteria (Criteria): Criteria to validate.
-            max_page_size (int): Maximum allowed page_size.
-            max_page_number (int): Maximum allowed page_number.
-
-        Raises:
-            PaginationBoundsError: If pagination parameters exceed maximum bounds.
-        """
-        if criteria.page_size is not None and criteria.page_size > max_page_size:
-            raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
-
-        if criteria.page_number is not None and criteria.page_number > max_page_number:
-            raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)

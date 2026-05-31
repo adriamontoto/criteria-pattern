@@ -8,7 +8,7 @@ from typing import Any
 
 from pytest import mark, param, raises as assert_raises
 
-from criteria_pattern import Criteria, Direction, Filter, Operator
+from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import (
     BodyToCriteriaConverter,
     CriteriaToMariadbConverter,
@@ -32,6 +32,10 @@ _SQL_CONVERTERS: tuple[type, ...] = (
     CriteriaToMysqlConverter,
     CriteriaToMariadbConverter,
     CriteriaToSqliteConverter,
+)
+
+SqlConverterClass = (
+    type[CriteriaToMysqlConverter] | type[CriteriaToPostgresqlConverter] | type[CriteriaToSqliteConverter]
 )
 
 
@@ -144,6 +148,71 @@ def test_body_to_criteria_converter_validates_directions_by_default() -> None:
 
 
 @mark.unit_testing
+def test_body_to_criteria_converter_skips_field_validation_when_disabled() -> None:
+    """
+    Field allowlist validation is skipped when check_field_injection is False.
+    """
+    body = {'filters': [{'field': 'invalid', 'operator': 'EQUAL', 'value': 'Doe'}]}
+
+    criteria = BodyToCriteriaConverter.convert(
+        body=body,
+        check_field_injection=False,
+        valid_fields=['name'],
+    )
+
+    assert criteria.filters is not None
+    assert criteria.filters[0].field == 'invalid'
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_skips_operator_validation_when_disabled() -> None:
+    """
+    Operator allowlist validation is skipped when check_operator_injection is False.
+    """
+    body = {'filters': [{'field': 'name', 'operator': 'EQUAL', 'value': 'Doe'}]}
+
+    criteria = BodyToCriteriaConverter.convert(
+        body=body,
+        check_operator_injection=False,
+        valid_operators=[Operator.GREATER],
+    )
+
+    assert criteria.filters is not None
+    assert criteria.filters[0].operator == Operator.EQUAL
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_skips_direction_validation_when_disabled() -> None:
+    """
+    Direction allowlist validation is skipped when check_direction_injection is False.
+    """
+    body = {'orders': [{'field': 'name', 'direction': 'DESC'}]}
+
+    criteria = BodyToCriteriaConverter.convert(
+        body=body,
+        check_direction_injection=False,
+        valid_directions=[Direction.ASC],
+    )
+
+    assert criteria.orders is not None
+    assert criteria.orders[0].direction == Direction.DESC
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_skips_pagination_validation_when_disabled() -> None:
+    """
+    Pagination bounds validation is skipped when check_pagination_bounds is False.
+    """
+    criteria = BodyToCriteriaConverter.convert(
+        body={'page_size': 50000},
+        check_pagination_bounds=False,
+        max_page_size=100,
+    )
+
+    assert criteria.page_size == 50000
+
+
+@mark.unit_testing
 def test_url_to_criteria_converter_validates_fields_by_default() -> None:
     """
     Field allowlist validation runs when check_field_injection is omitted.
@@ -243,11 +312,93 @@ def test_simple_url_to_criteria_converter_validates_pagination_by_default() -> N
 
 
 @mark.unit_testing
+def test_simple_url_to_criteria_converter_skips_field_validation_when_disabled() -> None:
+    """
+    Field allowlist validation is skipped when check_field_injection is False.
+    """
+    url = 'https://api.example.com/users?invalid_field=Doe'
+
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        valid_fields=['name'],
+    )
+
+    assert criteria.filters is not None
+    assert criteria.filters[0].field == 'invalid_field'
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_skips_operator_validation_when_disabled() -> None:
+    """
+    Operator allowlist validation is skipped when check_operator_injection is False.
+    """
+    url = 'https://api.example.com/users?age=18'
+
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_operator_injection=False,
+        valid_operators=[Operator.GREATER],
+    )
+
+    assert criteria.filters is not None
+    assert criteria.filters[0].operator == Operator.EQUAL
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_skips_pagination_validation_when_disabled() -> None:
+    """
+    Pagination bounds validation is skipped when check_pagination_bounds is False.
+    """
+    url = 'https://api.example.com/users?page_size=50000&page_number=1'
+
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_pagination_bounds=False,
+        max_page_size=100,
+    )
+
+    assert criteria.page_size == 50000
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_validate_criteria_accepts_allowlisted_order_field() -> None:
+    """
+    Criteria validation accepts order fields that are in the allowlist.
+    """
+    criteria = Criteria(orders=[Order(field='name', direction=Direction.ASC)])
+
+    SimpleUrlToCriteriaConverter._validate_criteria(
+        criteria=criteria,
+        columns_mapping={},
+        valid_columns=['name'],
+    )
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_validate_criteria_rejects_invalid_order_field() -> None:
+    """
+    Criteria validation rejects order fields that are not in the allowlist.
+    """
+    criteria = Criteria(orders=[Order(field='invalid', direction=Direction.ASC)])
+
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified <<<invalid>>>. Valid columns are <<<name>>>.',
+    ):
+        SimpleUrlToCriteriaConverter._validate_criteria(
+            criteria=criteria,
+            columns_mapping={},
+            valid_columns=['name'],
+        )
+
+
+@mark.unit_testing
 @mark.parametrize(
     'converter',
     [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
 )
-def test_sql_converter_validates_table_by_default(*, converter: type) -> None:
+def test_sql_converter_validates_table_by_default(*, converter: SqlConverterClass) -> None:
     """
     Table allowlist validation runs when check_table_injection is omitted.
     """
@@ -267,7 +418,7 @@ def test_sql_converter_validates_table_by_default(*, converter: type) -> None:
     'converter',
     [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
 )
-def test_sql_converter_validates_columns_by_default(*, converter: type) -> None:
+def test_sql_converter_validates_columns_by_default(*, converter: SqlConverterClass) -> None:
     """
     Column allowlist validation runs when check_column_injection is omitted.
     """
@@ -288,18 +439,18 @@ def test_sql_converter_validates_columns_by_default(*, converter: type) -> None:
     'converter',
     [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
 )
-def test_sql_converter_validates_criteria_fields_by_default(*, converter: type) -> None:
+def test_sql_converter_validates_criteria_fields_by_default(*, converter: SqlConverterClass) -> None:
     """
     Criteria field allowlist validation runs when check_criteria_injection is omitted.
     """
-    filter = FilterMother.create(field='id; DROP TABLE user;')
+    criteria_filter: Filter[Any] = FilterMother.create(field='id; DROP TABLE user;')
 
     with assert_raises(
         expected_exception=InvalidColumnError,
         match='Invalid column specified <<<id; DROP TABLE user;>>>. Valid columns are <<<id, name>>>.',
     ):
         converter.convert(
-            criteria=CriteriaMother.with_filters(filters=[filter]),
+            criteria=CriteriaMother.with_filters(filters=[criteria_filter]),
             table='user',
             columns=['id', 'name'],
             valid_columns=['id', 'name'],
@@ -311,18 +462,18 @@ def test_sql_converter_validates_criteria_fields_by_default(*, converter: type) 
     'converter',
     [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
 )
-def test_sql_converter_validates_operators_by_default(*, converter: type) -> None:
+def test_sql_converter_validates_operators_by_default(*, converter: SqlConverterClass) -> None:
     """
     Operator allowlist validation runs when check_operator_injection is omitted.
     """
-    filter = FilterMother.create(operator=Operator.EQUAL)
+    criteria_filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
 
     with assert_raises(
         expected_exception=InvalidOperatorError,
         match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
     ):
         converter.convert(
-            criteria=CriteriaMother.with_filters(filters=[filter]),
+            criteria=CriteriaMother.with_filters(filters=[criteria_filter]),
             table='user',
             columns=['id', 'name'],
             valid_operators=[Operator.GREATER, Operator.LESS],
@@ -334,7 +485,7 @@ def test_sql_converter_validates_operators_by_default(*, converter: type) -> Non
     'converter',
     [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
 )
-def test_sql_converter_validates_directions_by_default(*, converter: type) -> None:
+def test_sql_converter_validates_directions_by_default(*, converter: SqlConverterClass) -> None:
     """
     Direction allowlist validation runs when check_direction_injection is omitted.
     """
@@ -357,7 +508,7 @@ def test_sql_converter_validates_directions_by_default(*, converter: type) -> No
     'converter',
     [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
 )
-def test_sql_converter_validates_pagination_by_default(*, converter: type) -> None:
+def test_sql_converter_validates_pagination_by_default(*, converter: SqlConverterClass) -> None:
     """
     Pagination bounds validation runs when check_pagination_bounds is omitted.
     """

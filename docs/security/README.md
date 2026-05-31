@@ -10,10 +10,17 @@ All converters enable validation by default:
 - SQL converters: `check_table_injection`, `check_column_injection`, `check_criteria_injection`, `check_operator_injection`, `check_direction_injection`, and `check_pagination_bounds` default to `True`.
 - Request converters: `check_field_injection`, `check_operator_injection`, `check_direction_injection`, and `check_pagination_bounds` default to `True`.
 
+SQL converters also quote identifiers in generated SQL:
 
-SQL converters quote identifiers in generated SQL. MySQL and MariaDB use escaped backticks (`` `column``name` `` for ``column`name``).
+- PostgreSQL and SQLite use escaped double quotes (`"column""name"` for `column"name`).
+- MySQL and MariaDB use escaped backticks (`` `column``name` `` for ``column`name``).
 
-For user-controlled input, pass explicit `valid_*` allowlists. Set individual `check_*` flags to `False` only for trusted, application-built criteria in tests or internal tooling.
+Filter values remain parameterized in all dialects.
+
+For user-controlled input, pass explicit `valid_*` allowlists. Do not rely on implicit defaults derived from the current
+criteria, table, or selected columns, because that would expand the allowlist with attacker-controlled field names.
+
+Set individual `check_*` flags to `False` only for trusted, application-built criteria in tests or internal tooling.
 
 ## Main Rule
 

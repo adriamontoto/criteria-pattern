@@ -231,7 +231,7 @@ SQL converter output uses the placeholder style expected by each database family
 
 When criteria comes from a URL, JSON body, form, dashboard or any other user-facing surface, treat every field, operator, direction and pagination value as untrusted.
 
-Criteria Pattern parameterizes **filter values** for SQL converters, quotes SQL identifiers per dialect, and enables allowlist validation by default. SQL identifiers cannot be safely parameterized by database drivers, so for user-facing APIs you must pass explicit `valid_*` allowlists.
+Criteria Pattern parameterizes **filter values** for SQL converters, quotes SQL identifiers per dialect, and enables allowlist validation by default. SQL identifiers still cannot be safely parameterized by database drivers, so for user-facing APIs you must pass explicit `valid_*` allowlists instead of relying on implicit defaults derived from the current criteria.
 
 Use this rule of thumb:
 

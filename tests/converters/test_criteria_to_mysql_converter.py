@@ -677,9 +677,9 @@ def test_criteria_to_mysql_converter_with_complex_empty_combination() -> None:
         table='test_table',
     )
 
-    assert (
-        query
-        == 'SELECT * FROM test_table WHERE organization_identifier = %s ORDER BY created_date DESC, identifier ASC;'
+    assert query == (
+        'SELECT * FROM `test_table` WHERE `organization_identifier` = %s '
+        'ORDER BY `created_date` DESC, `identifier` ASC;'
     )
     assert parameters == ['test']
     assert_valid_mysql_syntax(query=query, parameters=parameters)
@@ -917,6 +917,7 @@ def test_criteria_to_mysql_converter_with_table_injection_check_disabled() -> No
     filter: Filter[Any] = FilterMother.create(field='id; DROP TABLE user;', operator=Operator.EQUAL)
 
     CriteriaToMysqlConverter.convert(
+        check_table_injection=False,
         criteria=CriteriaMother.create(filters=[filter]),
         table='user; DROP TABLE user;',
         valid_tables=['user'],
@@ -963,6 +964,7 @@ def test_criteria_to_mysql_converter_with_column_injection_check_disabled() -> N
     filter: Filter[Any] = FilterMother.create(operator=Operator.EQUAL)
 
     CriteriaToMysqlConverter.convert(
+        check_column_injection=False,
         criteria=CriteriaMother.create(filters=[filter]),
         table='user',
         columns=['id; DROP TABLE user;', 'name'],
@@ -990,15 +992,16 @@ def test_criteria_to_mysql_converter_with_column_injection() -> None:
 @mark.unit_testing
 def test_criteria_to_mysql_converter_with_column_injection_with_star_invalid() -> None:
     """
-    Test CriteriaToMysqlConverter class with columns injection where columns attribute is a star and is invalid.
+    Test CriteriaToMysqlConverter class with columns injection for a non-allowlisted column.
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match=r'Invalid column specified <<<\*>>>. Valid columns are <<<id, name>>>.',
+        match=r'Invalid column specified <<<evil>>>. Valid columns are <<<id, name>>>.',
     ):
         CriteriaToMysqlConverter.convert(
-            criteria=CriteriaMother.create(),
+            criteria=CriteriaMother.empty(),
             table='user',
+            columns=['evil'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
         )
@@ -1012,7 +1015,7 @@ def test_criteria_to_mysql_converter_with_column_injection_with_star_valid() -> 
     filter: Filter[Any] = FilterMother.create(field='*', operator=Operator.EQUAL)
 
     CriteriaToMysqlConverter.convert(
-        criteria=CriteriaMother.create(filters=[filter]),
+        criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         check_column_injection=True,
         valid_columns=['*', 'id', 'name'],
@@ -1026,12 +1029,12 @@ def test_criteria_to_mysql_converter_with_column_injection_with_star_and_columns
     """
     with assert_raises(
         expected_exception=InvalidColumnError,
-        match=r'Invalid column specified <<<\*>>>. Valid columns are <<<id, name>>>.',
+        match=r'Invalid column specified <<<evil>>>. Valid columns are <<<id, name>>>.',
     ):
         CriteriaToMysqlConverter.convert(
-            criteria=CriteriaMother.create(),
+            criteria=CriteriaMother.empty(),
             table='user',
-            columns=['*', 'id', 'name'],
+            columns=['*', 'id', 'name', 'evil'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
         )
@@ -1064,6 +1067,7 @@ def test_criteria_to_mysql_converter_with_filter_field_injection_check_disabled(
     filter: Filter[Any] = FilterMother.create(field='id; DROP TABLE user;', operator=Operator.EQUAL)
 
     CriteriaToMysqlConverter.convert(
+        check_criteria_injection=False,
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name'],
@@ -1161,6 +1165,7 @@ def test_criteria_to_mysql_converter_with_operator_injection_check_disabled() ->
     filter: Filter[Any] = FilterMother.create()
 
     CriteriaToMysqlConverter.convert(
+        check_operator_injection=False,
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name'],
@@ -1259,6 +1264,7 @@ def test_criteria_to_mysql_converter_with_direction_injection_check_disabled() -
     order: Order = OrderMother.create()
 
     CriteriaToMysqlConverter.convert(
+        check_direction_injection=False,
         criteria=CriteriaMother.with_orders(orders=[order]),
         table='user',
         columns=['id', 'name'],
@@ -1726,7 +1732,11 @@ def test_criteria_to_mysql_converter_with_pagination_bounds_check_disabled() -> 
     page_number = IntegerMother.positive(max=50000)
     criteria = Criteria(page_size=page_size, page_number=page_number)
 
-    query, parameters = CriteriaToMysqlConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMysqlConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_pagination_bounds=False,
+    )
 
     expected_offset = (page_number - 1) * page_size
     expected_query = 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
