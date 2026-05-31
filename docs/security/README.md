@@ -3,6 +3,15 @@
 This guide explains how to use Criteria Pattern safely when criteria comes from user-facing inputs such as URLs, JSON
 bodies, forms, dashboards or admin tools.
 
+## Secure Defaults
+
+All converters enable validation by default:
+
+- SQL converters: `check_table_injection`, `check_column_injection`, `check_criteria_injection`, `check_operator_injection`, `check_direction_injection`, and `check_pagination_bounds` default to `True`.
+- Request converters: `check_field_injection`, `check_operator_injection`, `check_direction_injection`, and `check_pagination_bounds` default to `True`.
+
+For user-controlled input, pass explicit `valid_*` allowlists. Set individual `check_*` flags to `False` only for trusted, application-built criteria in tests or internal tooling.
+
 ## Main Rule
 
 Criteria Pattern parameterizes **filter values** in SQL converters. That protects predicate values such as `'Doe'`, `18`
@@ -16,13 +25,13 @@ names or order field names. Those values must be controlled by application code 
 | Input kind | Example | Risk | Protection |
 | --- | --- | --- | --- |
 | Filter value | `value='Doe'` | SQL value injection | Converter parameter binding |
-| Table name | `table='users'` | SQL identifier injection | `check_table_injection=True` + `valid_tables` |
-| Selected column | `columns=['name']` | SQL identifier injection | `check_column_injection=True` + `valid_columns` |
-| Filter field | `field='name'` | SQL identifier injection | request field validation + SQL criteria validation |
-| Order field | `field='created_at'` | SQL identifier injection | request field validation + SQL criteria validation |
-| Operator | `operator='CONTAINS'` | Query behavior abuse | `check_operator_injection=True` + `valid_operators` |
-| Direction | `direction='DESC'` | Query behavior abuse | `check_direction_injection=True` + `valid_directions` |
-| Page size / number | `page_size=1000000` | Expensive query or overflow | `check_pagination_bounds=True` + strict maxima |
+| Table name | `table='users'` | SQL identifier injection | `valid_tables` allowlist (enabled by default) |
+| Selected column | `columns=['name']` | SQL identifier injection | `valid_columns` allowlist (enabled by default) |
+| Filter field | `field='name'` | SQL identifier injection | request field validation + SQL criteria validation (enabled by default) |
+| Order field | `field='created_at'` | SQL identifier injection | request field validation + SQL criteria validation (enabled by default) |
+| Operator | `operator='CONTAINS'` | Query behavior abuse | `valid_operators` allowlist (enabled by default) |
+| Direction | `direction='DESC'` | Query behavior abuse | `valid_directions` allowlist (enabled by default) |
+| Page size / number | `page_size=1000000` | Expensive query or overflow | strict `max_page_size` / `max_page_number` (enabled by default) |
 
 ## Recommended Production Flow
 

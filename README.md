@@ -231,19 +231,19 @@ SQL converter output uses the placeholder style expected by each database family
 
 When criteria comes from a URL, JSON body, form, dashboard or any other user-facing surface, treat every field, operator, direction and pagination value as untrusted.
 
-Criteria Pattern parameterizes **filter values** for SQL converters, but SQL identifiers cannot be safely parameterized by database drivers. Table names, selected columns, filter fields and order fields must come from trusted code or explicit allowlists.
+Criteria Pattern parameterizes **filter values** for SQL converters and enables allowlist validation by default. SQL identifiers cannot be safely parameterized by database drivers, so for user-facing APIs you must pass explicit `valid_*` allowlists.
 
 Use this rule of thumb:
 
 | Input kind | Risk | Recommended protection |
 | --- | --- | --- |
 | Filter values like `'Doe'`, `18` or `['ACTIVE']` | SQL value injection | Handled by converter parameters |
-| Table names | SQL identifier injection | `check_table_injection=True` + `valid_tables` |
-| Selected columns | SQL identifier injection | `check_column_injection=True` + `valid_columns` |
-| Filter and order fields | SQL identifier injection | `check_field_injection=True` when parsing, then `check_criteria_injection=True` when converting |
-| Operators | Query behavior abuse | `check_operator_injection=True` + only expose needed operators |
-| Directions | Query behavior abuse | `check_direction_injection=True` + `valid_directions` |
-| Page size and page number | Expensive queries / overflow | `check_pagination_bounds=True` + small maximums |
+| Table names | SQL identifier injection | `valid_tables` allowlist (validation on by default) |
+| Selected columns | SQL identifier injection | `valid_columns` allowlist (validation on by default) |
+| Filter and order fields | SQL identifier injection | `valid_fields` when parsing; `valid_columns` when converting (validation on by default) |
+| Operators | Query behavior abuse | `valid_operators` allowlist with only the operators you expose |
+| Directions | Query behavior abuse | `valid_directions` allowlist |
+| Page size and page number | Expensive queries / overflow | strict `max_page_size` / `max_page_number` (validation on by default) |
 
 The safest user-facing flow is:
 

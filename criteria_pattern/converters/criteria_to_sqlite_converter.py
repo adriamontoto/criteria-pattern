@@ -21,7 +21,7 @@ class CriteriaToSqliteConverter:
     Convert `Criteria` objects into SQLite `SELECT` statements.
 
     The converter preserves `AND`, `OR`, and `NOT` criteria composition, quotes selected columns and table identifiers,
-    and returns named parameters suitable for SQLite `:name` placeholders. Allowlist checks are opt-in through the
+    and returns named parameters suitable for SQLite `:name` placeholders. Allowlist checks are enabled by default through the
     `check_*_injection` flags.
 
     Example:
@@ -48,12 +48,12 @@ class CriteriaToSqliteConverter:
         table: str,
         columns: Sequence[str] | None = None,
         columns_mapping: Mapping[str, str] | None = None,
-        check_table_injection: bool = False,
-        check_column_injection: bool = False,
-        check_criteria_injection: bool = False,
-        check_operator_injection: bool = False,
-        check_direction_injection: bool = False,
-        check_pagination_bounds: bool = False,
+        check_table_injection: bool = True,
+        check_column_injection: bool = True,
+        check_criteria_injection: bool = True,
+        check_operator_injection: bool = True,
+        check_direction_injection: bool = True,
+        check_pagination_bounds: bool = True,
         valid_tables: Sequence[str] | None = None,
         valid_columns: Sequence[str] | None = None,
         valid_operators: Sequence[Operator] | None = None,
