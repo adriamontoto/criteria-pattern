@@ -2,6 +2,31 @@
 
 <!-- version list -->
 
+## v4.0.0 (2026-06-01)
+
+### 🐛 Bug Fixes
+
+- Deny all fields when valid_* allowlists are omitted or empty
+  ([`47cb308`](https://github.com/adriamontoto/criteria-pattern/commit/47cb308da817631c2aad8074dc80bdb4fe821e28))
+
+- **converters**: Quote MySQL and MariaDB SQL identifiers with backticks
+  ([`8b0d188`](https://github.com/adriamontoto/criteria-pattern/commit/8b0d188e086a37dd2e42a216b7fd365ae35e1755))
+
+- **converters**: Validate criteria against mapped SQL column names
+  ([`a5f6aa8`](https://github.com/adriamontoto/criteria-pattern/commit/a5f6aa8316cfca11f6e3506219baee7427fa2421))
+
+### ✨ Features
+
+- Ensure check_*_injection to true by default
+  ([`6f2dd5c`](https://github.com/adriamontoto/criteria-pattern/commit/6f2dd5ca89f824da75dd4387ddd5119c792c2776))
+
+- **converters**: Enhance criteria converters with valid_* allowlists
+  ([`6ee2ccf`](https://github.com/adriamontoto/criteria-pattern/commit/6ee2ccfc9477109463232581ba6b7b3a288bf803))
+
+- **converters**: Implement structural bounds and LIKE wildcard escaping
+  ([`531255c`](https://github.com/adriamontoto/criteria-pattern/commit/531255c71780d2799135674e5dfc32766a1fde92))
+
+
 ## v3.11.0 (2026-05-18)
 
 ### ✨ Features
