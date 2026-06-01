@@ -25,8 +25,10 @@ SQL converters also quote identifiers in generated SQL:
 
 Filter values remain parameterized in all dialects.
 
-For user-controlled input, pass explicit `valid_*` allowlists. Do not rely on implicit defaults derived from the current
-criteria, table, or selected columns, because that would expand the allowlist with attacker-controlled field names.
+Treat each `valid_*` allowlist as a **complete** enumeration of permitted values. When a check is enabled and the
+allowlist is omitted or empty, **nothing** is allowed for that dimension: any filter field, operator, direction, or SQL
+column outside the list raises the corresponding validation error (`InvalidColumnError`, `InvalidOperatorError`, and so
+on). Pass `valid_fields=['name', 'email']` to allow only those fields, or `valid_fields=[]` to reject every field.
 
 Set individual `check_*` flags to `False` only for trusted, application-built criteria in tests or internal tooling.
 

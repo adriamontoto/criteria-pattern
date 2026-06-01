@@ -138,7 +138,7 @@ class BodyToCriteriaConverter:
 
         Raises:
             IntegrityError: If the body shape is invalid.
-            InvalidColumnError: If an invalid field name is found in filters or orders.
+            InvalidColumnError: If a field is not listed in `valid_fields`. Omitted or empty allowlists deny all fields.
             InvalidOperatorError: If an invalid operator is found in filters.
             InvalidDirectionError: If an invalid direction is found in orders.
             PaginationBoundsError: If pagination parameters exceed maximum bounds.
@@ -169,15 +169,6 @@ class BodyToCriteriaConverter:
             page_number=body_mapping.get('page_number'),
         )
 
-        effective_valid_fields = cls._default_valid_fields(criteria=criteria, valid_fields=valid_fields)
-        effective_valid_operators = cls._default_valid_operators(
-            criteria=criteria,
-            valid_operators=valid_operators,
-        )
-        effective_valid_directions = cls._default_valid_directions(
-            criteria=criteria,
-            valid_directions=valid_directions,
-        )
         if check_operator_injection and valid_operators is not None:
             cls._ensure_operator_allowlist_size(
                 operators=valid_operators,
@@ -188,14 +179,20 @@ class BodyToCriteriaConverter:
             cls._validate_criteria(
                 criteria=criteria,
                 columns_mapping={},
-                valid_columns=effective_valid_fields,
+                valid_columns=list(valid_fields) if valid_fields is not None else [],
             )
 
         if check_operator_injection:
-            cls._validate_operators(criteria=criteria, valid_operators=effective_valid_operators)
+            cls._validate_operators(
+                criteria=criteria,
+                valid_operators=list(valid_operators) if valid_operators is not None else [],
+            )
 
         if check_direction_injection:
-            cls._validate_directions(criteria=criteria, valid_directions=effective_valid_directions)
+            cls._validate_directions(
+                criteria=criteria,
+                valid_directions=list(valid_directions) if valid_directions is not None else [],
+            )
 
         if check_pagination_bounds:
             cls._validate_pagination_bounds(
@@ -298,69 +295,6 @@ class BodyToCriteriaConverter:
             raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
         if criteria.page_number is not None and criteria.page_number > max_page_number:
             raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)
-
-    @classmethod
-    def _default_valid_fields(cls, *, criteria: Criteria, valid_fields: Sequence[str] | None) -> list[str]:
-        """
-        Build the effective request field allowlist.
-
-        When `valid_fields` is omitted, allowlisted fields are derived from the parsed criteria. That default is
-        intended for trusted, application-built requests. For user-controlled request data, pass an explicit
-        `valid_fields` allowlist.
-
-        Args:
-            criteria (Criteria): Parsed criteria.
-            valid_fields (Sequence[str] | None): Caller-provided allowlist.
-
-        Returns:
-            list[str]: Effective field allowlist.
-        """
-        if valid_fields is not None:
-            return list(valid_fields)
-        fields = {filter.field for filter in criteria.filters}
-        fields.update(order.field for order in criteria.orders)
-        return sorted(fields)
-
-    @classmethod
-    def _default_valid_operators(
-        cls, *, criteria: Criteria, valid_operators: Sequence[Operator] | None
-    ) -> list[Operator]:
-        """
-        Build the effective operator allowlist.
-
-        Args:
-            criteria (Criteria): Criteria being converted.
-            valid_operators (Sequence[Operator] | None): Caller-provided allowlist.
-
-        Returns:
-            list[Operator]: Effective operator allowlist.
-        """
-        if valid_operators is not None:
-            return list(valid_operators)
-        return sorted(
-            {Operator(value=filter.operator) for filter in criteria.filters}, key=lambda operator: operator.value
-        )
-
-    @classmethod
-    def _default_valid_directions(
-        cls, *, criteria: Criteria, valid_directions: Sequence[Direction] | None
-    ) -> list[Direction]:
-        """
-        Build the effective direction allowlist.
-
-        Args:
-            criteria (Criteria): Criteria being converted.
-            valid_directions (Sequence[Direction] | None): Caller-provided allowlist.
-
-        Returns:
-            list[Direction]: Effective direction allowlist.
-        """
-        if valid_directions is not None:
-            return list(valid_directions)
-        directions = {Direction(value=order.direction) for order in criteria.orders}
-        if directions:
-            return sorted(directions, key=lambda direction: direction.value)
-        return [Direction.ASC, Direction.DESC]
 
     @classmethod
     def _validate_body(cls, *, body: Mapping[str, Any]) -> Mapping[str, Any]:

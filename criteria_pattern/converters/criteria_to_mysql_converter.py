@@ -147,42 +147,37 @@ class CriteriaToMysqlConverter:
                 operators=valid_operators,
                 limit=max_operator_allowlist,
             )
-        effective_valid_tables = cls._default_valid_tables(table=table, valid_tables=valid_tables)
-        effective_valid_columns = cls._default_valid_columns(
-            columns=columns,
-            criteria=criteria,
-            columns_mapping=columns_mapping,
-            valid_columns=valid_columns,
-        )
-        effective_valid_operators = cls._default_valid_operators(
-            criteria=criteria,
-            valid_operators=valid_operators,
-        )
-        effective_valid_directions = cls._default_valid_directions(
-            criteria=criteria,
-            valid_directions=valid_directions,
-        )
-
         if check_table_injection:
-            cls._validate_table(table=table, valid_tables=effective_valid_tables)
+            cls._validate_table(
+                table=table,
+                valid_tables=list(valid_tables) if valid_tables is not None else [table],
+            )
 
         if check_column_injection:
             cls._validate_columns(
-                columns=columns, columns_mapping=columns_mapping, valid_columns=effective_valid_columns
+                columns=columns,
+                columns_mapping=columns_mapping,
+                valid_columns=list(valid_columns) if valid_columns is not None else [],
             )
 
         if check_criteria_injection:
             cls._validate_criteria(
                 criteria=criteria,
                 columns_mapping=columns_mapping,
-                valid_columns=effective_valid_columns,
+                valid_columns=list(valid_columns) if valid_columns is not None else [],
             )
 
         if check_operator_injection:
-            cls._validate_operators(criteria=criteria, valid_operators=effective_valid_operators)
+            cls._validate_operators(
+                criteria=criteria,
+                valid_operators=list(valid_operators) if valid_operators is not None else [],
+            )
 
         if check_direction_injection:
-            cls._validate_directions(criteria=criteria, valid_directions=effective_valid_directions)
+            cls._validate_directions(
+                criteria=criteria,
+                valid_directions=list(valid_directions) if valid_directions is not None else [],
+            )
 
         if check_pagination_bounds:
             cls._validate_pagination_bounds(
@@ -622,101 +617,6 @@ class CriteriaToMysqlConverter:
             raise PaginationBoundsError(parameter='page_size', value=criteria.page_size, max_value=max_page_size)
         if criteria.page_number is not None and criteria.page_number > max_page_number:
             raise PaginationBoundsError(parameter='page_number', value=criteria.page_number, max_value=max_page_number)
-
-    @classmethod
-    def _default_valid_tables(cls, *, table: str, valid_tables: Sequence[str] | None) -> list[str]:
-        """
-        Build the effective table allowlist.
-
-        When `valid_tables` is omitted, the current `table` argument is used. Callers that accept user-controlled table
-        names must pass an explicit allowlist instead of relying on this default.
-
-        Args:
-            table (str): Table requested for the query.
-            valid_tables (Sequence[str] | None): Caller-provided allowlist.
-
-        Returns:
-            list[str]: Effective table allowlist.
-        """
-        return list(valid_tables) if valid_tables is not None else [table]
-
-    @classmethod
-    def _default_valid_columns(
-        cls,
-        *,
-        columns: Sequence[str],
-        criteria: Criteria,
-        columns_mapping: Mapping[str, str],
-        valid_columns: Sequence[str] | None,
-    ) -> list[str]:
-        """
-        Build the effective column allowlist.
-
-        When `valid_columns` is omitted, allowlisted columns are derived from selected columns, mapped SQL columns,
-        and the SQL columns resolved from the current criteria. That default is intended for trusted,
-        application-built criteria. For user-controlled criteria, pass an explicit `valid_columns` allowlist.
-
-        Args:
-            columns (Sequence[str]): Selected columns.
-            criteria (Criteria): Criteria being converted.
-            columns_mapping (Mapping[str, str]): Criteria field to SQL column mapping.
-            valid_columns (Sequence[str] | None): Caller-provided allowlist.
-
-        Returns:
-            list[str]: Effective column allowlist.
-        """
-        if valid_columns is not None:
-            return list(valid_columns)
-        allowlisted_columns = {column for column in columns if column != '*'}
-        allowlisted_columns.update(columns_mapping.values())
-        for filter in criteria.filters:
-            allowlisted_columns.add(cls._resolve_sql_column(field=filter.field, columns_mapping=columns_mapping))
-        for order in criteria.orders:
-            allowlisted_columns.add(cls._resolve_sql_column(field=order.field, columns_mapping=columns_mapping))
-        if not allowlisted_columns and any(column == '*' for column in columns):
-            return ['*']
-        return sorted(allowlisted_columns)
-
-    @classmethod
-    def _default_valid_operators(
-        cls, *, criteria: Criteria, valid_operators: Sequence[Operator] | None
-    ) -> list[Operator]:
-        """
-        Build the effective operator allowlist.
-
-        Args:
-            criteria (Criteria): Criteria being converted.
-            valid_operators (Sequence[Operator] | None): Caller-provided allowlist.
-
-        Returns:
-            list[Operator]: Effective operator allowlist.
-        """
-        if valid_operators is not None:
-            return list(valid_operators)
-        return sorted(
-            {Operator(value=filter.operator) for filter in criteria.filters}, key=lambda operator: operator.value
-        )
-
-    @classmethod
-    def _default_valid_directions(
-        cls, *, criteria: Criteria, valid_directions: Sequence[Direction] | None
-    ) -> list[Direction]:
-        """
-        Build the effective direction allowlist.
-
-        Args:
-            criteria (Criteria): Criteria being converted.
-            valid_directions (Sequence[Direction] | None): Caller-provided allowlist.
-
-        Returns:
-            list[Direction]: Effective direction allowlist.
-        """
-        if valid_directions is not None:
-            return list(valid_directions)
-        directions = {Direction(value=order.direction) for order in criteria.orders}
-        if directions:
-            return sorted(directions, key=lambda direction: direction.value)
-        return [Direction.ASC, Direction.DESC]
 
     @classmethod
     def _escape_backtick_identifier(cls, *, identifier: str) -> str:

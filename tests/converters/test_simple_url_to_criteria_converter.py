@@ -15,7 +15,11 @@ def test_simple_url_to_criteria_converter_with_empty_url() -> None:
     Test SimpleUrlToCriteriaConverter class with an empty URL.
     """
     url = 'https://api.example.com/users'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(filters=None, orders=None, page_size=None, page_number=None)
 
@@ -28,7 +32,11 @@ def test_simple_url_to_criteria_converter_with_bare_query_string() -> None:
     Test SimpleUrlToCriteriaConverter class with a bare query string.
     """
     url = 'name=Doe&age_ge=4'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -49,7 +57,11 @@ def test_simple_url_to_criteria_converter_with_explicit_equal_filter() -> None:
     Test SimpleUrlToCriteriaConverter class with an explicit EQUAL filter.
     """
     url = 'https://api.example.com/users?name_eq=Doe'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')],
@@ -67,7 +79,11 @@ def test_simple_url_to_criteria_converter_with_comparison_filters() -> None:
     Test SimpleUrlToCriteriaConverter class with comparison filters.
     """
     url = 'https://api.example.com/products?price_gt=10&price_ge=11&price_gte=12&price_lt=100&price_le=99&price_lte=98'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -98,7 +114,11 @@ def test_simple_url_to_criteria_converter_with_string_and_negation_filters() -> 
         'name_starts_with=Ad&name_not_starts_with=Jo&'
         'name_ends_with=Peris&name_not_ends_with=Doe'
     )
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -129,7 +149,11 @@ def test_simple_url_to_criteria_converter_with_in_filters() -> None:
         'https://api.example.com/users?'
         'status_in=ACTIVE,PENDING,BLOCKED&category_not_in=deprecated&category_not_in=archived'
     )
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -150,7 +174,11 @@ def test_simple_url_to_criteria_converter_with_between_filters() -> None:
     Test SimpleUrlToCriteriaConverter class with BETWEEN and NOT BETWEEN filters.
     """
     url = 'https://api.example.com/products?price_between=10,100&age_not_between=18&age_not_between=30'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -171,7 +199,11 @@ def test_simple_url_to_criteria_converter_with_null_filters() -> None:
     Test SimpleUrlToCriteriaConverter class with IS NULL and IS NOT NULL filters.
     """
     url = 'https://api.example.com/users?deleted_at_is_null=true&archived_at_is_not_null=false'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -192,7 +224,11 @@ def test_simple_url_to_criteria_converter_with_filters_and_pagination() -> None:
     Test SimpleUrlToCriteriaConverter class with filters and pagination.
     """
     url = 'https://api.example.com/users?name=Doe&page_size=20&page_number=3'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')],
@@ -210,7 +246,11 @@ def test_simple_url_to_criteria_converter_with_page_size_only() -> None:
     Test SimpleUrlToCriteriaConverter class with only page_size.
     """
     url = 'https://api.example.com/users?page_size=10'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(filters=None, orders=None, page_size=10, page_number=None)
 
@@ -228,6 +268,7 @@ def test_simple_url_to_criteria_converter_with_fields_mapping() -> None:
         fields_mapping={'full_name': 'name'},
         check_field_injection=True,
         valid_fields=['id', 'name', 'email'],
+        check_operator_injection=False,
     )
 
     expected = Criteria(
@@ -255,6 +296,7 @@ def test_simple_url_to_criteria_converter_with_invalid_field() -> None:
             url=url,
             check_field_injection=True,
             valid_fields=['id', 'name', 'email'],
+            check_operator_injection=False,
         )
 
 
@@ -273,6 +315,7 @@ def test_simple_url_to_criteria_converter_with_invalid_operator() -> None:
             url=url,
             check_operator_injection=True,
             valid_operators=[Operator.GREATER],
+            check_field_injection=False,
         )
 
 
@@ -286,6 +329,7 @@ def test_simple_url_to_criteria_converter_with_valid_operator() -> None:
         url=url,
         check_operator_injection=True,
         valid_operators=[Operator.GREATER],
+        check_field_injection=False,
     )
 
     expected = Criteria(
@@ -309,7 +353,13 @@ def test_simple_url_to_criteria_converter_with_page_size_bounds_exceeded() -> No
         expected_exception=PaginationBoundsError,
         match='Pagination <<<page_size>>> <<<50000>>> exceeds maximum allowed value <<<10000>>>.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url, check_pagination_bounds=True, max_page_size=10000)
+        SimpleUrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_size=10000,
+            check_field_injection=False,
+            check_operator_injection=False,
+        )
 
 
 @mark.unit_testing
@@ -323,6 +373,8 @@ def test_simple_url_to_criteria_converter_with_valid_pagination_bounds() -> None
         check_pagination_bounds=True,
         max_page_size=100,
         max_page_number=10,
+        check_field_injection=False,
+        check_operator_injection=False,
     )
 
     expected = Criteria(filters=None, orders=None, page_size=50, page_number=2)
@@ -341,7 +393,13 @@ def test_simple_url_to_criteria_converter_with_page_number_bounds_exceeded() -> 
         expected_exception=PaginationBoundsError,
         match='Pagination <<<page_number>>> <<<2000000>>> exceeds maximum allowed value <<<1000000>>>.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url, check_pagination_bounds=True, max_page_number=1000000)
+        SimpleUrlToCriteriaConverter.convert(
+            url=url,
+            check_pagination_bounds=True,
+            max_page_number=1000000,
+            check_field_injection=False,
+            check_operator_injection=False,
+        )
 
 
 @mark.unit_testing
@@ -355,7 +413,7 @@ def test_simple_url_to_criteria_converter_with_page_number_without_page_size() -
         expected_exception=IntegrityError,
         match='Criteria page_number <<<2>>> cannot be provided without page_size.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url)
+        SimpleUrlToCriteriaConverter.convert(url=url, check_field_injection=False, check_operator_injection=False)
 
 
 @mark.unit_testing
@@ -369,7 +427,7 @@ def test_simple_url_to_criteria_converter_with_non_numeric_page_number() -> None
         expected_exception=IntegrityError,
         match='Criteria page_number <<<two>>> must be an integer.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url)
+        SimpleUrlToCriteriaConverter.convert(url=url, check_field_injection=False, check_operator_injection=False)
 
 
 @mark.unit_testing
@@ -383,7 +441,7 @@ def test_simple_url_to_criteria_converter_with_non_numeric_page_size() -> None:
         expected_exception=IntegrityError,
         match='Criteria page_size <<<big>>> must be an integer.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url)
+        SimpleUrlToCriteriaConverter.convert(url=url, check_field_injection=False, check_operator_injection=False)
 
 
 @mark.unit_testing
@@ -392,7 +450,11 @@ def test_simple_url_to_criteria_converter_with_boolean_null_and_empty_values() -
     Test SimpleUrlToCriteriaConverter class with boolean, null and empty string values.
     """
     url = 'https://api.example.com/users?active=true&verified=false&middle_name=null&suffix='
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -418,6 +480,8 @@ def test_simple_url_to_criteria_converter_with_custom_suffix_mapping() -> None:
     criteria = SimpleUrlToCriteriaConverter.convert(
         url=url,
         suffix_operator_mapping={'_After ': Operator.GREATER},
+        check_field_injection=False,
+        check_operator_injection=False,
     )
 
     expected = Criteria(
@@ -439,6 +503,8 @@ def test_simple_url_to_criteria_converter_with_custom_suffix_override() -> None:
     criteria = SimpleUrlToCriteriaConverter.convert(
         url=url,
         suffix_operator_mapping={'eq': Operator.CONTAINS},
+        check_field_injection=False,
+        check_operator_injection=False,
     )
 
     expected = Criteria(
@@ -457,7 +523,11 @@ def test_simple_url_to_criteria_converter_with_unknown_suffix_like_field() -> No
     Test SimpleUrlToCriteriaConverter class with an unknown suffix-like field.
     """
     url = 'https://api.example.com/users?name_unknown=Doe'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[Filter(field='name_unknown', operator=Operator.EQUAL, value='Doe')],
@@ -475,7 +545,11 @@ def test_simple_url_to_criteria_converter_keeps_plus_signs_after_url_decoding() 
     Test SimpleUrlToCriteriaConverter class without double-decoding plus signs.
     """
     url = 'https://api.example.com/users?phone=%2B1-555-123-4567&name=John+Doe'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        check_field_injection=False,
+        check_operator_injection=False,
+    )
 
     expected = Criteria(
         filters=[
@@ -502,7 +576,7 @@ def test_simple_url_to_criteria_converter_with_invalid_between_values() -> None:
         match='SimpleUrlToCriteriaConverter filter <<<price_between>>> has invalid value <<<10>>> '
         'for operator <<<BETWEEN>>>.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url)
+        SimpleUrlToCriteriaConverter.convert(url=url, check_field_injection=False, check_operator_injection=False)
 
 
 @mark.unit_testing
@@ -516,4 +590,4 @@ def test_simple_url_to_criteria_converter_with_empty_in_values() -> None:
         expected_exception=IntegrityError,
         match='SimpleUrlToCriteriaConverter filter <<<status_in>>> has invalid value <<<,,>>> for operator <<<IN>>>.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url)
+        SimpleUrlToCriteriaConverter.convert(url=url, check_field_injection=False, check_operator_injection=False)

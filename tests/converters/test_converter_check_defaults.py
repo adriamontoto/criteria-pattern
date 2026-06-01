@@ -3,7 +3,7 @@ Test default security check flags on converters.
 """
 
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from pytest import mark, param, raises as assert_raises
@@ -37,6 +37,50 @@ _SQL_CONVERTERS: tuple[type, ...] = (
 SqlConverterClass = (
     type[CriteriaToMysqlConverter] | type[CriteriaToPostgresqlConverter] | type[CriteriaToSqliteConverter]
 )
+
+
+def _sql_allowlist_kwargs(
+    *,
+    criteria: Criteria,
+    table: str,
+    columns: Sequence[str] | None = None,
+    columns_mapping: Mapping[str, str] | None = None,
+    tables: Sequence[str] | None = None,
+    operators: Sequence[Operator] | None = None,
+    directions: Sequence[Direction] | None = None,
+) -> dict[str, Any]:
+    selected_columns = list(columns or ['*'])
+    mapping = columns_mapping or {}
+    allowlisted_columns = {column for column in selected_columns if column != '*'}
+    allowlisted_columns.update(mapping.values())
+    for filter in criteria.filters:
+        allowlisted_columns.add(mapping.get(filter.field, filter.field))
+    for order in criteria.orders:
+        allowlisted_columns.add(mapping.get(order.field, order.field))
+    if not allowlisted_columns and any(column == '*' for column in selected_columns):
+        allowlisted_columns.add('*')
+    resolved_operators = (
+        list(operators)
+        if operators is not None
+        else sorted(
+            {Operator(value=filter.operator) for filter in criteria.filters}, key=lambda operator: operator.value
+        )
+        or list(Operator)
+    )
+    resolved_directions = (
+        list(directions)
+        if directions is not None
+        else sorted(
+            {Direction(value=order.direction) for order in criteria.orders}, key=lambda direction: direction.value
+        )
+        or [Direction.ASC, Direction.DESC]
+    )
+    return {
+        'valid_tables': list(tables) if tables is not None else [table],
+        'valid_columns': sorted(allowlisted_columns),
+        'valid_operators': resolved_operators,
+        'valid_directions': resolved_directions,
+    }
 
 
 def _assert_check_parameter_defaults(*, convert: Callable[..., Any], check_parameters: tuple[str, ...]) -> None:
@@ -130,7 +174,7 @@ def test_body_to_criteria_converter_validates_operators_by_default() -> None:
         expected_exception=InvalidOperatorError,
         match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER>>>.',
     ):
-        BodyToCriteriaConverter.convert(body=body, valid_operators=[Operator.GREATER])
+        BodyToCriteriaConverter.convert(body=body, valid_fields=['name'], valid_operators=[Operator.GREATER])
 
 
 @mark.unit_testing
@@ -144,7 +188,7 @@ def test_body_to_criteria_converter_validates_directions_by_default() -> None:
         expected_exception=InvalidDirectionError,
         match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
     ):
-        BodyToCriteriaConverter.convert(body=body, valid_directions=[Direction.ASC])
+        BodyToCriteriaConverter.convert(body=body, valid_fields=['name'], valid_directions=[Direction.ASC])
 
 
 @mark.unit_testing
@@ -157,7 +201,7 @@ def test_body_to_criteria_converter_skips_field_validation_when_disabled() -> No
     criteria = BodyToCriteriaConverter.convert(
         body=body,
         check_field_injection=False,
-        valid_fields=['name'],
+        valid_operators=[Operator.EQUAL],
     )
 
     assert criteria.filters is not None
@@ -174,7 +218,7 @@ def test_body_to_criteria_converter_skips_operator_validation_when_disabled() ->
     criteria = BodyToCriteriaConverter.convert(
         body=body,
         check_operator_injection=False,
-        valid_operators=[Operator.GREATER],
+        valid_fields=['name'],
     )
 
     assert criteria.filters is not None
@@ -191,7 +235,7 @@ def test_body_to_criteria_converter_skips_direction_validation_when_disabled() -
     criteria = BodyToCriteriaConverter.convert(
         body=body,
         check_direction_injection=False,
-        valid_directions=[Direction.ASC],
+        valid_fields=['name'],
     )
 
     assert criteria.orders is not None
@@ -238,7 +282,11 @@ def test_url_to_criteria_converter_validates_operators_by_default() -> None:
         expected_exception=InvalidOperatorError,
         match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
     ):
-        UrlToCriteriaConverter.convert(url=url, valid_operators=[Operator.GREATER, Operator.LESS])
+        UrlToCriteriaConverter.convert(
+            url=url,
+            valid_fields=['age'],
+            valid_operators=[Operator.GREATER, Operator.LESS],
+        )
 
 
 @mark.unit_testing
@@ -252,7 +300,7 @@ def test_url_to_criteria_converter_validates_directions_by_default() -> None:
         expected_exception=InvalidDirectionError,
         match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
     ):
-        UrlToCriteriaConverter.convert(url=url, valid_directions=[Direction.ASC])
+        UrlToCriteriaConverter.convert(url=url, valid_fields=['name'], valid_directions=[Direction.ASC])
 
 
 @mark.unit_testing
@@ -294,7 +342,7 @@ def test_simple_url_to_criteria_converter_validates_operators_by_default() -> No
         expected_exception=InvalidOperatorError,
         match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER>>>.',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url, valid_operators=[Operator.GREATER])
+        SimpleUrlToCriteriaConverter.convert(url=url, valid_fields=['name'], valid_operators=[Operator.GREATER])
 
 
 @mark.unit_testing
@@ -321,7 +369,7 @@ def test_simple_url_to_criteria_converter_skips_field_validation_when_disabled()
     criteria = SimpleUrlToCriteriaConverter.convert(
         url=url,
         check_field_injection=False,
-        valid_fields=['name'],
+        valid_operators=[Operator.EQUAL],
     )
 
     assert criteria.filters is not None
@@ -338,7 +386,7 @@ def test_simple_url_to_criteria_converter_skips_operator_validation_when_disable
     criteria = SimpleUrlToCriteriaConverter.convert(
         url=url,
         check_operator_injection=False,
-        valid_operators=[Operator.GREATER],
+        valid_fields=['age'],
     )
 
     assert criteria.filters is not None
@@ -472,11 +520,14 @@ def test_sql_converter_validates_operators_by_default(*, converter: SqlConverter
         expected_exception=InvalidOperatorError,
         match='Invalid operator specified <<<EQUAL>>>. Valid operators are <<<GREATER, LESS>>>.',
     ):
+        criteria = CriteriaMother.with_filters(filters=[criteria_filter])
+        allowlists = _sql_allowlist_kwargs(criteria=criteria, table='user', columns=['id', 'name'])
+        allowlists['valid_operators'] = [Operator.GREATER, Operator.LESS]
         converter.convert(
-            criteria=CriteriaMother.with_filters(filters=[criteria_filter]),
+            criteria=criteria,
             table='user',
             columns=['id', 'name'],
-            valid_operators=[Operator.GREATER, Operator.LESS],
+            **allowlists,
         )
 
 
@@ -495,11 +546,14 @@ def test_sql_converter_validates_directions_by_default(*, converter: SqlConverte
         expected_exception=InvalidDirectionError,
         match='Invalid direction specified <<<DESC>>>. Valid directions are <<<ASC>>>.',
     ):
+        criteria = CriteriaMother.with_orders(orders=[order])
+        allowlists = _sql_allowlist_kwargs(criteria=criteria, table='user', columns=['id', 'name'])
+        allowlists['valid_directions'] = [Direction.ASC]
         converter.convert(
-            criteria=CriteriaMother.with_orders(orders=[order]),
+            criteria=criteria,
             table='user',
             columns=['id', 'name'],
-            valid_directions=[Direction.ASC],
+            **allowlists,
         )
 
 
@@ -518,4 +572,66 @@ def test_sql_converter_validates_pagination_by_default(*, converter: SqlConverte
         expected_exception=PaginationBoundsError,
         match='Pagination <<<page_size>>> <<<50000>>> exceeds maximum allowed value <<<10000>>>.',
     ):
-        converter.convert(criteria=criteria, table='user', max_page_size=10000)
+        converter.convert(
+            criteria=criteria,
+            table='user',
+            max_page_size=10000,
+            **_sql_allowlist_kwargs(criteria=criteria, table='user'),
+        )
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_rejects_fields_when_allowlist_omitted() -> None:
+    """
+    Omitted field allowlists are treated as empty complete lists, not derived from the request.
+    """
+    body = {'filters': [{'field': 'password_hash', 'operator': 'EQUAL', 'value': 'x'}]}
+
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified <<<password_hash>>>. Valid columns are <<<>>>.',
+    ):
+        BodyToCriteriaConverter.convert(body=body)
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_rejects_fields_when_allowlist_empty() -> None:
+    """
+    Empty field allowlists reject every filter and order field.
+    """
+    body = {'filters': [{'field': 'name', 'operator': 'EQUAL', 'value': 'Doe'}]}
+
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified <<<name>>>. Valid columns are <<<>>>.',
+    ):
+        BodyToCriteriaConverter.convert(body=body, valid_fields=[])
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_allows_empty_body_with_empty_field_allowlist() -> None:
+    """
+    Empty allowlists do not reject requests that contain no fields to validate.
+    """
+    criteria = BodyToCriteriaConverter.convert(body={}, valid_fields=[])
+
+    assert criteria.filters == []
+    assert criteria.orders == []
+
+
+@mark.unit_testing
+@mark.parametrize(
+    'converter',
+    [param(converter, id=converter.__name__) for converter in _SQL_CONVERTERS],
+)
+def test_sql_converter_rejects_criteria_fields_when_column_allowlist_omitted(*, converter: SqlConverterClass) -> None:
+    """
+    Omitted column allowlists are treated as empty complete lists for criteria field validation.
+    """
+    criteria = Criteria(filters=[Filter(field='secret', operator=Operator.EQUAL, value='x')])
+
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified <<<secret>>>. Valid columns are <<<>>>.',
+    ):
+        converter.convert(criteria=criteria, table='user', valid_tables=['user'])

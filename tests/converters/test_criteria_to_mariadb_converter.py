@@ -64,7 +64,16 @@ def test_criteria_to_mariadb_converter_with_empty_criteria_and_all_columns() -> 
     """
     Test CriteriaToMariadbConverter class with an empty Criteria object and all columns.
     """
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=CriteriaMother.empty(), table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=CriteriaMother.empty(),
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user`;'
     assert parameters == []
@@ -80,6 +89,12 @@ def test_criteria_to_mariadb_converter_with_empty_criteria() -> None:
         criteria=CriteriaMother.empty(),
         table='user',
         columns=['id', 'name'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name` FROM `user`;'
@@ -97,6 +112,12 @@ def test_criteria_to_mariadb_converter_with_equal_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` = %s;'
@@ -114,6 +135,12 @@ def test_criteria_to_mariadb_converter_with_not_equal_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` != %s;'
@@ -131,6 +158,12 @@ def test_criteria_to_mariadb_converter_with_greater_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` > %s;'
@@ -148,6 +181,12 @@ def test_criteria_to_mariadb_converter_with_greater_or_equal_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` >= %s;'
@@ -165,6 +204,12 @@ def test_criteria_to_mariadb_converter_with_less_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` < %s;'
@@ -182,6 +227,12 @@ def test_criteria_to_mariadb_converter_with_less_or_equal_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` <= %s;'
@@ -199,6 +250,12 @@ def test_criteria_to_mariadb_converter_with_like_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -215,6 +272,12 @@ def test_criteria_to_mariadb_converter_with_not_like_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -231,6 +294,12 @@ def test_criteria_to_mariadb_converter_with_contains_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -247,6 +316,12 @@ def test_criteria_to_mariadb_converter_with_not_contains_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -263,6 +338,12 @@ def test_criteria_to_mariadb_converter_with_starts_with_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -279,6 +360,12 @@ def test_criteria_to_mariadb_converter_with_not_starts_with_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -295,6 +382,12 @@ def test_criteria_to_mariadb_converter_with_ends_with_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -311,6 +404,12 @@ def test_criteria_to_mariadb_converter_with_not_ends_with_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert CriteriaToMariadbConverter.SQL_LIKE_ESCAPE_CLAUSE in query
@@ -327,6 +426,12 @@ def test_criteria_to_mariadb_converter_with_between_filter_list() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` BETWEEN %s AND %s;'
@@ -344,6 +449,12 @@ def test_criteria_to_mariadb_converter_with_between_filter_tuple() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` BETWEEN %s AND %s;'
@@ -361,6 +472,12 @@ def test_criteria_to_mariadb_converter_with_not_between_filter_list() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` NOT BETWEEN %s AND %s;'
@@ -378,6 +495,12 @@ def test_criteria_to_mariadb_converter_with_not_between_filter_tuple() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `age` NOT BETWEEN %s AND %s;'
@@ -395,6 +518,12 @@ def test_criteria_to_mariadb_converter_with_is_null_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `email` IS NULL;'
@@ -412,6 +541,12 @@ def test_criteria_to_mariadb_converter_with_is_not_null_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `email` IS NOT NULL;'
@@ -429,6 +564,12 @@ def test_criteria_to_mariadb_converter_with_in_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'status'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `status` FROM `user` WHERE `status` IN (%s, %s, %s);'  # noqa: E501  # fmt: skip
@@ -446,6 +587,12 @@ def test_criteria_to_mariadb_converter_with_not_in_filter() -> None:
         criteria=CriteriaMother.with_filters(filters=[filter]),
         table='user',
         columns=['id', 'name', 'status'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `status` FROM `user` WHERE `status` NOT IN (%s, %s);'
@@ -466,11 +613,23 @@ def test_criteria_to_mariadb_converter_with_and_criteria() -> None:
         criteria=criteria1 & criteria2,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
     query2, parameters2 = CriteriaToMariadbConverter.convert(
         criteria=criteria2 & criteria1,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query1 == 'SELECT * FROM `user` WHERE (`name` = %s AND `email` IS NOT NULL);'
@@ -491,10 +650,26 @@ def test_criteria_to_mariadb_converter_with_or_criteria() -> None:
     criteria1 = CriteriaMother.with_filters(filters=[filter1])
     criteria2 = CriteriaMother.with_filters(filters=[filter2])
     query1, parameters1 = CriteriaToMariadbConverter.convert(
-        criteria=criteria1 | criteria2, table='user', columns=['*']
+        criteria=criteria1 | criteria2,
+        table='user',
+        columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
     query2, parameters2 = CriteriaToMariadbConverter.convert(
-        criteria=criteria2 | criteria1, table='user', columns=['*']
+        criteria=criteria2 | criteria1,
+        table='user',
+        columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query1 == 'SELECT * FROM `user` WHERE (`name` = %s OR `email` IS NOT NULL);'
@@ -512,7 +687,17 @@ def test_criteria_to_mariadb_converter_with_not_criteria() -> None:
     """
     filter = Filter(field='name', operator=Operator.EQUAL, value='John Doe')
     criteria = CriteriaMother.with_filters(filters=[filter])
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=~criteria, table='user', columns=['*'])
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=~criteria,
+        table='user',
+        columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user` WHERE NOT (`name` = %s);'
     assert parameters == ['John Doe']
@@ -532,6 +717,12 @@ def test_criteria_to_mariadb_converter_with_and_criteria_empty_left() -> None:
         criteria=empty_criteria & criteria_with_filter,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -552,6 +743,12 @@ def test_criteria_to_mariadb_converter_with_and_criteria_empty_right() -> None:
         criteria=criteria_with_filter & empty_criteria,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -571,6 +768,12 @@ def test_criteria_to_mariadb_converter_with_and_criteria_both_empty() -> None:
         criteria=empty_criteria1 & empty_criteria2,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user`;'
@@ -591,6 +794,12 @@ def test_criteria_to_mariadb_converter_with_or_criteria_empty_left() -> None:
         criteria=empty_criteria | criteria_with_filter,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -611,6 +820,12 @@ def test_criteria_to_mariadb_converter_with_or_criteria_empty_right() -> None:
         criteria=criteria_with_filter | empty_criteria,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -630,6 +845,12 @@ def test_criteria_to_mariadb_converter_with_or_criteria_both_empty() -> None:
         criteria=empty_criteria1 | empty_criteria2,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user`;'
@@ -648,6 +869,12 @@ def test_criteria_to_mariadb_converter_with_not_empty_criteria() -> None:
         criteria=~empty_criteria,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user`;'
@@ -671,6 +898,12 @@ def test_criteria_to_mariadb_converter_with_complex_empty_combination() -> None:
     query, parameters = CriteriaToMariadbConverter.convert(
         criteria=match_by_organization & criteria,
         table='test_table',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `test_table` WHERE `organization_identifier` = %s ORDER BY `created_date` DESC, `identifier` ASC;'  # noqa: E501 # fmt: skip
@@ -696,6 +929,12 @@ def test_criteria_to_mariadb_converter_with_nested_empty_and_criteria() -> None:
         criteria=combined,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -721,6 +960,12 @@ def test_criteria_to_mariadb_converter_with_nested_empty_or_criteria() -> None:
         criteria=combined,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -745,6 +990,12 @@ def test_criteria_to_mariadb_converter_with_nested_empty_not_criteria() -> None:
         criteria=combined,
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT * FROM `user` WHERE `name` = %s;'
@@ -767,6 +1018,12 @@ def test_criteria_to_mariadb_converter_with_mixed_criteria() -> None:
         criteria=criteria1 & (criteria2 | ~criteria3),
         table='user',
         columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == "SELECT * FROM `user` WHERE (`name` = %s AND (`email` IS NOT NULL OR NOT (`age` < %s)));"  # noqa: E501 # fmt: skip
@@ -784,6 +1041,12 @@ def test_criteria_to_mariadb_converter_with_asc_order() -> None:
         criteria=CriteriaMother.with_orders(orders=[order]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` ORDER BY `name` ASC;'
@@ -801,6 +1064,12 @@ def test_criteria_to_mariadb_converter_with_desc_order() -> None:
         criteria=CriteriaMother.with_orders(orders=[order]),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` ORDER BY `name` DESC;'
@@ -816,7 +1085,17 @@ def test_criteria_to_mariadb_converter_with_multiple_orders_on_the_same_criteria
     order1 = Order(field='name', direction=Direction.ASC)
     order2 = Order(field='email', direction=Direction.DESC)
     criteria = CriteriaMother.with_orders(orders=[order1, order2])
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user', columns=['*'])
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user` ORDER BY `name` ASC, `email` DESC;'
     assert parameters == []
@@ -833,7 +1112,17 @@ def test_criteria_to_mariadb_converter_with_multiple_orders_on_different_criteri
     order3 = Order(field='email', direction=Direction.DESC)
     criteria1 = CriteriaMother.with_orders(orders=[order1, order2])
     criteria2 = CriteriaMother.with_orders(orders=[order3])
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria1 & criteria2, table='user', columns=['*'])
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria1 & criteria2,
+        table='user',
+        columns=['*'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user` ORDER BY `name` ASC, `age` ASC, `email` DESC;'
     assert parameters == []
@@ -857,6 +1146,12 @@ def test_criteria_to_mariadb_converter_with_filtered_and_ordered_criteria() -> N
         criteria=criteria1 & (criteria2 | ~criteria3),
         table='user',
         columns=['id', 'name', 'email'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == "SELECT `id`, `name`, `email` FROM `user` WHERE (`name` = %s AND (`email` IS NOT NULL OR NOT (`age` < %s))) ORDER BY `email` DESC, `name` ASC;"  # noqa: E501 # fmt: skip
@@ -876,6 +1171,12 @@ def test_criteria_to_mariadb_converter_with_columns_mapping() -> None:
         table='user',
         columns=['id', 'name', 'email'],
         columns_mapping={'full_name': 'name'},
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` = %s ORDER BY `name` ASC;'
@@ -895,6 +1196,12 @@ def test_criteria_to_mariadb_converter_with_columns_mapping_with_spaces() -> Non
         table='user',
         columns=['id', 'name', 'email'],
         columns_mapping={'full name': 'name'},
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name`, `email` FROM `user` WHERE `name` = %s ORDER BY `name` ASC;'
@@ -914,6 +1221,11 @@ def test_criteria_to_mariadb_converter_with_table_injection_check_disabled() -> 
         criteria=CriteriaMother.create(filters=[filter]),
         table='user; DROP TABLE user;',
         valid_tables=['user'],
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -931,6 +1243,11 @@ def test_criteria_to_mariadb_converter_with_table_injection() -> None:
             table='user; DROP TABLE user;',
             check_table_injection=True,
             valid_tables=['user'],
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -946,6 +1263,11 @@ def test_criteria_to_mariadb_converter_without_table_injection() -> None:
         table='user',
         check_table_injection=True,
         valid_tables=['user'],
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -961,6 +1283,11 @@ def test_criteria_to_mariadb_converter_with_column_injection_check_disabled() ->
         criteria=CriteriaMother.create(filters=[filter]),
         table='user',
         columns=['id; DROP TABLE user;', 'name'],
+        check_table_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -979,6 +1306,11 @@ def test_criteria_to_mariadb_converter_with_column_injection() -> None:
             columns=['id; DROP TABLE user;', 'name'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -997,6 +1329,11 @@ def test_criteria_to_mariadb_converter_with_column_injection_with_star_invalid()
             columns=['evil'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1012,6 +1349,11 @@ def test_criteria_to_mariadb_converter_with_column_injection_with_star_valid() -
         table='user',
         check_column_injection=True,
         valid_columns=['*', 'id', 'name'],
+        check_table_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -1030,6 +1372,11 @@ def test_criteria_to_mariadb_converter_with_column_injection_with_star_and_colum
             columns=['*', 'id', 'name', 'evil'],
             check_column_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1049,6 +1396,11 @@ def test_criteria_to_mariadb_converter_with_column_mapping_injection() -> None:
             columns_mapping={'fullname': 'name', 'id': 'id; DROP TABLE user;'},
             check_column_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1065,6 +1417,11 @@ def test_criteria_to_mariadb_converter_with_filter_field_injection_check_disable
         table='user',
         columns=['id', 'name'],
         valid_columns=['id', 'name'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -1085,6 +1442,11 @@ def test_criteria_to_mariadb_converter_with_filter_field_injection() -> None:
             columns=['id', 'name'],
             check_criteria_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1100,6 +1462,11 @@ def test_criteria_to_mariadb_converter_with_filter_value_injection() -> None:
         columns=['id', 'name'],
         check_criteria_injection=True,
         valid_columns=['id', 'name'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name` FROM `user` WHERE `id` = %s;'
@@ -1124,6 +1491,11 @@ def test_criteria_to_mariadb_converter_with_order_field_injection() -> None:
             columns=['id', 'name'],
             check_criteria_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1147,6 +1519,11 @@ def test_criteria_to_mariadb_converter_with_two_order_fields_injection() -> None
             columns=['id', 'name'],
             check_criteria_injection=True,
             valid_columns=['id', 'name'],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1163,6 +1540,11 @@ def test_criteria_to_mariadb_converter_with_operator_injection_check_disabled() 
         table='user',
         columns=['id', 'name'],
         valid_operators=[Operator.GREATER, Operator.LESS],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -1183,6 +1565,11 @@ def test_criteria_to_mariadb_converter_with_operator_injection() -> None:
             columns=['id', 'name'],
             check_operator_injection=True,
             valid_operators=[Operator.GREATER, Operator.LESS],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1199,6 +1586,11 @@ def test_criteria_to_mariadb_converter_with_valid_operator() -> None:
         columns=['id', 'name'],
         check_operator_injection=True,
         valid_operators=[Operator.GREATER, Operator.LESS],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name` FROM `user` WHERE `id` > %s;'
@@ -1224,6 +1616,11 @@ def test_criteria_to_mariadb_converter_with_multiple_filters_operator_injection(
             columns=['id', 'name'],
             check_operator_injection=True,
             valid_operators=[Operator.GREATER, Operator.LESS],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1246,6 +1643,11 @@ def test_criteria_to_mariadb_converter_with_complex_criteria_operator_injection(
             columns=['id', 'name', 'age'],
             check_operator_injection=True,
             valid_operators=[Operator.GREATER, Operator.LESS],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1262,6 +1664,11 @@ def test_criteria_to_mariadb_converter_with_direction_injection_check_disabled()
         table='user',
         columns=['id', 'name'],
         valid_directions=[Direction.ASC],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_pagination_bounds=False,
     )
 
 
@@ -1282,6 +1689,11 @@ def test_criteria_to_mariadb_converter_with_direction_injection() -> None:
             columns=['id', 'name'],
             check_direction_injection=True,
             valid_directions=[Direction.ASC],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1298,6 +1710,11 @@ def test_criteria_to_mariadb_converter_with_valid_direction() -> None:
         columns=['id', 'name'],
         check_direction_injection=True,
         valid_directions=[Direction.ASC, Direction.DESC],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_pagination_bounds=False,
     )
 
     assert query == 'SELECT `id`, `name` FROM `user` ORDER BY `id` ASC;'
@@ -1323,6 +1740,11 @@ def test_criteria_to_mariadb_converter_with_multiple_orders_direction_injection(
             columns=['id', 'name'],
             check_direction_injection=True,
             valid_directions=[Direction.ASC],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1344,6 +1766,11 @@ def test_criteria_to_mariadb_converter_with_complex_criteria_direction_injection
             columns=['id', 'name', 'age'],
             check_direction_injection=True,
             valid_directions=[Direction.ASC],
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_pagination_bounds=False,
         )
 
 
@@ -1356,7 +1783,16 @@ def test_criteria_to_mariadb_converter_with_pagination() -> None:
     page_number = IntegerMother.positive()
 
     criteria = Criteria(page_size=page_size, page_number=page_number)
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_offset = (page_number - 1) * page_size
     expected_query = 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
@@ -1372,7 +1808,16 @@ def test_criteria_to_mariadb_converter_without_pagination() -> None:
     Test CriteriaToMariadbConverter class without pagination.
     """
     criteria = Criteria()
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user`;'
     assert parameters == []
@@ -1389,7 +1834,16 @@ def test_criteria_to_mariadb_converter_with_filters_and_pagination() -> None:
 
     filter = Filter(field='name', operator=Operator.EQUAL, value='John')
     criteria = Criteria(filters=[filter], page_size=page_size, page_number=page_number)
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_offset = (page_number - 1) * page_size
     expected_query = 'SELECT * FROM `user` WHERE `name` = %s LIMIT %s OFFSET %s;'
@@ -1409,7 +1863,16 @@ def test_criteria_to_mariadb_converter_with_orders_and_pagination() -> None:
 
     order = Order(field='name', direction=Direction.ASC)
     criteria = Criteria(orders=[order], page_size=page_size, page_number=page_number)
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_offset = (page_number - 1) * page_size
     expected_query = 'SELECT * FROM `user` ORDER BY `name` ASC LIMIT %s OFFSET %s;'
@@ -1434,6 +1897,12 @@ def test_criteria_to_mariadb_converter_with_filters_orders_and_pagination() -> N
         criteria=criteria,
         table='user',
         columns=['id', 'name', 'age'],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
     )
 
     expected_offset = (page_number - 1) * page_size
@@ -1450,7 +1919,16 @@ def test_criteria_to_mariadb_converter_pagination_first_page() -> None:
     Test CriteriaToMariadbConverter class with pagination for first page.
     """
     criteria = Criteria(page_size=10, page_number=1)
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
     assert parameters == [10, 0]
@@ -1463,7 +1941,16 @@ def test_criteria_to_mariadb_converter_pagination_second_page() -> None:
     Test CriteriaToMariadbConverter class with pagination for second page.
     """
     criteria = Criteria(page_size=10, page_number=2)
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     assert query == 'SELECT * FROM `user` LIMIT %s OFFSET %s;'
     assert parameters == [10, 10]
@@ -1482,7 +1969,16 @@ def test_criteria_to_mariadb_converter_pagination_with_combined_criteria() -> No
     criteria2 = Criteria(filters=[filter2])
 
     combined_criteria = criteria1 & criteria2
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=combined_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=combined_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_offset = (3 - 1) * 20
     expected_query = 'SELECT * FROM `user` WHERE (`active` = %s AND `age` > %s) LIMIT %s OFFSET %s;'
@@ -1500,7 +1996,16 @@ def test_criteria_to_mariadb_converter_with_page_size_only() -> None:
     page_size = IntegerMother.positive()
     criteria = Criteria(page_size=page_size)
 
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` LIMIT %s;'
 
@@ -1519,7 +2024,16 @@ def test_criteria_to_mariadb_converter_with_filters_and_page_size_only() -> None
 
     criteria = Criteria(filters=[filter], page_size=page_size)
 
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = f'SELECT * FROM `user` WHERE `{filter.field}` = %s LIMIT %s;'  # noqa: S608
 
@@ -1538,7 +2052,16 @@ def test_criteria_to_mariadb_converter_with_orders_and_page_size_only() -> None:
 
     criteria = Criteria(orders=[order], page_size=page_size)
 
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = f'SELECT * FROM `user` ORDER BY `{order.field}` ASC LIMIT %s;'  # noqa: S608
 
@@ -1557,7 +2080,16 @@ def test_criteria_to_mariadb_converter_with_multiple_filters_in_same_criteria() 
     filter2 = Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')
 
     criteria = Criteria(filters=[filter1, filter2])
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_parameters = [18, '@gmail.com']
 
@@ -1579,7 +2111,16 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_has_right_no
     right_criteria = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='active')])
 
     and_criteria = left_criteria & right_criteria
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=and_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
     expected_parameters = [18, 'active', 10, 10]
@@ -1603,7 +2144,16 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_left_none_right_h
     )
 
     and_criteria = left_criteria & right_criteria
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=and_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
     expected_parameters = [18, 'active', 15, 30]
@@ -1631,7 +2181,16 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_both_have() -> No
     )
 
     and_criteria = left_criteria & right_criteria
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=and_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s) LIMIT %s OFFSET %s;'  # noqa: E501  # fmt: skip
     expected_parameters = [18, 'active', 10, 10]
@@ -1651,7 +2210,16 @@ def test_criteria_to_mariadb_converter_and_criteria_pagination_both_none() -> No
     right_criteria = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='active')])
 
     and_criteria = left_criteria & right_criteria
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=and_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=and_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` WHERE (`age` > %s AND `status` = %s);'
     expected_parameters = [18, 'active']
@@ -1675,7 +2243,16 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_has_right_non
     right_criteria = Criteria(filters=[Filter(field='status', operator=Operator.EQUAL, value='active')])
 
     or_criteria = left_criteria | right_criteria
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=or_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` WHERE (`age` > %s OR `status` = %s) LIMIT %s OFFSET %s;'
     expected_parameters = [18, 'active', 10, 10]
@@ -1699,7 +2276,16 @@ def test_criteria_to_mariadb_converter_or_criteria_pagination_left_none_right_ha
     )
 
     or_criteria = left_criteria | right_criteria
-    query, parameters = CriteriaToMariadbConverter.convert(criteria=or_criteria, table='user')
+    query, parameters = CriteriaToMariadbConverter.convert(
+        criteria=or_criteria,
+        table='user',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
 
     expected_query = 'SELECT * FROM `user` WHERE (`age` > %s OR `status` = %s) LIMIT %s OFFSET %s;'
     expected_parameters = [18, 'active', 15, 30]
@@ -1722,6 +2308,11 @@ def test_criteria_to_mariadb_converter_with_pagination_bounds_check_disabled() -
         criteria=criteria,
         table='user',
         check_pagination_bounds=False,
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
     )
 
     expected_offset = (page_number - 1) * page_size
@@ -1750,6 +2341,11 @@ def test_criteria_to_mariadb_converter_with_page_size_bounds_exceeded() -> None:
             table='user',
             check_pagination_bounds=True,
             max_page_size=0,
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
         )
 
 
@@ -1771,6 +2367,11 @@ def test_criteria_to_mariadb_converter_with_page_number_bounds_exceeded() -> Non
             table='user',
             check_pagination_bounds=True,
             max_page_number=0,
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
         )
 
 
@@ -1789,6 +2390,11 @@ def test_criteria_to_mariadb_converter_with_valid_pagination_bounds() -> None:
         check_pagination_bounds=True,
         max_page_size=10000,
         max_page_number=10000,
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
     )
 
     expected_offset = (page_number - 1) * page_size
@@ -1812,4 +2418,9 @@ def test_criteria_to_mariadb_converter_with_none_pagination_bounds_check() -> No
         check_pagination_bounds=True,
         max_page_size=IntegerMother.positive(),
         max_page_number=IntegerMother.positive(),
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
     )

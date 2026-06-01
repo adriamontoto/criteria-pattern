@@ -2,9 +2,12 @@
 Test converter structural bounds and LIKE wildcard escaping.
 """
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 from pytest import mark, raises as assert_raises
 
-from criteria_pattern import Criteria, Filter, Operator
+from criteria_pattern import Criteria, Direction, Filter, Operator
 from criteria_pattern.converters import (
     BodyToCriteriaConverter,
     CriteriaToMysqlConverter,
@@ -14,6 +17,50 @@ from criteria_pattern.converters import (
 )
 from criteria_pattern.errors import IntegrityError, PaginationBoundsError
 from criteria_pattern.models.criteria import AndCriteria
+
+
+def _sql_allowlist_kwargs(
+    *,
+    criteria: Criteria,
+    table: str,
+    columns: Sequence[str] | None = None,
+    columns_mapping: Mapping[str, str] | None = None,
+    tables: Sequence[str] | None = None,
+    operators: Sequence[Operator] | None = None,
+    directions: Sequence[Direction] | None = None,
+) -> dict[str, Any]:
+    selected_columns = list(columns or ['*'])
+    mapping = columns_mapping or {}
+    allowlisted_columns = {column for column in selected_columns if column != '*'}
+    allowlisted_columns.update(mapping.values())
+    for filter in criteria.filters:
+        allowlisted_columns.add(mapping.get(filter.field, filter.field))
+    for order in criteria.orders:
+        allowlisted_columns.add(mapping.get(order.field, order.field))
+    if not allowlisted_columns and any(column == '*' for column in selected_columns):
+        allowlisted_columns.add('*')
+    resolved_operators = (
+        list(operators)
+        if operators is not None
+        else sorted(
+            {Operator(value=filter.operator) for filter in criteria.filters}, key=lambda operator: operator.value
+        )
+        or list(Operator)
+    )
+    resolved_directions = (
+        list(directions)
+        if directions is not None
+        else sorted(
+            {Direction(value=order.direction) for order in criteria.orders}, key=lambda direction: direction.value
+        )
+        or [Direction.ASC, Direction.DESC]
+    )
+    return {
+        'valid_tables': list(tables) if tables is not None else [table],
+        'valid_columns': sorted(allowlisted_columns),
+        'valid_operators': resolved_operators,
+        'valid_directions': resolved_directions,
+    }
 
 
 @mark.unit_testing
@@ -40,7 +87,13 @@ def test_body_to_criteria_converter_rejects_too_many_filters() -> None:
         expected_exception=IntegrityError,
         match='BodyToCriteriaConverter filters exceeds maximum limit',
     ):
-        BodyToCriteriaConverter.convert(body=body, max_filters=BodyToCriteriaConverter.DEFAULT_MAX_FILTERS)
+        BodyToCriteriaConverter.convert(
+            body=body,
+            max_filters=BodyToCriteriaConverter.DEFAULT_MAX_FILTERS,
+            check_field_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+        )
 
 
 @mark.unit_testing
@@ -62,7 +115,11 @@ def test_body_to_criteria_converter_rejects_large_in_list() -> None:
         expected_exception=IntegrityError,
         match='IN values for filter',
     ):
-        BodyToCriteriaConverter.convert(body=body)
+        BodyToCriteriaConverter.convert(
+            body=body,
+            valid_fields=['status'],
+            valid_operators=[Operator.IN],
+        )
 
 
 @mark.unit_testing
@@ -77,7 +134,11 @@ def test_simple_url_to_criteria_converter_rejects_too_many_filters() -> None:
         expected_exception=IntegrityError,
         match='SimpleUrlToCriteriaConverter filters exceeds maximum limit',
     ):
-        SimpleUrlToCriteriaConverter.convert(url=url)
+        SimpleUrlToCriteriaConverter.convert(
+            url=url,
+            check_field_injection=False,
+            check_operator_injection=False,
+        )
 
 
 @mark.unit_testing
@@ -92,7 +153,7 @@ def test_url_to_criteria_converter_rejects_large_in_list() -> None:
         expected_exception=IntegrityError,
         match='exceeds maximum limit',
     ):
-        UrlToCriteriaConverter.convert(url=url)
+        UrlToCriteriaConverter.convert(url=url, valid_fields=['status'], valid_operators=[Operator.IN])
 
 
 @mark.unit_testing
@@ -108,6 +169,7 @@ def test_body_to_criteria_converter_rejects_large_operator_allowlist() -> None:
     ):
         BodyToCriteriaConverter.convert(
             body={'filters': [{'field': 'name', 'operator': 'EQUAL', 'value': 'Doe'}]},
+            valid_fields=['name'],
             valid_operators=operators,
         )
 
@@ -171,7 +233,11 @@ def test_postgresql_converter_uses_lower_default_pagination_bounds() -> None:
         expected_exception=PaginationBoundsError,
         match=f'exceeds maximum allowed value <<<{CriteriaToPostgresqlConverter.DEFAULT_MAX_PAGE_SIZE}>>>',
     ):
-        CriteriaToPostgresqlConverter.convert(criteria=criteria, table='users', valid_tables=['users'])
+        CriteriaToPostgresqlConverter.convert(
+            criteria=criteria,
+            table='users',
+            **_sql_allowlist_kwargs(criteria=criteria, table='users'),
+        )
 
 
 @mark.unit_testing
