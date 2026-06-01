@@ -86,7 +86,12 @@ from criteria_pattern.converters import CriteriaToPostgresqlConverter
 
 
 criteria = Criteria(filters=[Filter(field='name', operator=Operator.CONTAINS, value='Doe')])
-query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='users')
+query, parameters = CriteriaToPostgresqlConverter.convert(
+    criteria=criteria,
+    table='users',
+    valid_columns=['name'],
+    valid_operators=[Operator.CONTAINS],
+)
 
 assert query == 'SELECT * FROM "users" WHERE "name" LIKE \'%%\' || %(parameter_0)s || \'%%\';'
 assert parameters == {'parameter_0': 'Doe'}

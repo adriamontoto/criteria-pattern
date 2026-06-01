@@ -792,6 +792,75 @@ def test_body_to_criteria_converter_with_non_integer_page_size() -> None:
 
 
 @mark.unit_testing
+def test_body_to_criteria_converter_rejects_too_many_filters() -> None:
+    """
+    Test body converter rejects filter lists above the configured maximum.
+    """
+    body = {
+        'filters': [
+            {'field': f'field_{index}', 'operator': 'EQUAL', 'value': index}
+            for index in range(BodyToCriteriaConverter.DEFAULT_MAX_FILTERS + 1)
+        ],
+    }
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='BodyToCriteriaConverter filters exceeds maximum limit',
+    ):
+        BodyToCriteriaConverter.convert(
+            body=body,
+            max_filters=BodyToCriteriaConverter.DEFAULT_MAX_FILTERS,
+            check_field_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+        )
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_rejects_large_in_list() -> None:
+    """
+    Test body converter rejects IN lists above the configured maximum.
+    """
+    body = {
+        'filters': [
+            {
+                'field': 'status',
+                'operator': 'IN',
+                'value': list(range(BodyToCriteriaConverter.DEFAULT_MAX_IN_VALUES + 1)),
+            },
+        ],
+    }
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='IN values for filter',
+    ):
+        BodyToCriteriaConverter.convert(
+            body=body,
+            valid_fields=['status'],
+            valid_operators=[Operator.IN],
+        )
+
+
+@mark.unit_testing
+def test_body_to_criteria_converter_rejects_large_operator_allowlist() -> None:
+    """
+    Test body converter rejects explicit operator allowlists above the configured maximum.
+    """
+    operators = [Operator.EQUAL] * (BodyToCriteriaConverter.DEFAULT_MAX_OPERATOR_ALLOWLIST + 1)
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='valid_operators exceeds maximum limit',
+    ):
+        BodyToCriteriaConverter.convert(
+            body={'filters': [{'field': 'name', 'operator': 'EQUAL', 'value': 'Doe'}]},
+            valid_fields=['name'],
+            valid_operators=operators,
+        )
+
+
+@mark.unit_testing
 def test_body_to_criteria_converter_export() -> None:
     """
     Test BodyToCriteriaConverter class export.

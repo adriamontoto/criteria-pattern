@@ -2,6 +2,7 @@
 Test CriteriaToSqliteConverter class.
 """
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from object_mother_pattern import IntegerMother
@@ -11,6 +12,7 @@ from sqlglot import parse_one
 from criteria_pattern import Criteria, Direction, Filter, Operator, Order
 from criteria_pattern.converters import CriteriaToSqliteConverter
 from criteria_pattern.errors import (
+    IntegrityError,
     InvalidColumnError,
     InvalidDirectionError,
     InvalidOperatorError,
@@ -38,6 +40,50 @@ def assert_valid_sqlite_syntax(*, query: str) -> None:
 
     except Exception as exception:
         raise AssertionError('Invalid SQLite syntax.') from exception
+
+
+def _sql_allowlist_kwargs(
+    *,
+    criteria: Criteria,
+    table: str,
+    columns: Sequence[str] | None = None,
+    columns_mapping: Mapping[str, str] | None = None,
+    tables: Sequence[str] | None = None,
+    operators: Sequence[Operator] | None = None,
+    directions: Sequence[Direction] | None = None,
+) -> dict[str, Any]:
+    selected_columns = list(columns or ['*'])
+    mapping = columns_mapping or {}
+    allowlisted_columns = {column for column in selected_columns if column != '*'}
+    allowlisted_columns.update(mapping.values())
+    for filter in criteria.filters:
+        allowlisted_columns.add(mapping.get(filter.field, filter.field))
+    for order in criteria.orders:
+        allowlisted_columns.add(mapping.get(order.field, order.field))
+    if not allowlisted_columns and any(column == '*' for column in selected_columns):
+        allowlisted_columns.add('*')
+    resolved_operators = (
+        list(operators)
+        if operators is not None
+        else sorted(
+            {Operator(value=filter.operator) for filter in criteria.filters}, key=lambda operator: operator.value
+        )
+        or list(Operator)
+    )
+    resolved_directions = (
+        list(directions)
+        if directions is not None
+        else sorted(
+            {Direction(value=order.direction) for order in criteria.orders}, key=lambda direction: direction.value
+        )
+        or [Direction.ASC, Direction.DESC]
+    )
+    return {
+        'valid_tables': list(tables) if tables is not None else [table],
+        'valid_columns': sorted(allowlisted_columns),
+        'valid_operators': resolved_operators,
+        'valid_directions': resolved_directions,
+    }
 
 
 @mark.unit_testing
@@ -2406,4 +2452,202 @@ def test_criteria_to_sqlite_converter_with_none_pagination_bounds_check() -> Non
         check_criteria_injection=False,
         check_operator_injection=False,
         check_direction_injection=False,
+    )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_escape_like_pattern_value_escapes_wildcards() -> None:
+    """
+    Test SQLite converter escapes SQL wildcard characters in LIKE pattern values.
+    """
+    assert CriteriaToSqliteConverter._escape_like_pattern_value(value='100%_off') == '100\\%\\_off'
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_escapes_like_wildcards_in_contains_query() -> None:
+    """
+    Test SQLite converter escapes wildcard characters for CONTAINS filters.
+    """
+    criteria = Criteria(filters=[Filter(field='name', operator=Operator.CONTAINS, value='100%')])
+
+    query, parameters = CriteriaToSqliteConverter.convert(
+        criteria=criteria,
+        table='users',
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
+
+    assert CriteriaToSqliteConverter.SQL_LIKE_ESCAPE_CLAUSE in query
+    assert parameters == {'parameter_0': '100\\%'}
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_quote_double_quoted_identifier_escapes_embedded_quotes() -> None:
+    """
+    Test SQLite converter escapes embedded double quotes in identifiers.
+    """
+    assert CriteriaToSqliteConverter._quote_double_quoted_identifier(identifier='id" OR 1=1 --') == '"id"" OR 1=1 --"'
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_convert_escapes_embedded_double_quotes_in_generated_sql() -> None:
+    """
+    Test SQLite converter escapes double quotes in identifiers used in generated SQL.
+    """
+    malicious = 'id" OR 1=1 --'
+    criteria = Criteria(filters=[Filter(field=malicious, operator=Operator.EQUAL, value=1)])
+
+    query, _ = CriteriaToSqliteConverter.convert(
+        criteria=criteria,
+        table=malicious,
+        columns=[malicious],
+        check_table_injection=False,
+        check_column_injection=False,
+        check_criteria_injection=False,
+        check_operator_injection=False,
+        check_direction_injection=False,
+        check_pagination_bounds=False,
+    )
+
+    assert query == 'SELECT "id"" OR 1=1 --" FROM "id"" OR 1=1 --" WHERE "id"" OR 1=1 --" = :parameter_0;'
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_rejects_deep_criteria_composition() -> None:
+    """
+    Test SQLite converter rejects criteria trees deeper than the configured maximum.
+    """
+    nested = Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')])
+    for _ in range(CriteriaToSqliteConverter.DEFAULT_MAX_CRITERIA_COMPOSITION_DEPTH + 1):
+        other = Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')])
+        nested = other & nested
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='criteria composition depth',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=nested,
+            table='users',
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_rejects_default_max_page_size() -> None:
+    """
+    Test SQLite converter applies default pagination maxima when bounds checking is enabled.
+    """
+    criteria = Criteria(page_size=CriteriaToSqliteConverter.DEFAULT_MAX_PAGE_SIZE + 1, page_number=1)
+
+    with assert_raises(
+        expected_exception=PaginationBoundsError,
+        match=f'exceeds maximum allowed value <<<{CriteriaToSqliteConverter.DEFAULT_MAX_PAGE_SIZE}>>>',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='users',
+            **_sql_allowlist_kwargs(criteria=criteria, table='users'),
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_validate_criteria_rejects_unmapped_sql_column() -> None:
+    """
+    Test SQLite converter rejects mapped SQL columns that are not allowlisted.
+    """
+    criteria = Criteria(filters=[Filter(field='public_name', operator=Operator.EQUAL, value='Doe')])
+
+    with assert_raises(
+        expected_exception=InvalidColumnError,
+        match='Invalid column specified <<<secret_column>>>. Valid columns are <<<public_name>>>.',
+    ):
+        CriteriaToSqliteConverter._validate_criteria(
+            criteria=criteria,
+            columns_mapping={'public_name': 'secret_column'},
+            valid_columns=['public_name'],
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_and_criteria_depth_counts_boolean_nodes() -> None:
+    """
+    Test SQLite converter measures composed criteria depth on boolean nodes only.
+    """
+    left = Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')])
+    right = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQUAL, value=18)])
+    composed = left & right
+
+    assert CriteriaToSqliteConverter._criteria_composition_depth(criteria=composed) == 1
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_rejects_large_operator_allowlist() -> None:
+    """
+    Test SQLite converter rejects explicit operator allowlists above the configured maximum.
+    """
+    operators = [Operator.EQUAL] * (CriteriaToSqliteConverter.DEFAULT_MAX_OPERATOR_ALLOWLIST + 1)
+    criteria = Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')])
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='valid_operators exceeds maximum limit',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='users',
+            valid_operators=operators,
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_rejects_large_not_in_list_in_composed_criteria() -> None:
+    """
+    Test SQLite converter rejects NOT IN lists above the limit inside composed criteria.
+    """
+    large_values = list(range(CriteriaToSqliteConverter.DEFAULT_MAX_IN_VALUES + 1))
+    inner = Criteria(filters=[Filter(field='status', operator=Operator.NOT_IN, value=large_values)])
+    criteria = inner & Criteria(filters=[Filter(field='name', operator=Operator.EQUAL, value='Doe')])
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='IN values for field <<<status>>>',
+    ):
+        CriteriaToSqliteConverter.convert(
+            criteria=criteria,
+            table='users',
+            max_in_values=CriteriaToSqliteConverter.DEFAULT_MAX_IN_VALUES,
+            check_table_injection=False,
+            check_column_injection=False,
+            check_criteria_injection=False,
+            check_operator_injection=False,
+            check_direction_injection=False,
+            check_pagination_bounds=False,
+        )
+
+
+@mark.unit_testing
+def test_criteria_to_sqlite_converter_ignores_non_list_in_values_during_bounds_check() -> None:
+    """
+    Test SQLite converter skips IN bounds checks when the filter value is not a list or tuple.
+    """
+    criteria = Criteria(filters=[Filter(field='status', operator=Operator.IN, value='active')])
+
+    CriteriaToSqliteConverter._ensure_criteria_in_list_sizes(
+        criteria=criteria,
+        limit=CriteriaToSqliteConverter.DEFAULT_MAX_IN_VALUES,
     )

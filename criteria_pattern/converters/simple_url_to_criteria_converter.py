@@ -19,10 +19,15 @@ class SimpleUrlToCriteriaConverter:
 
     Example:
     ```python
+    from criteria_pattern import Operator
     from criteria_pattern.converters import SimpleUrlToCriteriaConverter
 
     url = 'https://api.example.com/users?name=Doe&age_ge=18&page_size=20&page_number=1'
-    criteria = SimpleUrlToCriteriaConverter.convert(url=url)
+    criteria = SimpleUrlToCriteriaConverter.convert(
+        url=url,
+        valid_fields=['name', 'age'],
+        valid_operators=[Operator.EQUAL, Operator.GREATER_OR_EQUAL],
+    )
     print(criteria)
     # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='Doe')), Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER_OR_EQUAL: 'GREATER_OR_EQUAL'>), value=FilterValue(value=18))], orders=[], page_size=20, page_number=1)
     ```
@@ -85,30 +90,32 @@ class SimpleUrlToCriteriaConverter:
         """
         Convert a URL or bare query string into criteria.
 
-        `fields_mapping` translates public field names into internal field names. `suffix_operator_mapping` can add or
-        override suffixes such as `_gte` or `_contains`. Validation flags check the parsed criteria against the provided
-        allowlists.
+        Validation is on by default. Each `valid_*` allowlist is complete; omitting it or passing `[]` denies that
+        dimension. Does not parse orders. Mapping arguments apply before validation.
 
         Args:
-            url (str): The URL containing the query string.
-            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal field names.
-            suffix_operator_mapping (Mapping[str, Operator], optional): Additional suffix-to-operator aliases.
-            check_field_injection (bool, optional): Validate parsed fields against `valid_fields`.
-            check_operator_injection (bool, optional): Validate parsed operators against `valid_operators`.
-            check_pagination_bounds (bool, optional): Validate pagination values against configured maxima.
-            valid_fields (Sequence[str], optional): Allowed parsed field names.
-            valid_operators (Sequence[Operator], optional): Allowed parsed operators.
-            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
-            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
+            url (str): URL or query string; each non-pagination parameter becomes an `AND` filter.
+            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal names.
+            suffix_operator_mapping (Mapping[str, Operator], optional): Extra suffix aliases (for example `_gte`).
+            check_field_injection (bool, optional): Validate fields against `valid_fields`. Default `True`.
+            check_operator_injection (bool, optional): Validate operators against `valid_operators`. Default `True`.
+            check_pagination_bounds (bool, optional): Cap `page_size` and `page_number`. Default `True`.
+            valid_fields (Sequence[str], optional): Allowed field names after mapping; omitted or `[]` allows none.
+            valid_operators (Sequence[Operator], optional): Allowed operators; omitted or `[]` allows none.
+            max_page_size (int, optional): Max `page_size`. Default `1000`.
+            max_page_number (int, optional): Max `page_number`. Default `10000`.
+            max_filters (int, optional): Max filter parameters (excluding pagination keys). Default `100`.
+            max_in_values (int, optional): Max values per `IN` / `NOT_IN` list. Default `100`.
+            max_operator_allowlist (int, optional): Max size of `valid_operators` when set. Default `len(Operator)`.
 
         Raises:
-            IntegrityError: If a list operator has invalid values.
-            InvalidColumnError: If an invalid field name is found in filters.
-            InvalidOperatorError: If an invalid operator is found in filters.
-            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+            IntegrityError: Unparseable parameter or exceeded a structural limit.
+            InvalidColumnError: Field not allowed when `check_field_injection` is enabled.
+            InvalidOperatorError: Operator not allowed when `check_operator_injection` is enabled.
+            PaginationBoundsError: Pagination above maxima when bounds check is enabled.
 
         Returns:
-            Criteria: The parsed criteria.
+            Criteria: Parsed criteria.
         """
         fields_mapping = fields_mapping or {}
         suffix_operator_mapping = cls._build_suffix_operator_mapping(mapping=suffix_operator_mapping)
@@ -331,6 +338,8 @@ class SimpleUrlToCriteriaConverter:
                 )
 
             except IntegrityError as exception:
+                if 'exceeds maximum limit' in str(exception):
+                    raise
                 raw_value = ','.join(values)
                 raise IntegrityError(
                     message=f'SimpleUrlToCriteriaConverter filter <<<{name}>>> has invalid value <<<{raw_value}>>> for operator <<<{operator.value}>>>.'  # noqa: E501

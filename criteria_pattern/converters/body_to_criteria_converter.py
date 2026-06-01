@@ -34,7 +34,11 @@ class BodyToCriteriaConverter:
         'page_size': 20,
         'page_number': 1,
     }
-    criteria = BodyToCriteriaConverter.convert(body=body)
+    criteria = BodyToCriteriaConverter.convert(
+        body=body,
+        valid_fields=['name', 'price'],
+        valid_operators=[Operator.EQUAL, Operator.GREATER],
+    )
     print(criteria)
     # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='Doe')), Filter(field=FilterField(value='price'), operator=FilterOperator(value=<Operator.GREATER: 'GREATER'>), value=FilterValue(value=10))], orders=[], page_size=20, page_number=1)
     ```
@@ -118,33 +122,36 @@ class BodyToCriteriaConverter:
         """
         Convert a decoded body mapping into criteria.
 
-        `fields_mapping` translates public field names into internal field names before `Filter` and `Order` objects are
-        created. `operator_mapping` can add or override accepted operator aliases. Validation flags check the parsed
-        criteria against the provided allowlists.
+        Validation is on by default. Each `valid_*` allowlist is complete; omitting it or passing `[]` denies that
+        dimension. `fields_mapping` and `operator_mapping` are applied before validation.
 
         Args:
-            body (Mapping[str, Any]): The decoded body dictionary.
-            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal field names.
-            operator_mapping (Mapping[str, Operator], optional): Additional accepted operator aliases.
-            check_field_injection (bool, optional): Validate parsed fields against `valid_fields`.
-            check_operator_injection (bool, optional): Validate parsed operators against `valid_operators`.
-            check_direction_injection (bool, optional): Validate parsed directions against `valid_directions`.
-            check_pagination_bounds (bool, optional): Validate pagination values against configured maxima.
-            valid_fields (Sequence[str], optional): Allowed parsed field names.
-            valid_operators (Sequence[Operator], optional): Allowed parsed operators.
-            valid_directions (Sequence[Direction], optional): Allowed parsed directions.
-            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
-            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
+            body (Mapping[str, Any]): Decoded body (`filters`, `orders`, `page_size`, `page_number`).
+            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal names.
+            operator_mapping (Mapping[str, Operator], optional): Extra operator aliases for the body parser.
+            check_field_injection (bool, optional): Validate fields against `valid_fields`. Default `True`.
+            check_operator_injection (bool, optional): Validate operators against `valid_operators`. Default `True`.
+            check_direction_injection (bool, optional): Validate directions against `valid_directions`. Default `True`.
+            check_pagination_bounds (bool, optional): Cap `page_size` and `page_number`. Default `True`.
+            valid_fields (Sequence[str], optional): Allowed field names after mapping; omitted or `[]` allows none.
+            valid_operators (Sequence[Operator], optional): Allowed operators; omitted or `[]` allows none.
+            valid_directions (Sequence[Direction], optional): Allowed directions; omitted or `[]` allows none.
+            max_page_size (int, optional): Max `page_size`. Default `1000`.
+            max_page_number (int, optional): Max `page_number`. Default `10000`.
+            max_filters (int, optional): Max filters in the body. Default `100`.
+            max_orders (int, optional): Max orders in the body. Default `100`.
+            max_in_values (int, optional): Max values per `IN` / `NOT_IN` list. Default `100`.
+            max_operator_allowlist (int, optional): Max size of `valid_operators` when set. Default `len(Operator)`.
 
         Raises:
-            IntegrityError: If the body shape is invalid.
-            InvalidColumnError: If a field is not listed in `valid_fields`. Omitted or empty allowlists deny all fields.
-            InvalidOperatorError: If an invalid operator is found in filters.
-            InvalidDirectionError: If an invalid direction is found in orders.
-            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+            IntegrityError: Invalid body or exceeded a structural limit.
+            InvalidColumnError: Field not allowed when `check_field_injection` is enabled.
+            InvalidOperatorError: Operator not allowed when `check_operator_injection` is enabled.
+            InvalidDirectionError: Direction not allowed when `check_direction_injection` is enabled.
+            PaginationBoundsError: Pagination above `max_page_size` or `max_page_number` when bounds check is enabled.
 
         Returns:
-            Criteria: The parsed criteria.
+            Criteria: Parsed criteria.
         """
         fields_mapping = fields_mapping or {}
         operator_mapping = cls._build_operator_mapping(mapping=operator_mapping)

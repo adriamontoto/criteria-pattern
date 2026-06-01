@@ -117,7 +117,12 @@ is_adult = Criteria(filters=[Filter(field='age', operator=Operator.GREATER_OR_EQ
 email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
 email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-query, parameters = CriteriaToPostgresqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+query, parameters = CriteriaToPostgresqlConverter.convert(
+    criteria=is_adult & (email_is_gmail | email_is_yahoo),
+    table='user',
+    valid_columns=['age', 'email'],
+    valid_operators=[Operator.GREATER_OR_EQUAL, Operator.ENDS_WITH],
+)
 print(query)
 print(parameters)
 # >>> SELECT * FROM "user" WHERE ("age" >= %(parameter_0)s AND ("email" LIKE '%%' || %(parameter_1)s OR "email" LIKE '%%' || %(parameter_2)s));
@@ -411,6 +416,7 @@ Accepted body keys are `filters`, `orders`, `page_size` and `page_number`. Unkno
 Use `UrlToCriteriaConverter` when you want an explicit URL format that can express filters, orders and pagination.
 
 ```python
+from criteria_pattern import Direction, Operator
 from criteria_pattern.converters import UrlToCriteriaConverter
 
 
@@ -422,7 +428,12 @@ url = (
     'page_size=20&page_number=1'
 )
 
-criteria = UrlToCriteriaConverter.convert(url=url)
+criteria = UrlToCriteriaConverter.convert(
+    url=url,
+    valid_fields=['name', 'age', 'created_at'],
+    valid_operators=[Operator.CONTAINS, Operator.GREATER_OR_EQUAL],
+    valid_directions=[Direction.DESC],
+)
 
 print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
 # >>> name CONTAINS Doe
@@ -469,7 +480,13 @@ class UserSearchService:
         if only_active:
             criteria = criteria & active_scope
 
-        return CriteriaToPostgresqlConverter.convert(criteria=criteria, table='users')
+        return CriteriaToPostgresqlConverter.convert(
+            criteria=criteria,
+            table='users',
+            valid_columns=['tenant_id', 'is_active', 'email', 'created_at'],
+            valid_operators=[Operator.EQUAL, Operator.ENDS_WITH],
+            valid_directions=[Direction.DESC],
+        )
 
 
 service = UserSearchService(tenant_id='tenant_123')
@@ -490,11 +507,14 @@ print(parameters)
 Use `SimpleUrlToCriteriaConverter` when you want a compact public query format where each parameter becomes one `AND` filter. Plain parameters use equality, and suffixes map to operators.
 
 ```python
+from criteria_pattern import Operator
 from criteria_pattern.converters import SimpleUrlToCriteriaConverter
 
 
 criteria = SimpleUrlToCriteriaConverter.convert(
-    url='https://api.example.com/users?name=Doe&age_gte=18&page_size=20&page_number=1'
+    url='https://api.example.com/users?name=Doe&age_gte=18&page_size=20&page_number=1',
+    valid_fields=['name', 'age'],
+    valid_operators=[Operator.EQUAL, Operator.GREATER_OR_EQUAL],
 )
 
 print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
@@ -532,7 +552,9 @@ Comma-separated values are also supported for list operators:
 
 ```python
 criteria = SimpleUrlToCriteriaConverter.convert(
-    url='https://api.example.com/users?status_in=ACTIVE,PENDING,BLOCKED'
+    url='https://api.example.com/users?status_in=ACTIVE,PENDING,BLOCKED',
+    valid_fields=['status'],
+    valid_operators=[Operator.IN],
 )
 
 print(criteria.filters[0].value)
@@ -545,6 +567,8 @@ You can map public field names to internal field names:
 criteria = SimpleUrlToCriteriaConverter.convert(
     url='https://api.example.com/users?full_name_contains=Doe',
     fields_mapping={'full_name': 'name'},
+    valid_fields=['name'],
+    valid_operators=[Operator.CONTAINS],
 )
 
 print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)
@@ -557,6 +581,8 @@ You can also extend or override URL suffixes:
 criteria = SimpleUrlToCriteriaConverter.convert(
     url='https://api.example.com/users?created_at_after=2026-05-18',
     suffix_operator_mapping={'after': Operator.GREATER},
+    valid_fields=['created_at'],
+    valid_operators=[Operator.GREATER],
 )
 
 print(criteria.filters[0].field, criteria.filters[0].operator, criteria.filters[0].value)

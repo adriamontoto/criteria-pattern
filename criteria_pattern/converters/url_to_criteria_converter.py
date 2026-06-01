@@ -27,10 +27,16 @@ class UrlToCriteriaConverter:
 
     Example:
     ```python
+    from criteria_pattern import Direction, Operator
     from criteria_pattern.converters import UrlToCriteriaConverter
 
     url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=Doe&filters[1][field]=age&filters[1][operator]=GREATER_OR_EQUAL&filters[1][value]=18&orders[1][field]=age&orders[1][direction]=DESC'
-    criteria = UrlToCriteriaConverter.convert(url=url)
+    criteria = UrlToCriteriaConverter.convert(
+        url=url,
+        valid_fields=['name', 'age'],
+        valid_operators=[Operator.EQUAL, Operator.GREATER_OR_EQUAL],
+        valid_directions=[Direction.DESC],
+    )
     print(criteria)
     # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='Doe')), Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER_OR_EQUAL: 'GREATER OR EQUAL'>), value=FilterValue(value=18))], orders=[Order(direction=OrderDirection(value=<Direction.DESC: 'DESC'>), field=OrderField(value='age'))], page_number=None, page_size=None)
     ```
@@ -97,44 +103,48 @@ class UrlToCriteriaConverter:
         """
         Convert a URL containing structured query parameters into criteria.
 
-        `fields_mapping` translates public field names into internal field names before `Filter` and `Order` objects are
-        created. Validation flags check the parsed criteria against the provided allowlists.
+        Validation is on by default. Each `valid_*` allowlist is complete; omitting it or passing `[]` denies that
+        dimension. `fields_mapping` is applied before validation.
 
         Args:
-            url (str): The URL containing the query string.
-            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal field names.
-            check_field_injection (bool, optional): Validate parsed fields against `valid_fields`.
-            check_operator_injection (bool, optional): Validate parsed operators against `valid_operators`.
-            check_direction_injection (bool, optional): Validate parsed directions against `valid_directions`.
-            check_pagination_bounds (bool, optional): Validate pagination values against configured maxima.
-            valid_fields (Sequence[str], optional): Allowed parsed field names.
-            valid_operators (Sequence[Operator], optional): Allowed parsed operators.
-            valid_directions (Sequence[Direction], optional): Allowed parsed directions.
-            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
-            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
+            url (str): URL with bracketed parameters (`filters[n][field]`, `orders[n][direction]`, etc.).
+            fields_mapping (Mapping[str, str], optional): Public field names mapped to internal names.
+            check_field_injection (bool, optional): Validate fields against `valid_fields`. Default `True`.
+            check_operator_injection (bool, optional): Validate operators against `valid_operators`. Default `True`.
+            check_direction_injection (bool, optional): Validate directions against `valid_directions`. Default `True`.
+            check_pagination_bounds (bool, optional): Cap `page_size` and `page_number`. Default `True`.
+            valid_fields (Sequence[str], optional): Allowed field names after mapping; omitted or `[]` allows none.
+            valid_operators (Sequence[Operator], optional): Allowed operators; omitted or `[]` allows none.
+            valid_directions (Sequence[Direction], optional): Allowed directions; omitted or `[]` allows none.
+            max_page_size (int, optional): Max `page_size`. Default `1000`.
+            max_page_number (int, optional): Max `page_number`. Default `10000`.
+            max_filters (int, optional): Max `filters[n]` entries. Default `100`.
+            max_orders (int, optional): Max `orders[n]` entries. Default `100`.
+            max_in_values (int, optional): Max values per `IN` / `NOT_IN` list. Default `100`.
+            max_operator_allowlist (int, optional): Max size of `valid_operators` when set. Default `len(Operator)`.
 
         Raises:
-            IntegrityError: If the filter index is not an integer.
-            IntegrityError: If the filter has missing field.
-            IntegrityError: If the filter has missing operator.
-            IntegrityError: If the filter has unsupported operator.
-            IntegrityError: If the filter has missing value.
-            IntegrityError: If the order index is not an integer.
-            IntegrityError: If the order has missing field.
-            IntegrityError: If the order has missing direction.
-            IntegrityError: If the order has unsupported direction.
-            InvalidColumnError: If an invalid field name is found in filters.
-            InvalidColumnError: If an invalid field name is found in orders.
-            InvalidOperatorError: If an invalid operator is found in filters.
-            InvalidDirectionError: If an invalid direction is found in orders.
-            PaginationBoundsError: If pagination parameters exceed maximum bounds.
+            IntegrityError: Malformed query or exceeded a structural limit.
+            InvalidColumnError: Field not allowed when `check_field_injection` is enabled.
+            InvalidOperatorError: Operator not allowed when `check_operator_injection` is enabled.
+            InvalidDirectionError: Direction not allowed when `check_direction_injection` is enabled.
+            PaginationBoundsError: Pagination above maxima when bounds check is enabled.
+
+        Returns:
+            Criteria: Parsed criteria.
 
         Example:
         ```python
+        from criteria_pattern import Direction, Operator
         from criteria_pattern.converters import UrlToCriteriaConverter
 
         url = 'https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=Doe&filters[1][field]=age&filters[1][operator]=GREATER_OR_EQUAL&filters[1][value]=18&orders[1][field]=age&orders[1][direction]=DESC'
-        criteria = UrlToCriteriaConverter.convert(url=url)
+        criteria = UrlToCriteriaConverter.convert(
+            url=url,
+            valid_fields=['name', 'age'],
+            valid_operators=[Operator.EQUAL, Operator.GREATER_OR_EQUAL],
+            valid_directions=[Direction.DESC],
+        )
         print(criteria)
         # >>> Criteria(filters=[Filter(field=FilterField(value='name'), operator=FilterOperator(value=<Operator.EQUAL: 'EQUAL'>), value=FilterValue(value='Doe')), Filter(field=FilterField(value='age'), operator=FilterOperator(value=<Operator.GREATER_OR_EQUAL: 'GREATER OR EQUAL'>), value=FilterValue(value=18))], orders=[Order(direction=OrderDirection(value=<Direction.DESC: 'DESC'>), field=OrderField(value='age'))], page_number=None, page_size=None)
         ```
@@ -331,8 +341,11 @@ class UrlToCriteriaConverter:
             except ValueError as exception:
                 raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
-            if index >= max_filters:
-                raise IntegrityError(message=f'UrlToCriteriaConverter filter <<<filters[{index}]>>> exceeds maximum limit of <<<{max_filters}>>>.')  # noqa: E501  # fmt: skip
+            cls._ensure_index_below_limit(
+                index=index,
+                limit=max_filters,
+                resource=f'filter <<<filters[{index}]>>>',
+            )
 
             bucket.setdefault(index, {})[key] = values[0]
 
@@ -490,8 +503,11 @@ class UrlToCriteriaConverter:
             except ValueError as exception:
                 raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index_string}]>>> must be an integer.') from exception  # noqa: E501  # fmt: skip
 
-            if index >= max_orders:
-                raise IntegrityError(message=f'UrlToCriteriaConverter order <<<orders[{index}]>>> exceeds maximum limit of <<<{max_orders}>>>.')  # noqa: E501  # fmt: skip
+            cls._ensure_index_below_limit(
+                index=index,
+                limit=max_orders,
+                resource=f'order <<<orders[{index}]>>>',
+            )
 
             bucket.setdefault(index, {})[key] = values[0]
 

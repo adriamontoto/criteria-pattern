@@ -33,10 +33,15 @@ class CriteriaToMysqlConverter:
     email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
     email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-    query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+    query, parameters = CriteriaToMysqlConverter.convert(
+        criteria=is_adult & (email_is_gmail | email_is_yahoo),
+        table='user',
+        valid_columns=['age', 'email'],
+        valid_operators=[Operator.GREATER_OR_EQUAL, Operator.ENDS_WITH],
+    )
     print(query)
     print(parameters)
-    # >>> SELECT * FROM user WHERE (age >= %s AND (email LIKE CONCAT('%', %s) OR email LIKE CONCAT('%', %s)));
+    # >>> SELECT * FROM `user` WHERE (`age` >= %s AND (`email` LIKE CONCAT('%%', %s) OR `email` LIKE CONCAT('%%', %s)));
     # >>> [18, '@gmail.com', '@yahoo.com']
     ```
     """  # noqa: E501  # fmt: skip
@@ -86,35 +91,37 @@ class CriteriaToMysqlConverter:
         """
         Convert criteria into a MySQL query and positional parameters.
 
-        Field names from filters and orders are resolved through `columns_mapping` before SQL is rendered. Validation
-        flags only check values against the corresponding allowlists; callers should pass allowlists whenever accepting
-        table, column, operator, direction, or pagination input from untrusted sources.
+        Filter values are parameterized. Validation is on by default. Each `valid_*` allowlist is complete; omitting it
+        or passing `[]` denies that dimension. Omitted `valid_tables` allows only the `table` argument.
 
         Args:
             criteria (Criteria): Criteria to convert.
-            table (str): Name of the table to query.
-            columns (Sequence[str], optional): Columns to select. Defaults to `['*']`.
-            columns_mapping (Mapping[str, str], optional): External field names mapped to SQL column names.
-            check_criteria_injection (bool, optional): Validate filter and order fields against `valid_columns`.
-            check_table_injection (bool, optional): Validate `table` against `valid_tables`.
-            check_column_injection (bool, optional): Validate selected columns and mapped columns against
-                `valid_columns`.
-            check_operator_injection (bool, optional): Validate filter operators against `valid_operators`.
-            check_direction_injection (bool, optional): Validate order directions against `valid_directions`.
-            check_pagination_bounds (bool, optional): Validate page size and page number against configured maxima.
-            valid_tables (Sequence[str], optional): Allowed table names.
-            valid_columns (Sequence[str], optional): Allowed selectable and criteria column names.
-            valid_operators (Sequence[Operator], optional): Allowed filter operators.
-            valid_directions (Sequence[Direction], optional): Allowed order directions.
-            max_page_size (int, optional): Maximum allowed page size when pagination validation is enabled.
-            max_page_number (int, optional): Maximum allowed page number when pagination validation is enabled.
+            table (str): Table to query.
+            columns (Sequence[str], optional): Selected columns. Default `['*']` (`'*'` skips column allowlist check).
+            columns_mapping (Mapping[str, str], optional): Criteria field to SQL column names.
+            check_table_injection (bool, optional): Validate `table` against `valid_tables`. Default `True`.
+            check_column_injection (bool, optional): Validate `columns` and mapping targets. Default `True`.
+            check_criteria_injection (bool, optional): Validate criteria fields after mapping. Default `True`.
+            check_operator_injection (bool, optional): Validate operators against `valid_operators`. Default `True`.
+            check_direction_injection (bool, optional): Validate directions against `valid_directions`. Default `True`.
+            check_pagination_bounds (bool, optional): Cap criteria pagination. Default `True`.
+            valid_tables (Sequence[str], optional): Allowed tables; omitted allows only `table`.
+            valid_columns (Sequence[str], optional): Allowed columns and criteria fields; omitted or `[]` allows none.
+            valid_operators (Sequence[Operator], optional): Allowed operators; omitted or `[]` allows none.
+            valid_directions (Sequence[Direction], optional): Allowed directions; omitted or `[]` allows none.
+            max_page_size (int, optional): Max `criteria.page_size`. Default `1000`.
+            max_page_number (int, optional): Max `criteria.page_number`. Default `10000`.
+            max_criteria_depth (int, optional): Max `AND` / `OR` / `NOT` nesting depth. Default `32`.
+            max_in_values (int, optional): Max values per `IN` / `NOT_IN` list. Default `100`.
+            max_operator_allowlist (int, optional): Max size of `valid_operators` when set. Default `len(Operator)`.
 
         Raises:
-            InvalidTableError: If the table is not in the list of valid tables (only if check_table_injection=True).
-            InvalidColumnError: If the column is not in the list of valid columns (only if check_column_injection=True).
-            InvalidOperatorError: If the operator is not in the list of valid operators (only if check_operator_injection=True).
-            InvalidDirectionError: If the direction is not in the list of valid directions (only if check_direction_injection=True).
-            PaginationBoundsError: If pagination parameters exceed maximum bounds (only if check_pagination_bounds=True).
+            IntegrityError: Limit exceeded (`max_criteria_depth`, `max_in_values`, `max_operator_allowlist`).
+            InvalidTableError: Table not allowed when `check_table_injection` is enabled.
+            InvalidColumnError: Column or field not allowed when column/criteria checks are enabled.
+            InvalidOperatorError: Operator not allowed when `check_operator_injection` is enabled.
+            InvalidDirectionError: Direction not allowed when `check_direction_injection` is enabled.
+            PaginationBoundsError: Pagination above maxima when `check_pagination_bounds` is enabled.
 
         Returns:
             tuple[str, list[Any]]: MySQL query string and positional query parameters.
@@ -128,10 +135,15 @@ class CriteriaToMysqlConverter:
         email_is_gmail = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@gmail.com')])
         email_is_yahoo = Criteria(filters=[Filter(field='email', operator=Operator.ENDS_WITH, value='@yahoo.com')])
 
-        query, parameters = CriteriaToMysqlConverter.convert(criteria=is_adult & (email_is_gmail | email_is_yahoo), table='user')
+        query, parameters = CriteriaToMysqlConverter.convert(
+            criteria=is_adult & (email_is_gmail | email_is_yahoo),
+            table='user',
+            valid_columns=['age', 'email'],
+            valid_operators=[Operator.GREATER_OR_EQUAL, Operator.ENDS_WITH],
+        )
         print(query)
         print(parameters)
-        # >>> SELECT * FROM user WHERE (age >= %s AND (email LIKE CONCAT('%', %s) OR email LIKE CONCAT('%', %s)));
+        # >>> SELECT * FROM `user` WHERE (`age` >= %s AND (`email` LIKE CONCAT('%%', %s) OR `email` LIKE CONCAT('%%', %s)));
         # >>> [18, '@gmail.com', '@yahoo.com']
         ```
         """  # noqa: E501  # fmt: skip

@@ -2175,3 +2175,36 @@ def test_url_to_criteria_converter_with_pagination_bounds_both_exceeded() -> Non
             check_operator_injection=False,
             check_direction_injection=False,
         )
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_rejects_large_in_list() -> None:
+    """
+    Test URL converter rejects IN lists above the configured maximum.
+    """
+    values = ','.join(str(index) for index in range(UrlToCriteriaConverter.DEFAULT_MAX_IN_VALUES + 1))
+    url = f'https://api.example.com/users?filters[0][field]=status&filters[0][operator]=IN&filters[0][value]={values}'
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='exceeds maximum limit',
+    ):
+        UrlToCriteriaConverter.convert(url=url, valid_fields=['status'], valid_operators=[Operator.IN])
+
+
+@mark.unit_testing
+def test_url_to_criteria_converter_rejects_large_operator_allowlist() -> None:
+    """
+    Test URL converter rejects explicit operator allowlists above the configured maximum.
+    """
+    operators = [Operator.EQUAL] * (UrlToCriteriaConverter.DEFAULT_MAX_OPERATOR_ALLOWLIST + 1)
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='valid_operators exceeds maximum limit',
+    ):
+        UrlToCriteriaConverter.convert(
+            url='https://api.example.com/users?filters[0][field]=name&filters[0][operator]=EQUAL&filters[0][value]=Doe',
+            valid_fields=['name'],
+            valid_operators=operators,
+        )

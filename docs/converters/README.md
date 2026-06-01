@@ -32,7 +32,12 @@ from criteria_pattern.converters import CriteriaToPostgresqlConverter
 
 
 criteria = Criteria(filters=[Filter(field='name', operator=Operator.CONTAINS, value='Doe')])
-query, parameters = CriteriaToPostgresqlConverter.convert(criteria=criteria, table='users')
+query, parameters = CriteriaToPostgresqlConverter.convert(
+    criteria=criteria,
+    table='users',
+    valid_columns=['name'],
+    valid_operators=[Operator.CONTAINS],
+)
 
 print(query)
 print(parameters)
@@ -55,7 +60,7 @@ Common SQL converter arguments:
 | `max_page_size` | Upper bound for page size when pagination bounds validation is enabled |
 | `max_page_number` | Upper bound for page number when pagination bounds validation is enabled |
 
-Validation flags are disabled by default. Enable them for user-facing inputs:
+Validation flags are enabled by default. Pass explicit `valid_*` allowlists for user-facing inputs:
 
 ```python
 query, parameters = CriteriaToPostgresqlConverter.convert(
@@ -89,6 +94,7 @@ Accepted top-level keys:
 - `page_number`
 
 ```python
+from criteria_pattern import Direction, Operator
 from criteria_pattern.converters import BodyToCriteriaConverter
 
 
@@ -103,6 +109,9 @@ criteria = BodyToCriteriaConverter.convert(
         'page_number': 1,
     },
     fields_mapping={'full_name': 'name'},
+    valid_fields=['name', 'status', 'created_at'],
+    valid_operators=[Operator.CONTAINS, Operator.IN],
+    valid_directions=[Direction.DESC],
 )
 ```
 
@@ -131,6 +140,8 @@ from criteria_pattern.converters import BodyToCriteriaConverter
 criteria = BodyToCriteriaConverter.convert(
     body={'filters': [{'field': 'created_at', 'operator': 'after', 'value': '2026-05-18'}]},
     operator_mapping={'after': Operator.GREATER},
+    valid_fields=['created_at'],
+    valid_operators=[Operator.GREATER],
 )
 ```
 
@@ -139,6 +150,7 @@ criteria = BodyToCriteriaConverter.convert(
 Use `UrlToCriteriaConverter` for explicit bracketed query parameters.
 
 ```python
+from criteria_pattern import Direction, Operator
 from criteria_pattern.converters import UrlToCriteriaConverter
 
 
@@ -149,7 +161,12 @@ url = (
     'page_size=20&page_number=1'
 )
 
-criteria = UrlToCriteriaConverter.convert(url=url)
+criteria = UrlToCriteriaConverter.convert(
+    url=url,
+    valid_fields=['name', 'created_at'],
+    valid_operators=[Operator.CONTAINS],
+    valid_directions=[Direction.DESC],
+)
 ```
 
 Supported parameter groups:
@@ -170,10 +187,15 @@ Use `SimpleUrlToCriteriaConverter` for compact public query formats where each n
 filter. It accepts a full URL or a bare query string.
 
 ```python
+from criteria_pattern import Operator
 from criteria_pattern.converters import SimpleUrlToCriteriaConverter
 
 
-criteria = SimpleUrlToCriteriaConverter.convert(url='name=Doe&age_gte=18&page_size=20&page_number=1')
+criteria = SimpleUrlToCriteriaConverter.convert(
+    url='name=Doe&age_gte=18&page_size=20&page_number=1',
+    valid_fields=['name', 'age'],
+    valid_operators=[Operator.EQUAL, Operator.GREATER_OR_EQUAL],
+)
 ```
 
 Common suffixes:
@@ -194,7 +216,14 @@ Common suffixes:
 List and range operators can use comma-separated values or repeated query parameters:
 
 ```python
-criteria = SimpleUrlToCriteriaConverter.convert(url='status_in=ACTIVE,PENDING&price_between=10,100')
+from criteria_pattern import Operator
+from criteria_pattern.converters import SimpleUrlToCriteriaConverter
+
+criteria = SimpleUrlToCriteriaConverter.convert(
+    url='status_in=ACTIVE,PENDING&price_between=10,100',
+    valid_fields=['status', 'price'],
+    valid_operators=[Operator.IN, Operator.BETWEEN],
+)
 ```
 
 `SimpleUrlToCriteriaConverter` does not parse orders. Use `UrlToCriteriaConverter` or `BodyToCriteriaConverter` when the
@@ -216,10 +245,16 @@ criteria = BodyToCriteriaConverter.convert(
 SQL converters use `columns_mapping` to translate criteria fields into SQL column names during rendering:
 
 ```python
+from criteria_pattern import Direction, Operator
+from criteria_pattern.converters import CriteriaToPostgresqlConverter
+
 query, parameters = CriteriaToPostgresqlConverter.convert(
     criteria=criteria,
     table='users',
     columns_mapping={'name': 'user_name'},
+    valid_columns=['user_name'],
+    valid_operators=[Operator.CONTAINS],
+    valid_directions=[Direction.DESC],
 )
 ```
 

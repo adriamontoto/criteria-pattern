@@ -591,3 +591,59 @@ def test_simple_url_to_criteria_converter_with_empty_in_values() -> None:
         match='SimpleUrlToCriteriaConverter filter <<<status_in>>> has invalid value <<<,,>>> for operator <<<IN>>>.',
     ):
         SimpleUrlToCriteriaConverter.convert(url=url, check_field_injection=False, check_operator_injection=False)
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_rejects_too_many_filters() -> None:
+    """
+    Test simple URL converter rejects too many query-parameter filters.
+    """
+    query = '&'.join(f'field_{index}=value' for index in range(SimpleUrlToCriteriaConverter.DEFAULT_MAX_FILTERS + 1))
+    url = f'https://api.example.com/users?{query}'
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='SimpleUrlToCriteriaConverter filters exceeds maximum limit',
+    ):
+        SimpleUrlToCriteriaConverter.convert(
+            url=url,
+            check_field_injection=False,
+            check_operator_injection=False,
+        )
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_rejects_large_in_list() -> None:
+    """
+    Test simple URL converter rejects IN lists above the configured maximum.
+    """
+    values = ','.join(str(index) for index in range(SimpleUrlToCriteriaConverter.DEFAULT_MAX_IN_VALUES + 1))
+    url = f'https://api.example.com/users?status_in={values}'
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='exceeds maximum limit',
+    ):
+        SimpleUrlToCriteriaConverter.convert(
+            url=url,
+            valid_fields=['status'],
+            valid_operators=[Operator.IN],
+        )
+
+
+@mark.unit_testing
+def test_simple_url_to_criteria_converter_rejects_large_operator_allowlist() -> None:
+    """
+    Test simple URL converter rejects explicit operator allowlists above the configured maximum.
+    """
+    operators = [Operator.EQUAL] * (SimpleUrlToCriteriaConverter.DEFAULT_MAX_OPERATOR_ALLOWLIST + 1)
+
+    with assert_raises(
+        expected_exception=IntegrityError,
+        match='valid_operators exceeds maximum limit',
+    ):
+        SimpleUrlToCriteriaConverter.convert(
+            url='https://api.example.com/users?name=Doe',
+            valid_fields=['name'],
+            valid_operators=operators,
+        )
