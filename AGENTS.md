@@ -56,6 +56,9 @@ There is no database, message broker, or application server to start.
 - Keep changes scoped to the requested behavior; avoid unrelated cleanup.
 - Add or update tests for behavior changes.
 - For public API changes, update exports in `criteria_pattern/__init__.py` or package `__init__.py` files as needed.
+- For public API, converter, operator, direction, security, documentation, or release-behavior changes, update the
+  installable AI skill under `skills/criteria-pattern/`, update its evals when behavior changes, and regenerate
+  `skills/criteria-pattern.skill`.
 - Keep `criteria_pattern/py.typed` present so package typing remains advertised.
 - This repository currently has no lockfile; avoid introducing dependency lockfile churn unless the task is explicitly about dependency management.
 - `make clean` removes configured virtual environments, caches, coverage files, and generated output. Treat it as destructive and do not run it unless the task calls for cleanup.

@@ -63,6 +63,15 @@ You can install **Criteria Pattern** using `pip`:
 pip install criteria-pattern
 ```
 
+You can install the companion AI-agent skill from [skills.sh](https://www.skills.sh/) with Vercel's `skills` CLI:
+
+```bash
+npx skills add adriamontoto/criteria-pattern
+```
+
+Review the skill source in [`skills/criteria-pattern`](skills/criteria-pattern) before installing it in sensitive
+environments.
+
 <p align="right">
     <a href="#readme-top">🔼 Back to top</a>
 </p><br><br>
@@ -77,6 +86,8 @@ The root README is the entry point. Deeper guides live in this repository and ar
 - [`🔄 Converter Guide`](docs/converters/README.md): SQL converters, request converters, placeholder styles and mapping.
 - [`🔐 Security Guide`](docs/security/README.md): User-facing criteria safety and injection prevention.
 - [`🧪 Testing Guide`](docs/testing/README.md): Object mother helpers and testing recommendations.
+- [`AI Skill`](skills/README.md): Installable skill package that teaches AI agents how to use Criteria Pattern
+  safely.
 
 This [project's DeepWiki documentation](https://deepwiki.com/adriamontoto/criteria-pattern) is also available for generated repository navigation.
 
