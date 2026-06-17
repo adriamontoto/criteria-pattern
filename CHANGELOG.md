@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v4.1.0 (2026-06-17)
+
+### ✨ Features
+
+- Implement criteria-pattern skill for AI agents
+  ([`e317700`](https://github.com/adriamontoto/criteria-pattern/commit/e317700408894bf91c5d8f20fe2f0591174473a6))
+
+
 ## v4.0.0 (2026-06-01)
 
 ### 🐛 Bug Fixes
