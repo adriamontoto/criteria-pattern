@@ -12,3 +12,4 @@ htmlcov/
 
 # environment folders
 **.venv**
+**.agents/skills**

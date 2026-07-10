@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "object-mother-pattern": {
+      "source": "adriamontoto/object-mother-pattern",
+      "sourceType": "github",
+      "skillPath": "skills/object-mother-pattern/SKILL.md",
+      "computedHash": "7ca22272a3743b0003a00d9655a654a263423580f790af321b3441e021ad3839"
+    },
+    "value-object-pattern": {
+      "source": "adriamontoto/value-object-pattern",
+      "sourceType": "github",
+      "skillPath": "skills/value-object-pattern/SKILL.md",
+      "computedHash": "4fd3b31aa09089fb4b54f90b6725e238d1e82ea602a0893b8249628e09b3dd94"
+    }
+  }
+}
