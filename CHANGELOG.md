@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v4.1.1 (2026-09-04)
+
+### 📦 Build System
+
+- Use ty instead of mypy
+  ([`63ea2d5`](https://github.com/adriamontoto/criteria-pattern/commit/63ea2d5c55b2beeebe7ece5ec3a46e6c96441528))
+
+
 ## v4.1.0 (2026-06-17)
 
 ### ✨ Features
