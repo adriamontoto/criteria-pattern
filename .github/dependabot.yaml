@@ -2,15 +2,62 @@ version: 2
 
 updates:
   - package-ecosystem: github-actions
-    directory: '/'
+    directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
+      time: '06:00'
     commit-message:
       prefix: 'ci:'
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    cooldown:
+      default-days: 7
 
-  - package-ecosystem: pip
-    directory: '/'
+  - package-ecosystem: pre-commit
+    directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
+      time: '06:00'
+    commit-message:
+      prefix: 'ci:'
+    groups:
+      pre-commit-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: uv
+    directory: /
+    versioning-strategy: increase-if-necessary
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
     commit-message:
       prefix: 'build:'
+    groups:
+      uv-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
