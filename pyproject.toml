@@ -53,7 +53,7 @@ Issues = 'https://github.com/adriamontoto/criteria-pattern/issues'
 coverage = ['coverage[toml]>=7.0.0', 'smokeshow>=0.5.0']
 develop = ['pre-commit>=3.1.0']
 format = ['ruff>=0.11.10']
-lint = ['ruff>=0.11.10', 'mypy[reports]>=1.0.0', { include-group = 'test' }]
+lint = ['ruff>=0.11.10', 'ty>=0.0.77', { include-group = 'test' }]
 release = ['build>=1.2.2', 'python-semantic-release>=10.0.2']
 test = [
     'pytest>=8.0.0',
@@ -124,6 +124,7 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 select = [
+    'ANN',  # flake8-annotations
     'F',    # pyflakes
     'S',    # flake8-bandit
     'B',    # flake8-bugbear
@@ -134,6 +135,7 @@ select = [
     'C90',  # mccabe
     'N',    # pep8-naming
     'PERF', # perflint
+    'PYI',  # flake8-pyi
     'E',    # pycodestyle
     'W',    # pycodestyle
     'D',    # pydocstyle
@@ -179,15 +181,11 @@ known-first-party = ['criteria_pattern']
 combine-as-imports = true
 
 
-[tool.mypy]
-strict = true
-warn_unreachable = true
-enable_error_code = [
-    'redundant-expr',
-    'possibly-undefined',
-    'truthy-bool',
-    'explicit-override',
-]
+[tool.ty.rules]
+missing-override-decorator = 'error'
+missing-type-argument = 'error'
+possibly-unresolved-reference = 'warn'
+unsound-return-statement = 'error'
 
 
 [tool.semantic_release]

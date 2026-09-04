@@ -221,7 +221,7 @@ class CriteriaToMysqlConverter:
             parameters_counter += 1
 
         if criteria.has_pagination():
-            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[operator]
+            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[ty:unsupported-operator]
             parameters.append(offset_value)
             query += ' OFFSET %s'
             parameters_counter += 1
@@ -670,15 +670,15 @@ class CriteriaToMysqlConverter:
         return '.'.join(cls._quote_backtick_identifier(identifier=part) for part in name.split('.'))
 
     @classmethod
-    def _escape_like_pattern_value(cls, *, value: Any) -> Any:
+    def _escape_like_pattern_value(cls, *, value: object) -> object:
         """
         Escape SQL LIKE wildcard characters in a bound parameter value.
 
         Args:
-            value (Any): Filter value to escape.
+            value (object): Filter value to escape.
 
         Returns:
-            Any: Escaped string values, or the original value for non-strings.
+            object: Escaped string values, or the original value for non-strings.
         """
         if not isinstance(value, str):
             return value

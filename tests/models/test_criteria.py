@@ -57,7 +57,7 @@ def test_criteria_model_repr_method_happy_path() -> None:
         page_number=criteria_value.page_number,
     )
 
-    assert repr(criteria) == f'Criteria(filters={Filters(value=criteria_value.filters)!r}, orders={Orders(value=criteria_value.orders)!r}, page_number={PageNumber(value=criteria_value.page_number)!r}, page_size={PageSize(value=criteria_value.page_size)!r})'  # type: ignore[arg-type]  # noqa: E501  # fmt: skip
+    assert repr(criteria) == f'Criteria(filters={Filters(value=criteria_value.filters)!r}, orders={Orders(value=criteria_value.orders)!r}, page_number={PageNumber(value=criteria_value.page_number)!r}, page_size={PageSize(value=criteria_value.page_size)!r})'  # type: ignore[ty:invalid-argument-type]  # noqa: E501  # fmt: skip
 
 
 @mark.unit_testing
@@ -73,10 +73,7 @@ def test_criteria_model_str_method_happy_path() -> None:
         page_size=10,
         page_number=1,
     )
-    expected = (
-        f"Criteria(filters=[{{'field': 'name', 'operator': {Operator.EQUAL!r}, 'value': 'John'}}], "
-        f"orders=[{{'field': 'name', 'direction': {Direction.ASC!r}}}], page_number=1, page_size=10)"
-    )
+    expected = "Criteria(filters=['Filter(field=name, operator=EQUAL, value=John)'], orders=['Order(direction=ASC, field=name)'], page_number=1, page_size=10)"  # noqa: E501
 
     assert str(criteria) == expected
 

@@ -375,7 +375,7 @@ class SimpleUrlToCriteriaConverter:
         return name, suffix_operator_mapping['']
 
     @classmethod
-    def _parse_filter_value(cls, *, raw_values: Sequence[str], operator: Operator, max_in_values: int) -> Any:
+    def _parse_filter_value(cls, *, raw_values: Sequence[str], operator: Operator, max_in_values: int) -> object:
         """
         Parse the raw filter values based on the operator.
 
@@ -387,7 +387,7 @@ class SimpleUrlToCriteriaConverter:
             IntegrityError: If raw values are invalid for the operator.
 
         Returns:
-            Any: The parsed filter value.
+            object: The parsed filter value.
         """
         if operator in (Operator.IS_NULL, Operator.IS_NOT_NULL):
             return None
@@ -472,7 +472,7 @@ class SimpleUrlToCriteriaConverter:
         return parts
 
     @staticmethod
-    def _convert_primitive(*, value: str) -> Any:
+    def _convert_primitive(*, value: str) -> object:
         """
         Convert a raw string value to a primitive Python type.
 
@@ -480,7 +480,7 @@ class SimpleUrlToCriteriaConverter:
             value (str): The raw string value to convert.
 
         Returns:
-            Any: The converted primitive value.
+            object: The converted primitive value.
         """
         lower_value = value.lower()
         if lower_value in ('true', 'false'):
@@ -525,7 +525,7 @@ class SimpleUrlToCriteriaConverter:
             return int(values[0])
 
         except ValueError:
-            return values[0]  # type: ignore[return-value]
+            return values[0]  # type: ignore[ty:invalid-return-type]
 
     @classmethod
     def _parse_page_size(cls, *, query_parameters: Mapping[str, Sequence[str]]) -> int | None:
@@ -546,7 +546,7 @@ class SimpleUrlToCriteriaConverter:
             return int(values[0])
 
         except ValueError:
-            return values[0]  # type: ignore[return-value]
+            return values[0]  # type: ignore[ty:invalid-return-type]
 
     @classmethod
     def _ensure_index_below_limit(cls, *, index: int, limit: int, resource: str) -> None:

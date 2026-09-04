@@ -108,4 +108,4 @@ class Orders(ListValueObject[Order]):
         Raises:
             IntegrityError: If the `value` is not of type `T`.
         """
-        raise IntegrityError(message=f'ListValueObject value <<<{value}>>> must be of type <<<{self._type.__name__}>>> type. Got <<<{type(value).__name__}>>> type.')  # type: ignore[attr-defined]  # noqa: E501  # fmt: skip
+        raise IntegrityError(message=f'ListValueObject value <<<{value}>>> must be of type <<<{self._type.__name__}>>> type. Got <<<{type(value).__name__}>>> type.')  # type: ignore[ty:unresolved-attribute]  # noqa: E501  # fmt: skip

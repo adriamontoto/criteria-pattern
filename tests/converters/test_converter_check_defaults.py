@@ -87,7 +87,7 @@ def _assert_check_parameter_defaults(*, convert: Callable[..., Any], check_param
     signature = inspect.signature(convert)
     for name in check_parameters:
         parameter = signature.parameters[name]
-        assert parameter.default is True, f'{convert.__qualname__}.{name} must default to True'
+        assert parameter.default is True, f'{convert.__qualname__}.{name} must default to True'  # type: ignore[ty:unresolved-attribute]
 
 
 _REQUEST_CHECK_PARAMETERS: tuple[str, ...] = (

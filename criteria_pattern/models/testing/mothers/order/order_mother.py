@@ -33,7 +33,7 @@ class OrderMother(BaseMother[Order]):
 
     @classmethod
     @override
-    def create(cls, *, field: str | None = None, direction: str | None = None) -> Order:  # type: ignore[override]
+    def create(cls, *, field: str | None = None, direction: str | None = None) -> Order:  # type: ignore[ty:invalid-method-override]
         """
         Create a random order value. If specific order parameters are provided via `field` and `direction`,
         they are used to create the order after validation. Otherwise, a random order value is generated.

@@ -224,7 +224,7 @@ class CriteriaToPostgresqlConverter:
 
         if criteria.has_pagination():
             offset_parameter = f'offset_{parameters_counter}'
-            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[operator]
+            offset_value = criteria.page_size * (criteria.page_number - 1)  # type: ignore[ty:unsupported-operator]
             parameters[offset_parameter] = offset_value
             query += f' OFFSET %({offset_parameter})s'
             parameters_counter += 1
@@ -689,15 +689,15 @@ class CriteriaToPostgresqlConverter:
         return '.'.join(cls._quote_double_quoted_identifier(identifier=part) for part in name.split('.'))
 
     @classmethod
-    def _escape_like_pattern_value(cls, *, value: Any) -> Any:
+    def _escape_like_pattern_value(cls, *, value: object) -> object:
         """
         Escape SQL LIKE wildcard characters in a bound parameter value.
 
         Args:
-            value (Any): Filter value to escape.
+            value (object): Filter value to escape.
 
         Returns:
-            Any: Escaped string values, or the original value for non-strings.
+            object: Escaped string values, or the original value for non-strings.
         """
         if not isinstance(value, str):
             return value

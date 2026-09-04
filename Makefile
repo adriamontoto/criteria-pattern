@@ -129,11 +129,11 @@ lint: # It automatically lints code
 	@echo -e "\n⌛ Linting project code...\n"
 
 	@set -e; \
-	mypy_exit=0; \
+	ty_exit=0; \
 	ruff_exit=0; \
-	$(PYTHON_BIN) -m mypy $(FULL_SOURCES) --config-file $(CONFIGURATION_FILE) || mypy_exit=$$?; \
+	$(PYTHON_BIN) -m ty check $(FULL_SOURCES) --python $(PYTHON_BIN) || ty_exit=$$?; \
 	$(PYTHON_BIN) -m ruff check $(FULL_SOURCES) --config $(CONFIGURATION_FILE) --no-fix || ruff_exit=$$?; \
-	exit $$(( mypy_exit || ruff_exit ))
+	exit $$(( ty_exit || ruff_exit ))
 
 	@echo -e "\n✅ Code linted correctly.\n"
 

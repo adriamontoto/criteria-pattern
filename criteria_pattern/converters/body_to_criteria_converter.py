@@ -330,7 +330,7 @@ class BodyToCriteriaConverter:
                 message=f'BodyToCriteriaConverter body keys <<<{", ".join(str(key) for key in invalid_keys)}>>> must be strings.'  # noqa: E501
             )
 
-        typed_body = cast(Mapping[str, Any], body_mapping)
+        typed_body = body_mapping
         cls._validate_keys(
             keys=set(typed_body),
             allowed_keys=cls._ALLOWED_BODY_KEYS,
@@ -379,7 +379,7 @@ class BodyToCriteriaConverter:
     def _parse_filters(
         cls,
         *,
-        value: Any,
+        value: object,
         fields_mapping: Mapping[str, str],
         operator_mapping: Mapping[str, Operator],
         max_filters: int,
@@ -389,7 +389,7 @@ class BodyToCriteriaConverter:
         Parse body filters into `Filter` objects.
 
         Args:
-            value (Any): The raw filters body value.
+            value (object): The raw filters body value.
             fields_mapping (Mapping[str, str]): The mapping of external to internal field names.
             operator_mapping (Mapping[str, Operator]): The operator mapping.
 
@@ -438,12 +438,12 @@ class BodyToCriteriaConverter:
         return filters
 
     @classmethod
-    def _validate_filter_body(cls, *, value: Any, index: int) -> Mapping[str, Any]:
+    def _validate_filter_body(cls, *, value: object, index: int) -> Mapping[str, Any]:
         """
         Validate a filter body.
 
         Args:
-            value (Any): The raw filter body value.
+            value (object): The raw filter body value.
             index (int): The filter index.
 
         Raises:
@@ -465,7 +465,7 @@ class BodyToCriteriaConverter:
     def _parse_operator(
         cls,
         *,
-        value: Any,
+        value: object,
         index: int,
         operator_mapping: Mapping[str, Operator],
     ) -> Operator:
@@ -473,7 +473,7 @@ class BodyToCriteriaConverter:
         Parse a filter operator.
 
         Args:
-            value (Any): The raw operator value.
+            value (object): The raw operator value.
             index (int): The filter index.
             operator_mapping (Mapping[str, Operator]): The operator mapping.
 
@@ -500,12 +500,12 @@ class BodyToCriteriaConverter:
         return operator
 
     @classmethod
-    def _parse_filter_value(cls, *, value: Any, operator: Operator, index: int, max_in_values: int) -> Any:
+    def _parse_filter_value(cls, *, value: object, operator: Operator, index: int, max_in_values: int) -> object:
         """
         Parse a filter value according to operator value-shape requirements.
 
         Args:
-            value (Any): The raw filter value.
+            value (object): The raw filter value.
             operator (Operator): The parsed operator.
             index (int): The filter index.
 
@@ -513,7 +513,7 @@ class BodyToCriteriaConverter:
             IntegrityError: If the filter value is invalid.
 
         Returns:
-            Any: The parsed filter value.
+            object: The parsed filter value.
         """
         if operator in (Operator.IS_NULL, Operator.IS_NOT_NULL):
             return None
@@ -530,12 +530,12 @@ class BodyToCriteriaConverter:
         return value
 
     @staticmethod
-    def _parse_between_value(*, value: Any, index: int) -> list[Any]:
+    def _parse_between_value(*, value: object, index: int) -> list[Any]:
         """
         Parse a BETWEEN filter value.
 
         Args:
-            value (Any): The raw filter value.
+            value (object): The raw filter value.
             index (int): The filter index.
 
         Raises:
@@ -552,12 +552,12 @@ class BodyToCriteriaConverter:
         return list(value)
 
     @classmethod
-    def _parse_list_value(cls, *, value: Any, index: int, max_in_values: int) -> list[Any]:
+    def _parse_list_value(cls, *, value: object, index: int, max_in_values: int) -> list[Any]:
         """
         Parse an IN filter value.
 
         Args:
-            value (Any): The raw filter value.
+            value (object): The raw filter value.
             index (int): The filter index.
 
         Raises:
@@ -580,12 +580,12 @@ class BodyToCriteriaConverter:
         return parsed_values
 
     @classmethod
-    def _parse_orders(cls, *, value: Any, fields_mapping: Mapping[str, str], max_orders: int) -> list[Order]:
+    def _parse_orders(cls, *, value: object, fields_mapping: Mapping[str, str], max_orders: int) -> list[Order]:
         """
         Parse body orders into `Order` objects.
 
         Args:
-            value (Any): The raw orders body value.
+            value (object): The raw orders body value.
             fields_mapping (Mapping[str, str]): The mapping of external to internal field names.
 
         Raises:
@@ -624,12 +624,12 @@ class BodyToCriteriaConverter:
         return orders
 
     @classmethod
-    def _validate_order_body(cls, *, value: Any, index: int) -> Mapping[str, Any]:
+    def _validate_order_body(cls, *, value: object, index: int) -> Mapping[str, Any]:
         """
         Validate an order body.
 
         Args:
-            value (Any): The raw order body value.
+            value (object): The raw order body value.
             index (int): The order index.
 
         Raises:
@@ -648,12 +648,12 @@ class BodyToCriteriaConverter:
         return order_body
 
     @classmethod
-    def _parse_direction(cls, *, value: Any, index: int) -> Direction:
+    def _parse_direction(cls, *, value: object, index: int) -> Direction:
         """
         Parse an order direction.
 
         Args:
-            value (Any): The raw direction value.
+            value (object): The raw direction value.
             index (int): The order index.
 
         Raises:
@@ -679,12 +679,12 @@ class BodyToCriteriaConverter:
         return direction
 
     @classmethod
-    def _ensure_mapping(cls, *, value: Any, path: str) -> Mapping[str, Any]:
+    def _ensure_mapping(cls, *, value: object, path: str) -> Mapping[str, Any]:
         """
         Ensure a nested body value is a mapping.
 
         Args:
-            value (Any): The nested value.
+            value (object): The nested value.
             path (str): The nested body path.
 
         Raises:

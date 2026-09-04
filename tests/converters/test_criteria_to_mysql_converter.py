@@ -34,7 +34,7 @@ def assert_valid_mysql_syntax(*, query: str, parameters: list[Any]) -> None:
         AssertionError: If the query is not valid MySQL syntax.
     """
 
-    def to_literal(parameter: Any) -> str:
+    def to_literal(parameter: object) -> str:
         if parameter is None:
             return 'NULL'
 

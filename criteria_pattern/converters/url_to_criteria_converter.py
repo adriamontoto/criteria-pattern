@@ -385,7 +385,7 @@ class UrlToCriteriaConverter:
         return filters
 
     @classmethod
-    def _parse_filter_value(cls, *, raw_value: str | None, operator: Operator, max_in_values: int) -> Any:
+    def _parse_filter_value(cls, *, raw_value: str | None, operator: Operator, max_in_values: int) -> object:
         """
         Parse a raw filter value according to operator value-shape requirements.
 
@@ -398,7 +398,7 @@ class UrlToCriteriaConverter:
             IntegrityError: If the raw value was expected to have two comma-separated values.
 
         Returns:
-            Any: The parsed filter value.
+            object: The parsed filter value.
         """
         if operator in (Operator.IS_NULL, Operator.IS_NOT_NULL):
             return None
@@ -430,7 +430,7 @@ class UrlToCriteriaConverter:
         return cls._convert_primitive(value=raw_value)
 
     @staticmethod
-    def _convert_primitive(*, value: str) -> Any:
+    def _convert_primitive(*, value: str) -> object:
         """
         Convert a raw string value to a primitive Python type.
 
@@ -438,7 +438,7 @@ class UrlToCriteriaConverter:
             value (str): The raw string value to convert.
 
         Returns:
-            Any: The converted primitive value.
+            object: The converted primitive value.
         """
         lower_value = value.lower()
         if lower_value in ('true', 'false'):
@@ -549,7 +549,7 @@ class UrlToCriteriaConverter:
             return int(values[0])
 
         except ValueError:
-            return values[0]  # type: ignore[return-value]
+            return values[0]  # type: ignore[ty:invalid-return-type]
 
     @classmethod
     def _parse_page_size(cls, *, query_parameters: Mapping[str, Sequence[str]]) -> int | None:
@@ -570,7 +570,7 @@ class UrlToCriteriaConverter:
             return int(values[0])
 
         except ValueError:
-            return values[0]  # type: ignore[return-value]
+            return values[0]  # type: ignore[ty:invalid-return-type]
 
     @classmethod
     def _ensure_index_below_limit(cls, *, index: int, limit: int, resource: str) -> None:
