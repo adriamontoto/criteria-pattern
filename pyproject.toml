@@ -54,7 +54,8 @@ coverage = ['coverage[toml]>=7.0.0', 'smokeshow>=0.5.0']
 develop = ['pre-commit>=3.1.0']
 format = ['ruff>=0.11.10']
 lint = ['ruff>=0.11.10', 'ty>=0.0.77', { include-group = 'test' }]
-release = ['build>=1.2.2', 'python-semantic-release>=10.0.2']
+# TODO: Remove the pin when python-semantic-release supports click>=8.3.3 (PYSEC-2026-2132).
+release = ['build>=1.2.2', 'python-semantic-release==10.6.1']
 test = [
     'pytest>=8.0.0',
     'pytest-randomly>=3.0.0',
