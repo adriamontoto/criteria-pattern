@@ -96,13 +96,20 @@ setup-all: # It setups all configured Python versions
 install: # Installs the project dependencies, use the GROUP variable to install only a specific group of dependencies
 	@echo -e "\n⌛ Installing dependencies...\n"
 
+ifeq ($(GROUP), production)
 ifeq ($(CI), true)
-	$(call quiet, $(UV_BIN) pip install --system -r pyproject.toml)
-	$(call quiet, $(UV_BIN) pip install --system --group $(GROUP))
+	$(call quiet, $(UV_BIN) export --frozen --no-emit-project --no-default-groups | $(UV_BIN) pip install --system --python $(PYTHON_BIN) --requirements -)
 else
-	$(call quiet, $(UV_BIN) pip install --python $(PYTHON_BIN) -r pyproject.toml)
-	$(call quiet, $(UV_BIN) pip install --python $(PYTHON_BIN) --group $(GROUP))
+	$(call quiet, UV_PROJECT_ENVIRONMENT="$(PYTHON_VIRTUAL_ENVIRONMENT)" $(UV_BIN) sync --frozen --inexact --no-active --no-install-project --no-default-groups --python $(PYTHON_VERSION))
 endif
+else
+ifeq ($(CI), true)
+	$(call quiet, $(UV_BIN) export --frozen --no-emit-project --no-default-groups $(if $(filter all,$(GROUP)),--all-groups,--group $(GROUP)) | $(UV_BIN) pip install --system --python $(PYTHON_BIN) --requirements -)
+else
+	$(call quiet, UV_PROJECT_ENVIRONMENT="$(PYTHON_VIRTUAL_ENVIRONMENT)" $(UV_BIN) sync --frozen --inexact --no-active --no-install-project --no-default-groups $(if $(filter all,$(GROUP)),--all-groups,--group $(GROUP)) --python $(PYTHON_VERSION))
+endif
+endif
+
 
 	@echo -e "\n✅ Dependencies installed correctly.\n"
 
