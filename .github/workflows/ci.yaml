@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -46,7 +46,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -65,7 +65,7 @@ jobs:
           COVERAGE_CONTEXT: ${{ matrix.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
       - name: 🫙 Store tests coverage
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
           name: coverage_${{ matrix.os }}_python_${{ matrix.python-version }}
@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -105,7 +105,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -125,7 +125,7 @@ jobs:
         run: make coverage-report CI=true VERBOSE=true COVERAGE_HTML_TITLE="Coverage for ${{ github.sha }}"
 
       - name: 🫙 Store coverage HTML report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           name: coverage-html
@@ -133,7 +133,7 @@ jobs:
           retention-days: 10
 
       - name: 🫙 Store coverage data report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           name: coverage-data
@@ -159,7 +159,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -174,7 +174,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -218,7 +218,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -235,7 +235,7 @@ jobs:
 
       - name: 📊 Generate coverage comment
         id: coverage-comment
-        uses: py-cov-action/python-coverage-comment-action@a05be3d2e8a6272d3ef5fb2840ab20368bb2eb71 # v4.3
+        uses: py-cov-action/python-coverage-comment-action@e5fb2218463c3377f3504b0c5b5646ed53da7a2f # v4.5
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMUM_GREEN: 100
@@ -243,7 +243,7 @@ jobs:
           COMMENT_FILENAME: coverage_comment.txt
 
       - name: 🫙 Store coverage comment
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.coverage-comment.outputs.COMMENT_FILE_WRITTEN == 'true'
         with:
           name: coverage_comment
@@ -264,7 +264,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -279,7 +279,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -316,7 +316,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -331,7 +331,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -360,7 +360,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -370,7 +370,7 @@ jobs:
           persist-credentials: false
 
       - name: ▶️ CodeQL Initialization
-        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v3.29.5
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v3.29.5
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -398,7 +398,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -414,7 +414,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -441,7 +441,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -456,7 +456,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -478,7 +478,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -508,7 +508,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -519,7 +519,7 @@ jobs:
 
       - name: 🔖 Semantic Release
         id: released
-        uses: python-semantic-release/python-semantic-release@9a026e9303981c866c3425723009becb2437c757 # v10.0.2
+        uses: python-semantic-release/python-semantic-release@b700dbeb1f431a0fcc30a79f3f0869407fe07278 # v10.0.2
         with:
           build: false
           push: true
@@ -556,7 +556,7 @@ jobs:
 
     steps:
       - name: 🛡️ Harden runner
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -572,7 +572,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🛠️ Setup UV
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           version: 0.11.8
           python-version: ${{ matrix.python-version }}
@@ -585,7 +585,7 @@ jobs:
         run: make build-code CI=true VERBOSE=true
 
       - name: 🫙 Store distribution package
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           name: python-package-distributions
