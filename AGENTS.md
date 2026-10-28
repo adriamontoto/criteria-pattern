@@ -144,7 +144,7 @@ Architecture conventions:
 Semantic-release is configured for Conventional Commits:
 
 - Minor release tags: `feat`
-- Patch release tags: `fix`, `perf`, `build`
+- Patch release tags: `fix`, `perf`
 - Other conventional types such as `docs`, `test`, `refactor`, and `ci` may be valid for commit hygiene but do not bump by default according to the local semantic-release config.
 
 ## Security
