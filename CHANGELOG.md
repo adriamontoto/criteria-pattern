@@ -17,7 +17,6 @@
 - Implement criteria-pattern skill for AI agents
   ([`e317700`](https://github.com/adriamontoto/criteria-pattern/commit/e317700408894bf91c5d8f20fe2f0591174473a6))
 
-
 ## v4.0.0 (2026-06-01)
 
 ### 🐛 Bug Fixes
@@ -42,7 +41,6 @@
 - **converters**: Implement structural bounds and LIKE wildcard escaping
   ([`531255c`](https://github.com/adriamontoto/criteria-pattern/commit/531255c71780d2799135674e5dfc32766a1fde92))
 
-
 ## v3.11.0 (2026-05-18)
 
 ### ✨ Features
@@ -50,14 +48,12 @@
 - Implement BodyToCriteriaConverter to parse criteria from request bodies
   ([`e5955ad`](https://github.com/adriamontoto/criteria-pattern/commit/e5955ada45f88656bc2c3233a80deec251505159))
 
-
 ## v3.10.0 (2026-05-18)
 
 ### ✨ Features
 
 - Implement SimpleUrlToCriteriaConverter to parse URL query strings into Criteria objects
   ([`088e5e5`](https://github.com/adriamontoto/criteria-pattern/commit/088e5e5117a913342c43152c012f8c10e45eaf22))
-
 
 ## v3.9.0 (2026-05-18)
 
@@ -71,14 +67,12 @@
 - Introduce AGENTS.md
   ([`de74d7b`](https://github.com/adriamontoto/criteria-pattern/commit/de74d7b955c80f6096423c5237df6ea5f1011681))
 
-
 ## v3.8.0 (2025-12-10)
 
 ### ✨ Features
 
 - Support python 3.14
   ([`88e18ae`](https://github.com/adriamontoto/criteria-pattern/commit/88e18aee4e3cdfd6bb0d9c149da4617a9ed89351))
-
 
 ## v3.7.0 (2025-09-22)
 
@@ -87,14 +81,12 @@
 - Implement clean_pagination method to Criteria and its subclasses to clear pagination attributes
   ([`ac03c6e`](https://github.com/adriamontoto/criteria-pattern/commit/ac03c6e9e4879616635b47e10363719ac6807f53))
 
-
 ## v3.6.1 (2025-09-18)
 
 ### 🐛 Bug Fixes
 
 - Update query parameter names from 'pageNumber' and 'pageSize' to 'page_number' and 'page_size'
   ([`8e33c0d`](https://github.com/adriamontoto/criteria-pattern/commit/8e33c0d1bb58437c1f2727e96d8a73173d4ef7ee))
-
 
 ## v3.6.0 (2025-09-16)
 
@@ -103,14 +95,12 @@
 - Replace TypeError and ValueError to IntegrityError
   ([`3591109`](https://github.com/adriamontoto/criteria-pattern/commit/3591109ebfc4ef07e6c38502d6211dc1bdd871ea))
 
-
 ## v3.5.1 (2025-09-16)
 
 ### 🐛 Bug Fixes
 
 - Update query parameter names from 'page_number' and 'page_size' to 'pageNumber' and 'pageSize'
   ([`535d4ca`](https://github.com/adriamontoto/criteria-pattern/commit/535d4cafa3066806ea2b0eb3804e59222622f922))
-
 
 ## v3.5.0 (2025-09-16)
 
@@ -119,14 +109,12 @@
 - Implement IntegrityError
   ([`cc90a9d`](https://github.com/adriamontoto/criteria-pattern/commit/cc90a9dea8b981bbd9790420d9ba1e0cd8e463bd))
 
-
 ## v3.4.0 (2025-09-16)
 
 ### ✨ Features
 
 - Implement pagination bounds validation to criteria converters and URL converter
   ([`e223adf`](https://github.com/adriamontoto/criteria-pattern/commit/e223adf7c92d4e12863fef2e3dd399c7b10e0881))
-
 
 ## v3.3.0 (2025-09-16)
 
@@ -135,14 +123,12 @@
 - Move pagination parameters to query placeholders
   ([`1c4a8a8`](https://github.com/adriamontoto/criteria-pattern/commit/1c4a8a8c0631432ddfd6e64d60ac4c0aa2fa4483))
 
-
 ## v3.2.0 (2025-09-15)
 
 ### ✨ Features
 
 - Implement directions validation to converters
   ([`d015d33`](https://github.com/adriamontoto/criteria-pattern/commit/d015d333b5190f52a0d8f46cb20bfc155169fcbf))
-
 
 ## v3.1.0 (2025-09-15)
 
@@ -151,14 +137,12 @@
 - Implement operator validation to converters
   ([`7afa9c1`](https://github.com/adriamontoto/criteria-pattern/commit/7afa9c1ed694508019eddf1680945662888f2ad8))
 
-
 ## v3.0.3 (2025-09-15)
 
 ### 🐛 Bug Fixes
 
 - Solve filtering issue when single filter
   ([`4125e29`](https://github.com/adriamontoto/criteria-pattern/commit/4125e29065a7d9e5558ba1f44f4d1de9adf0846d))
-
 
 ## v3.0.2 (2025-09-15)
 
@@ -167,7 +151,6 @@
 - Return pagination size and number in combined criteria
   ([`241a09c`](https://github.com/adriamontoto/criteria-pattern/commit/241a09cf32110ec6ae03e41fb196a0f985d10b95))
 
-
 ## v3.0.1 (2025-09-15)
 
 ### 🐛 Bug Fixes
@@ -175,14 +158,12 @@
 - Solve a bug while using multiple filters in the same criteria
   ([`3051d00`](https://github.com/adriamontoto/criteria-pattern/commit/3051d0026edd9de9d5b28eccc304f0383bd9a2a4))
 
-
 ## v3.0.0 (2025-09-15)
 
 ### ✨ Features
 
 - Rename converter folder to converters
   ([`0524679`](https://github.com/adriamontoto/criteria-pattern/commit/052467950b46a569ca793c2a792c26e3014e31ec))
-
 
 ## v2.2.0 (2025-09-11)
 
@@ -195,7 +176,6 @@
 
 - Implement url to criteria converter and its tests
   ([`c5b5b37`](https://github.com/adriamontoto/criteria-pattern/commit/c5b5b37282e679f65e3bec4b7496229160818c20))
-
 
 ## v2.1.1 (2025-09-10)
 
@@ -213,7 +193,6 @@
 - Enhance MySQL and Mariadb converters to use their dialect parameter style
   ([`4ae0446`](https://github.com/adriamontoto/criteria-pattern/commit/4ae0446f998cd284d58ffbda2c6c5a91b25ff3ce))
 
-
 ## v2.1.0 (2025-09-10)
 
 ### 🐛 Bug Fixes
@@ -226,7 +205,6 @@
 - Implement sqlite criteria converter
   ([`b05576b`](https://github.com/adriamontoto/criteria-pattern/commit/b05576be4742f4819040471e658e0cc01e09a0c1))
 
-
 ## v2.0.0 (2025-09-10)
 
 ### ✨ Features
@@ -236,7 +214,6 @@
 
 - Implement criteria to mysql and mariadb converters
   ([`73a67ff`](https://github.com/adriamontoto/criteria-pattern/commit/73a67ff369812370e2f3ab9e03f36309aef816e9))
-
 
 ## v1.3.0 (2025-09-10)
 
@@ -250,14 +227,12 @@
 - Implement criteria pagination
   ([`0b89c05`](https://github.com/adriamontoto/criteria-pattern/commit/0b89c057ce10b3348134f03975ff2d9cff4bc008))
 
-
 ## v1.2.0 (2025-09-09)
 
 ### ✨ Features
 
 - Enhance model constructors with title and parameter attributes
   ([`65b1b77`](https://github.com/adriamontoto/criteria-pattern/commit/65b1b77f5f483d0292f73406ded5f5caebc8d24a))
-
 
 ## v1.1.0 (2025-09-07)
 
@@ -266,7 +241,6 @@
 - Implement in and not in operators
   ([`e5294ee`](https://github.com/adriamontoto/criteria-pattern/commit/e5294eeffb77be81cae131b7f9dd36714279f92d))
 
-
 ## v1.0.0 (2025-07-20)
 
 ### ✨ Features
@@ -274,14 +248,12 @@
 - Implement hole library using value objects pattern library
   ([`7427554`](https://github.com/adriamontoto/criteria-pattern/commit/7427554202bfbc6b9c08dd4b1cee209e8bc8cc9a))
 
-
 ## v0.1.1 (2025-06-15)
 
 ### 📦 Build System
 
 - Update package license locations
   ([`4c05682`](https://github.com/adriamontoto/criteria-pattern/commit/4c05682394b245e8d4f3df23e2c3c3952a76066f))
-
 
 ## v0.1.0 (2025-06-15)
 
