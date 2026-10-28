@@ -73,6 +73,37 @@ all = [
 ]
 
 
+[tool.uv]
+exclude-newer = '7 days'
+# TODO: Remove this cutoff and constraint once virtualenv 21.14.13 is older than the cooldown.
+exclude-newer-package = { virtualenv = '2026-10-23T00:00:00Z' }
+constraint-dependencies = ['virtualenv==21.14.13']
+index-strategy = 'first-index'
+prerelease = 'if-necessary'
+preview = false
+upgrade = false
+resolution = 'highest'
+no-build = true
+no-build-isolation = false
+link-mode = 'clone'
+python-downloads = 'never'
+python-preference = 'system'
+no-binary-package = ['criteria-pattern']
+
+[tool.uv.pip]
+exclude-newer = '7 days'
+generate-hashes = true
+verify-hashes = true
+require-hashes = true
+strict = true
+index-strategy = 'first-index'
+prerelease = 'if-necessary'
+resolution = 'highest'
+no-build = true
+no-build-isolation = false
+link-mode = 'clone'
+
+
 [tool.pytest.ini_options]
 pythonpath = '.'
 addopts = [

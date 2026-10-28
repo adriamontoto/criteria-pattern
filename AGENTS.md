@@ -60,7 +60,7 @@ There is no database, message broker, or application server to start.
   installable AI skill under `skills/criteria-pattern/`, update its evals when behavior changes, and regenerate
   `skills/criteria-pattern.skill`.
 - Keep `criteria_pattern/py.typed` present so package typing remains advertised.
-- This repository currently has no lockfile; avoid introducing dependency lockfile churn unless the task is explicitly about dependency management.
+- This repository includes `uv.lock`; keep it aligned with `pyproject.toml` and avoid unrelated lockfile churn.
 - `make clean` removes configured virtual environments, caches, coverage files, and generated output. Treat it as destructive and do not run it unless the task calls for cleanup.
 
 Use this local verification loop for code changes:
