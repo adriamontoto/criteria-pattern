@@ -2,6 +2,48 @@
 
 <!-- version list -->
 
+## v4.2.0 (2026-10-29)
+
+### 📦 Build System
+
+- Harden uv execution
+  ([`30004ec`](https://github.com/adriamontoto/criteria-pattern/commit/30004ec8452c8f4cccb845d1a8529468b01150ca))
+
+### 🤖 Continuous Integration
+
+- Bump actions/upload-artifact from 4.6.2 to 7.0.1
+  ([#147](https://github.com/adriamontoto/criteria-pattern/pull/147),
+  [`9931e1a`](https://github.com/adriamontoto/criteria-pattern/commit/9931e1aa6bfcb6dd8026fd76006d8ab89b0f51d3))
+
+- Bump astral-sh/setup-uv from 7.3.1 to 10.0.1
+  ([#148](https://github.com/adriamontoto/criteria-pattern/pull/148),
+  [`dbb07b0`](https://github.com/adriamontoto/criteria-pattern/commit/dbb07b087e3090f9d5cf2fcdb243eee983ec69ab))
+
+- Bump github/codeql-action/init from 3.30.3 to 4.37.9
+  ([#145](https://github.com/adriamontoto/criteria-pattern/pull/145),
+  [`94bab88`](https://github.com/adriamontoto/criteria-pattern/commit/94bab8879787df7850d5e288a0234a7a5dbe2aea))
+
+- Bump py-cov-action/python-coverage-comment-action from 3.39 to 4.3
+  ([#146](https://github.com/adriamontoto/criteria-pattern/pull/146),
+  [`39cfeb0`](https://github.com/adriamontoto/criteria-pattern/commit/39cfeb019c1c99c978dd3a0e4275178f41dabeda))
+
+- Bump the actions-minor-patch group with 4 updates
+  ([#144](https://github.com/adriamontoto/criteria-pattern/pull/144),
+  [`eb13056`](https://github.com/adriamontoto/criteria-pattern/commit/eb130560ff9ef08a09601412252b9a42883c8765))
+
+- Update those commit types that create a new version
+  ([`93f7d20`](https://github.com/adriamontoto/criteria-pattern/commit/93f7d2004e84b3d4d5b7ab06bec169d9ebc5e40c))
+
+### 📚 Documentation
+
+- **ci**: Correct generated changelog release spacing
+  ([`0017e5f`](https://github.com/adriamontoto/criteria-pattern/commit/0017e5faa3f18d5c91e148a12e8e1e3140d4352a))
+
+### ✨ Features
+
+- Implement criteria.clean_orders method
+  ([`d902d17`](https://github.com/adriamontoto/criteria-pattern/commit/d902d1727285a865b8c19b495c21455470df96cb))
+
 ## v4.1.1 (2026-09-04)
 
 ### 📦 Build System
