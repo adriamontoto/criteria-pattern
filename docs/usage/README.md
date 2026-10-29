@@ -62,6 +62,8 @@ criteria = criteria.or_(criteria=has_company_email)
 criteria = criteria.not_()
 ```
 
+To remove ordering rules while retaining filters and pagination, call `criteria.clean_orders()`. It mutates and returns the same instance. On composed criteria it clears orders from the child criteria as well.
+
 ## Operators
 
 Criteria Pattern supports these filter operators:

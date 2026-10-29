@@ -45,6 +45,7 @@ Useful properties and methods:
 | `criteria.has_orders()` | True when at least one order exists. |
 | `criteria.has_page_size()` | True when a page size exists. |
 | `criteria.has_pagination()` | True when page size and page number both exist. |
+| `criteria.clean_orders()` | Mutates the criteria, clears orders, and returns the same instance. |
 | `criteria.clean_pagination()` | Mutates the criteria, clears pagination, and returns the same instance. |
 | `criteria.to_primitives()` | Inherited value-object serializer. Use tests to confirm exact enum representation. |
 | `Criteria.from_primitives(...)` | Inherited constructor helper used by tests and downstream code. |
@@ -75,9 +76,7 @@ criteria = criteria.not_()
 Composition nodes are `AndCriteria`, `OrCriteria`, and `NotCriteria` in `criteria_pattern.models.criteria`. They are
 not usually constructed directly. SQL converters preserve the boolean tree with parentheses and `NOT`.
 
-For `AndCriteria` and `OrCriteria`, filters and orders are exposed as left followed by right. Pagination prefers the
-left side when set and falls back to the right side. `clean_pagination()` propagates to children. `NotCriteria` exposes
-the wrapped criteria through `.criteria` and propagates pagination cleanup to it.
+For `AndCriteria` and `OrCriteria`, filters and orders are exposed as left followed by right. Pagination prefers the left side when set and falls back to the right side. `clean_orders()` and `clean_pagination()` propagate to children. `NotCriteria` exposes the wrapped criteria through `.criteria` and propagates both cleanup methods to it.
 
 ## Filter
 

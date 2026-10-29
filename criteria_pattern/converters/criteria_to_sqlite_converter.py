@@ -701,6 +701,7 @@ class CriteriaToSqliteConverter:
         """
         if not isinstance(value, str):
             return value
+
         return value.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
     @classmethod

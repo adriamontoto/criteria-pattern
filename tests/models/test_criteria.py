@@ -582,6 +582,48 @@ def test_not_criteria_pagination_from_wrapped() -> None:
 
 
 @mark.unit_testing
+def test_criteria_model_clean_orders_clears_orders_and_preserves_other_criteria() -> None:
+    """
+    Test clean_orders clears orders, preserves other fields, and returns the same instance.
+    """
+    filter = Filter(field='status', operator=Operator.EQUAL, value='active')
+    order = Order(field='name', direction=Direction.ASC)
+    criteria = Criteria(filters=[filter], orders=[order], page_size=10, page_number=2)
+
+    assert criteria.clean_orders() is criteria
+    assert criteria.orders == []
+    assert not criteria.has_orders()
+    assert criteria.filters == [filter]
+    assert criteria.page_size == 10
+    assert criteria.page_number == 2
+    assert criteria.clean_orders() is criteria
+
+
+@mark.unit_testing
+def test_composed_criteria_clean_orders_propagates_to_nested_children() -> None:
+    """
+    Test clean_orders propagates through nested criteria while preserving filters and pagination.
+    """
+    filter = Filter(field='status', operator=Operator.EQUAL, value='active')
+    left = Criteria(
+        filters=[filter], orders=[Order(field='name', direction=Direction.ASC)], page_size=10, page_number=2
+    )
+    middle = Criteria(orders=[Order(field='age', direction=Direction.DESC)])
+    right = Criteria(orders=[Order(field='id', direction=Direction.ASC)])
+    disjunction = middle | right
+    negated = ~disjunction
+    combined = left & negated
+
+    assert combined.clean_orders() is combined
+    assert all(not criterion.has_orders() for criterion in (left, middle, right, disjunction, negated, combined))
+    assert left.filters == [filter]
+    assert left.page_size == 10
+    assert left.page_number == 2
+    assert disjunction.clean_orders() is disjunction
+    assert negated.clean_orders() is negated
+
+
+@mark.unit_testing
 def test_criteria_model_clean_pagination_clears_page_size_and_number() -> None:
     """
     Test clean_pagination clears pagination attributes on base Criteria.

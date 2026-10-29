@@ -418,6 +418,27 @@ class Criteria(BaseModel):
         """
         return self.page_size is not None and self.page_number is not None
 
+    def clean_orders(self) -> Criteria:
+        """
+        Remove all ordering rules from this criteria.
+
+        Returns:
+            Criteria: The same criteria instance with orders cleared.
+
+        Example:
+        ```python
+        from criteria_pattern import Criteria, Direction, Order
+
+        criteria = Criteria(orders=[Order(field='name', direction=Direction.ASC)], page_size=10)
+        criteria.clean_orders()
+        print(criteria.orders, criteria.page_size)
+        # >>> [] 10
+        ```
+        """
+        self._orders = Orders(value=[], title='Criteria', parameter='orders')
+
+        return self
+
     def clean_pagination(self) -> Criteria:
         """
         Remove pagination from this criteria by clearing page_size and page_number.
@@ -556,6 +577,19 @@ class AndCriteria(Criteria):
         return self._right
 
     @override
+    def clean_orders(self) -> Criteria:
+        """
+        Remove ordering rules from both sides and return this criteria.
+
+        Returns:
+            Criteria: The same AndCriteria instance with ordering rules cleared from children.
+        """
+        self.left.clean_orders()
+        self.right.clean_orders()
+
+        return self
+
+    @override
     def clean_pagination(self) -> Criteria:
         """
         Remove pagination from both sides of the AND criteria.
@@ -684,6 +718,19 @@ class OrCriteria(Criteria):
         return self._right
 
     @override
+    def clean_orders(self) -> Criteria:
+        """
+        Remove ordering rules from both sides and return this criteria.
+
+        Returns:
+            Criteria: The same AndCriteria instance with ordering rules cleared from children.
+        """
+        self.left.clean_orders()
+        self.right.clean_orders()
+
+        return self
+
+    @override
     def clean_pagination(self) -> Criteria:
         """
         Remove pagination from both sides of the OR criteria.
@@ -791,6 +838,18 @@ class NotCriteria(Criteria):
             int | None: Page number for pagination, or None if not set.
         """
         return self.criteria.page_number
+
+    @override
+    def clean_orders(self) -> Criteria:
+        """
+        Remove ordering rules from the wrapped criteria and return this criteria.
+
+        Returns:
+            Criteria: The same NotCriteria instance with ordering rules cleared from the wrapped criteria.
+        """
+        self.criteria.clean_orders()
+
+        return self
 
     @override
     def clean_pagination(self) -> Criteria:
