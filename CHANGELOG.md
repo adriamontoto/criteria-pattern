@@ -2,6 +2,13 @@
 
 <!-- version list -->
 
+## v4.3.1 (2026-11-06)
+
+### 🐛 Bug Fixes
+
+- Declare typing-extensions for Python 3.11
+  ([`6a80ea4`](https://github.com/adriamontoto/criteria-pattern/commit/6a80ea4144cd6b82b4e756484c5f7c7010b8e791))
+
 ## v4.3.0 (2026-11-06)
 
 ### ✨ Features

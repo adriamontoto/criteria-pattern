@@ -1,4 +1,4 @@
-__version__ = '4.3.0'
+__version__ = '4.3.1'
 
 from .models import Criteria, Direction, Filter, Operator, Order, PageNumber, PageSize
 
