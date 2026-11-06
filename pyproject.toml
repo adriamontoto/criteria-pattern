@@ -41,7 +41,10 @@ keywords = [
     'selection',
 ]
 requires-python = '>=3.11'
-dependencies = ['value-object-pattern>=1.20.0']
+dependencies = [
+    'value-object-pattern>=1.20.0',
+    'typing-extensions>=4.4.0; python_version < "3.12"',
+]
 dynamic = ['version']
 
 [project.urls]

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 
 [options]
@@ -375,6 +375,7 @@ toml = [
 name = "criteria-pattern"
 source = { editable = "." }
 dependencies = [
+    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
     { name = "value-object-pattern" },
 ]
 
@@ -426,7 +427,10 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "value-object-pattern", specifier = ">=1.20.0" }]
+requires-dist = [
+    { name = "typing-extensions", marker = "python_full_version < '3.12'", specifier = ">=4.4.0" },
+    { name = "value-object-pattern", specifier = ">=1.20.0" },
+]
 
 [package.metadata.requires-dev]
 all = [
