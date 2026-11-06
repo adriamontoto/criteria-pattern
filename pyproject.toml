@@ -27,6 +27,7 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: 3.15',
 ]
 keywords = [
     'python',
@@ -88,7 +89,7 @@ no-build-isolation = false
 link-mode = 'clone'
 python-downloads = 'never'
 python-preference = 'system'
-no-binary-package = ['criteria-pattern']
+no-binary-package = ['criteria-pattern', 'pyyaml']
 
 [tool.uv.pip]
 exclude-newer = '7 days'
@@ -100,6 +101,7 @@ index-strategy = 'first-index'
 prerelease = 'if-necessary'
 resolution = 'highest'
 no-build = true
+no-binary = ['pyyaml']
 no-build-isolation = false
 link-mode = 'clone'
 

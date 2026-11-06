@@ -17,7 +17,7 @@ Key paths:
 - `pyproject.toml`: package metadata and tool configuration.
 - `Makefile`: canonical local workflow.
 
-This is a single-package Python project, not a monorepo. It supports Python `>=3.11` and CI tests Python `3.11`, `3.12`, `3.13`, and `3.14` on Ubuntu and Windows.
+This is a single-package Python project, not a monorepo. It supports Python `>=3.11` and CI tests Python `3.11`, `3.12`, `3.13`, `3.14`, and `3.15` on Ubuntu and Windows.
 
 ## Setup Commands
 
@@ -32,11 +32,11 @@ Run commands from the repository root.
 The Makefile defaults to:
 
 - `UV_BIN=uv`
-- `PYTHON_VERSION=3.14`
-- `PYTHON_VERSIONS=3.11,3.12,3.13,3.14`
-- `PYTHON_VIRTUAL_ENVIRONMENT=.venv$(PYTHON_VERSION)`, so the default environment is `.venv3.14`
+- `PYTHON_VERSION=3.15`
+- `PYTHON_VERSIONS=3.11,3.12,3.13,3.14,3.15`
+- `PYTHON_VIRTUAL_ENVIRONMENT=.venv$(PYTHON_VERSION)`, so the default environment is `.venv3.15`
 
-If Python 3.14 is unavailable locally, pass a supported version explicitly, for example:
+If Python 3.15 is unavailable locally, pass a supported version explicitly, for example:
 
 ```bash
 make setup PYTHON_VERSION=3.13 PYTHON_VIRTUAL_ENVIRONMENT=.venv3.13
@@ -45,7 +45,7 @@ make setup PYTHON_VERSION=3.13 PYTHON_VIRTUAL_ENVIRONMENT=.venv3.13
 After setup, activate the environment when useful:
 
 ```bash
-source .venv3.14/bin/activate
+source .venv3.15/bin/activate
 ```
 
 There is no database, message broker, or application server to start.
@@ -87,12 +87,12 @@ For documentation-only changes, run the smallest relevant check and state what w
 - Run all configured Python versions: `make test-all`
 - Run coverage: `make coverage`
 - Run all-version coverage: `make coverage-all`
-- Run tests directly after setup: `.venv3.14/bin/python3.14 -m pytest --config-file pyproject.toml`
-- Run a specific file: `.venv3.14/bin/python3.14 -m pytest tests/converters/test_criteria_to_postgresql_converter.py --config-file pyproject.toml`
-- Run a focused test expression: `.venv3.14/bin/python3.14 -m pytest -k "url_to_criteria" --config-file pyproject.toml`
-- Reproduce a randomized test order or data failure: `.venv3.14/bin/python3.14 -m pytest --config-file pyproject.toml --randomly-seed=<seed>`
+- Run tests directly after setup: `.venv3.15/bin/python3.15 -m pytest --config-file pyproject.toml`
+- Run a specific file: `.venv3.15/bin/python3.15 -m pytest tests/converters/test_criteria_to_postgresql_converter.py --config-file pyproject.toml`
+- Run a focused test expression: `.venv3.15/bin/python3.15 -m pytest -k "url_to_criteria" --config-file pyproject.toml`
+- Reproduce a randomized test order or data failure: `.venv3.15/bin/python3.15 -m pytest --config-file pyproject.toml --randomly-seed=<seed>`
 
-If setup used a different `PYTHON_VERSION`, adjust the `.venv3.14/bin/python3.14` path or activate the environment and use `python -m pytest ...`.
+If setup used a different `PYTHON_VERSION`, adjust the `.venv3.15/bin/python3.15` path or activate the environment and use `python -m pytest ...`.
 
 Test conventions:
 
@@ -159,7 +159,7 @@ Semantic-release is configured for Conventional Commits:
 
 CI runs on pushes and pull requests targeting `master`, plus a scheduled daily run. The main checks are:
 
-- Tests and coverage on Ubuntu and Windows across Python `3.11` through `3.14`
+- Tests and coverage on Ubuntu and Windows across Python `3.11` through `3.15`
 - Format check with `make format` followed by a clean working tree assertion
 - Lint and type check with `make lint`
 - CodeQL analysis
