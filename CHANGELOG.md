@@ -2,6 +2,13 @@
 
 <!-- version list -->
 
+## v4.3.0 (2026-11-06)
+
+### ✨ Features
+
+- Bump to python3.15
+  ([`04ac5b8`](https://github.com/adriamontoto/criteria-pattern/commit/04ac5b803d0387cc1ad92922093275e66c8fa8a5))
+
 ## v4.2.0 (2026-10-29)
 
 ### 📦 Build System
