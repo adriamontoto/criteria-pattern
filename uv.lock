@@ -7,6 +7,8 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
+object-mother-pattern = false
+value-object-pattern = false
 virtualenv = "2026-10-23T00:00:00Z"
 
 [manifest]
@@ -429,7 +431,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "typing-extensions", marker = "python_full_version < '3.12'", specifier = ">=4.4.0" },
-    { name = "value-object-pattern", specifier = ">=1.20.0" },
+    { name = "value-object-pattern", specifier = ">=1.41.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1481,14 +1483,14 @@ wheels = [
 
 [[package]]
 name = "value-object-pattern"
-version = "1.39.1"
+version = "1.41.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "python-dateutil" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/ed/82aea4bdefdc5f09468512f69d677cef67d937df53d18b18ed33d682d38f/value_object_pattern-1.39.1.tar.gz", hash = "sha256:3de7471221e479e8946791ceaa42cb9065512dd8e3534bb0dc3243002ab439b8", size = 131084, upload-time = "2026-09-26T18:47:20.912Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/c5/e8d3bb271d6f1da510628ed272ba6351026adeddd44f599411e7b30d9854/value_object_pattern-1.41.0.tar.gz", hash = "sha256:574db2305e55626c6b888d8eda50b2f835a7de2e8491d0a5e309b300be3a12a2", size = 135522, upload-time = "2026-11-07T17:06:36.243Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/15/e023405ac9cd577822c5b3d67419c14c392ca6b8969136b9774b1cf8616b/value_object_pattern-1.39.1-py3-none-any.whl", hash = "sha256:7b93ec1420dea6f18d8bad5cfa0d19298a39a7025c16156e8c66837521469352", size = 267812, upload-time = "2026-09-26T18:47:19.222Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/93/d68c20b125ecd92b509f3303b93925480127c1847c30c044bf75ac365f4a/value_object_pattern-1.41.0-py3-none-any.whl", hash = "sha256:681834fcc97ca211c1cdfe7c89db7c1ceb6c6dbabcfa2e60ab0fdeb5dbfc0ee2", size = 270366, upload-time = "2026-11-07T17:06:34.651Z" },
 ]
 
 [[package]]
