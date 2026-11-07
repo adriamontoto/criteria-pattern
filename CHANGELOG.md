@@ -2,6 +2,13 @@
 
 <!-- version list -->
 
+## v4.4.0 (2026-11-07)
+
+### ✨ Features
+
+- Remove python-dateutil dependency
+  ([`c0376de`](https://github.com/adriamontoto/criteria-pattern/commit/c0376dea1843ddc5d1b65a3c4a4e88e8e47e961a))
+
 ## v4.3.1 (2026-11-06)
 
 ### 🐛 Bug Fixes
